@@ -925,19 +925,27 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
   label.textContent = 'מכין קריינות...';
 
   const text = buildTTSText();
+  const body = { text, voice: 'he-IL-Wavenet-A', gender: 'FEMALE' };
+  console.log('[TTS] sending body:', JSON.stringify(body).slice(0, 200));
   try {
     const res = await fetch(`${API}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice: 'he-IL-Wavenet-A', gender: 'female' }),
+      body: JSON.stringify(body),
     });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[TTS] error response:', res.status, errText);
+      throw new Error(errText);
+    }
     const data = await res.json();
-    if (!data.audioContent) throw new Error();
+    if (!data.audioContent) throw new Error('no audioContent');
     audio.src = `data:audio/mp3;base64,${data.audioContent}`;
     audio.style.display = 'block';
     audio.play();
     label.textContent = 'עצור';
-  } catch {
+  } catch (e) {
+    console.error('[TTS] caught:', e);
     label.textContent = 'שגיאה — נסה שוב';
   } finally {
     btn.disabled = false;
@@ -955,8 +963,9 @@ async function speakStep(sid) {
     const res = await fetch(`${API}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: step.text, voice: 'he-IL-Wavenet-A', gender: 'female' }),
+      body: JSON.stringify({ text: step.text, voice: 'he-IL-Wavenet-A', gender: 'FEMALE' }),
     });
+    console.log('[TTS step] status:', res.status);
     const data = await res.json();
     if (!data.audioContent) throw new Error();
     const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
