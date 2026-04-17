@@ -253,6 +253,43 @@
 
     .spinner { width:32px;height:32px;border:3px solid var(--sand-dark);border-top-color:var(--terracotta);border-radius:50%;animation:spin .8s linear infinite;margin:2rem auto; }
     @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Image crop/position editor ── */
+    .crop-dialog {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 1.5rem; max-width: 600px; width: 95%; box-shadow: var(--shadow-md);
+    }
+    .crop-viewport {
+      width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative;
+      border-radius: var(--radius); background: #111;
+      cursor: grab; user-select: none; touch-action: none;
+    }
+    .crop-viewport.grabbing { cursor: grabbing; }
+    #crop-img-el { position: absolute; pointer-events: none; display: block; }
+    .crop-controls { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; }
+    .crop-zoom-slider { flex: 1; accent-color: var(--terracotta); cursor: pointer; }
+
+    /* ── Step image ── */
+    .step-img-section { margin-top: .75rem; }
+    .step-img-preview {
+      width: 100%; height: 80px; border-radius: var(--radius);
+      border: 2px dashed var(--sand-dark); overflow: hidden; position: relative;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      background: var(--sand); transition: border-color .2s;
+    }
+    .step-img-preview:hover { border-color: var(--terracotta); }
+    .step-img-preview img { width:100%; height:100%; object-fit:cover; }
+    .step-img-ph { font-size:.8rem; color:var(--ink-muted); pointer-events:none; }
+    .step-img-actions { display:flex; gap:.5rem; margin-top:.4rem; align-items:center; }
+    .step-img-adjust-btn, .step-img-clear-btn {
+      font-size:.75rem; padding:.25rem .65rem; border-radius:50px;
+      cursor:pointer; transition:all .2s; font-family:'Heebo',sans-serif; white-space:nowrap;
+    }
+    .step-img-adjust-btn { background:none; border:1.5px solid var(--olive); color:var(--olive); }
+    .step-img-adjust-btn:hover { background:var(--olive); color:var(--white); }
+    .step-img-clear-btn { background:none; border:1.5px solid var(--sand-dark); color:var(--ink-muted); }
+    .step-img-clear-btn:hover { border-color:var(--danger); color:var(--danger); }
+    .img-adjust-row { margin-top:.5rem; }
   </style>
 </head>
 <body>
@@ -313,6 +350,32 @@
     <div class="dialog-actions">
       <button class="btn-cancel-dlg" onclick="closeConfirm()">ביטול</button>
       <button class="btn-confirm-dlg" id="confirm-ok-btn">מחק</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image position/crop editor -->
+<div class="overlay" id="crop-overlay">
+  <div class="crop-dialog">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 style="font-family:'Noto Serif Hebrew',serif;font-size:1.1rem;font-weight:600">כוונון תמונה</h3>
+      <small style="color:var(--ink-muted)">גרור להזזה • גלגלת לזום</small>
+    </div>
+    <div class="crop-viewport" id="crop-viewport">
+      <img id="crop-img-el" draggable="false" alt="" />
+    </div>
+    <div class="crop-controls">
+      <span style="font-size:.82rem;color:var(--ink-light);white-space:nowrap">זום</span>
+      <input type="range" id="crop-zoom-slider" class="crop-zoom-slider" min="100" max="300" step="1" value="100" />
+      <span id="crop-zoom-label" style="font-size:.82rem;white-space:nowrap;min-width:3rem;text-align:center">100%</span>
+      <button type="button" onclick="resetCrop()"
+        style="font-size:.78rem;padding:.3rem .75rem;background:none;border:1.5px solid var(--sand-dark);border-radius:50px;cursor:pointer;font-family:'Heebo',sans-serif">
+        איפוס
+      </button>
+    </div>
+    <div class="dialog-actions" style="margin-top:1rem">
+      <button type="button" class="btn-cancel-dlg" onclick="cancelCrop()">ביטול</button>
+      <button type="button" class="btn-confirm-dlg" style="background:var(--olive)" onclick="applyCrop()">אישור ✓</button>
     </div>
   </div>
 </div>
@@ -473,10 +536,13 @@ function renderForm(data) {
         <input type="file" id="f-image-file" accept="image/*" style="display:none" onchange="handleImageSelect(this)" />
         <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
         <div class="img-row">
-          <input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://res.cloudinary.com/..." style="direction:ltr" />
+          <input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://res.cloudinary.com/..." style="direction:ltr" onchange="toggleMainAdjustBtn()" />
           <button type="button" class="upload-btn" id="upload-btn" onclick="document.getElementById('f-image-file').click()">
             📤 העלה
           </button>
+        </div>
+        <div class="img-adjust-row" id="img-adjust-row" ${data.image_url ? '' : 'style="display:none"'}>
+          <button type="button" class="step-img-adjust-btn" onclick="openCropEditor(document.getElementById('f-image').value,{type:'main'})">⊕ כוון מיקום תמונה</button>
         </div>
       </div>
     </div>
@@ -501,6 +567,7 @@ function renderForm(data) {
       ${!isNew ? `<button class="cancel-btn" onclick="openForm(null)">ביטול</button>` : ''}
       <button class="submit-btn" id="submit-btn" onclick="submitForm()">${isNew ? 'צור מתכון' : 'שמור שינויים'}</button>
     </div>`;
+  initFormTransforms();
 }
 
 // ── Ingredient rows ───────────────────────────────────────────────────────────
@@ -538,6 +605,22 @@ function stepRowHtml(idx, s={}) {
         <label style="font-size:.8rem">טיימר (שניות, אופציונלי)</label>
         <input type="number" placeholder="למשל 1800 = חצי שעה" value="${s.timer_seconds||''}" class="step-timer-inp" min="0" style="margin-top:.3rem" />
       </div>
+      <div class="step-img-section">
+        <div class="step-img-preview" id="step-${id}-prev"
+          onclick="document.getElementById('step-${id}-file').click()">
+          <img src="${s.image_url ? esc(s.image_url.split('#')[0]) : ''}" ${s.image_url ? '' : 'style="display:none"'} />
+          <span class="step-img-ph" ${s.image_url ? 'style="display:none"' : ''}>📷 תמונה לשלב (אופציונלי)</span>
+        </div>
+        <input type="file" accept="image/*" style="display:none" id="step-${id}-file"
+          onchange="handleStepFileSelect(this,'step-${id}')" />
+        <input type="hidden" class="step-img-url" value="${esc(s.image_url||'')}" />
+        <div class="step-img-actions" id="step-${id}-actions" ${s.image_url ? '' : 'style="display:none"'}>
+          <button type="button" class="step-img-adjust-btn"
+            onclick="openCropEditor(document.getElementById('step-${id}').querySelector('.step-img-url').value,{type:'step',id:'step-${id}'})">⊕ כוון</button>
+          <button type="button" class="step-img-clear-btn"
+            onclick="clearStepImg('step-${id}')">✕ הסר</button>
+        </div>
+      </div>
     </div>`;
 }
 function addStepRow() {
@@ -571,7 +654,7 @@ function collectForm() {
     title:         row.querySelector('.step-title-inp').value.trim() || null,
     text:          row.querySelector('.step-text-inp').value.trim(),
     timer_seconds: parseInt(row.querySelector('.step-timer-inp').value) || null,
-    image_url:     null,
+    image_url:     row.querySelector('.step-img-url')?.value.trim() || null,
   })).filter(s => s.text);
 
   return {
@@ -671,77 +754,243 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').
 function handleImageSelect(input) {
   const file = input.files[0];
   if (!file) return;
-
-  // Show local preview immediately
+  input.value = '';
   const reader = new FileReader();
   reader.onload = e => {
     const img = document.getElementById('img-preview-img');
     const ph  = document.getElementById('img-preview-ph');
-    if (img) { img.src = e.target.result; img.style.display = 'block'; }
+    if (img) { img.src = e.target.result; img.style.display = 'block'; img.style.transform = ''; img.style.objectPosition = ''; }
     if (ph)  ph.style.display = 'none';
   };
   reader.readAsDataURL(file);
-
-  // Upload to Cloudinary
-  uploadToCloudinary(file);
+  uploadToCloudinary(file, url => {
+    document.getElementById('f-image').value = url;
+    document.getElementById('img-adjust-row').style.display = '';
+    openCropEditor(url, { type: 'main' });
+  }, {
+    btnEl:      document.getElementById('upload-btn'),
+    progressEl: document.getElementById('upload-progress'),
+    barEl:      document.getElementById('upload-bar'),
+  });
 }
 
-async function uploadToCloudinary(file) {
+async function uploadToCloudinary(file, onSuccess, opts = {}) {
   const cloud  = CONFIG.CLOUDINARY_CLOUD;
   const preset = CONFIG.CLOUDINARY_PRESET;
-
   if (!cloud || cloud === 'YOUR_CLOUD_NAME') {
     showToast('מלא CLOUDINARY_CLOUD ו-CLOUDINARY_PRESET ב-config.js', 'error');
     return;
   }
-
-  const btn      = document.getElementById('upload-btn');
-  const progress = document.getElementById('upload-progress');
-  const bar      = document.getElementById('upload-bar');
-
-  btn.disabled = true;
-  btn.textContent = 'מעלה...';
-  progress.style.display = 'block';
-  bar.style.width = '10%';
-
+  const { btnEl, progressEl, barEl } = opts;
+  if (btnEl)      { btnEl.disabled = true; btnEl.textContent = 'מעלה...'; }
+  if (progressEl) progressEl.style.display = 'block';
+  if (barEl)      barEl.style.width = '10%';
   const fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', preset);
   fd.append('folder', 'recipes');
-
   try {
-    // Simulate progress
     let pct = 10;
-    const tick = setInterval(() => { pct = Math.min(pct + 10, 80); bar.style.width = pct + '%'; }, 200);
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, {
-      method: 'POST', body: fd,
-    });
+    const tick = setInterval(() => { pct = Math.min(pct + 10, 80); if (barEl) barEl.style.width = pct + '%'; }, 200);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, { method: 'POST', body: fd });
     clearInterval(tick);
-
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-
-    bar.style.width = '100%';
-    setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 600);
-
-    // Fill URL field
-    const urlInput = document.getElementById('f-image');
-    if (urlInput) {
-      urlInput.value = data.secure_url;
-      // Also update preview with the Cloudinary URL
-      const img = document.getElementById('img-preview-img');
-      if (img) img.src = data.secure_url;
-    }
+    if (barEl) barEl.style.width = '100%';
+    setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; if (barEl) barEl.style.width = '0%'; }, 600);
+    onSuccess(data.secure_url);
     showToast('התמונה הועלתה בהצלחה ✓', 'success');
   } catch (err) {
     console.error(err);
-    progress.style.display = 'none';
+    if (progressEl) progressEl.style.display = 'none';
     showToast('שגיאה בהעלאת התמונה — בדוק cloud name ו-preset', 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = '📤 העלה';
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📤 העלה'; }
   }
+}
+
+// ── Image crop/position editor ─────────────────────────────────────────────
+
+let cropTarget = null, cropBaseUrl = '', cropOffsetX = 0, cropOffsetY = 0;
+let cropZoom = 1, cropDrag = null, pendingCropPos = null;
+
+function openCropEditor(imageUrl, target) {
+  if (!imageUrl) return;
+  cropTarget  = target;
+  cropBaseUrl = imageUrl.split('#')[0];
+  const m = imageUrl.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+  if (m) {
+    cropZoom = parseFloat(m[3]);
+    pendingCropPos = { xPct: parseFloat(m[1]), yPct: parseFloat(m[2]) };
+  } else {
+    cropZoom = 1; cropOffsetX = 0; cropOffsetY = 0; pendingCropPos = null;
+  }
+  document.getElementById('crop-zoom-slider').value = Math.round(cropZoom * 100);
+  document.getElementById('crop-zoom-label').textContent = Math.round(cropZoom * 100) + '%';
+  const img = document.getElementById('crop-img-el');
+  img.onload = () => {
+    if (pendingCropPos) {
+      const vp = document.getElementById('crop-viewport');
+      const cs = Math.max(vp.clientWidth / img.naturalWidth, vp.clientHeight / img.naturalHeight);
+      cropOffsetX = (0.5 - pendingCropPos.xPct / 100) * img.naturalWidth  * cs * cropZoom;
+      cropOffsetY = (0.5 - pendingCropPos.yPct / 100) * img.naturalHeight * cs * cropZoom;
+      pendingCropPos = null;
+    }
+    updateCropView();
+  };
+  img.src = cropBaseUrl;
+  if (img.complete && img.naturalWidth) img.onload();
+  document.getElementById('crop-overlay').classList.add('show');
+}
+
+function updateCropView() {
+  const vp  = document.getElementById('crop-viewport');
+  const img = document.getElementById('crop-img-el');
+  if (!img.naturalWidth) return;
+  const vpW = vp.clientWidth, vpH = vp.clientHeight;
+  const cs  = Math.max(vpW / img.naturalWidth, vpH / img.naturalHeight) * cropZoom;
+  const iW  = img.naturalWidth * cs, iH = img.naturalHeight * cs;
+  cropOffsetX = Math.max(-(iW - vpW) / 2, Math.min((iW - vpW) / 2, cropOffsetX));
+  cropOffsetY = Math.max(-(iH - vpH) / 2, Math.min((iH - vpH) / 2, cropOffsetY));
+  img.style.width  = iW + 'px';
+  img.style.height = iH + 'px';
+  img.style.left   = (vpW / 2 - iW / 2 + cropOffsetX) + 'px';
+  img.style.top    = (vpH / 2 - iH / 2 + cropOffsetY) + 'px';
+}
+
+function resetCrop() {
+  cropOffsetX = 0; cropOffsetY = 0; cropZoom = 1;
+  document.getElementById('crop-zoom-slider').value = 100;
+  document.getElementById('crop-zoom-label').textContent = '100%';
+  updateCropView();
+}
+
+function applyCrop() {
+  const img = document.getElementById('crop-img-el');
+  const vp  = document.getElementById('crop-viewport');
+  const vpW = vp.clientWidth, vpH = vp.clientHeight;
+  const cs  = Math.max(vpW / img.naturalWidth, vpH / img.naturalHeight) * cropZoom;
+  const iW  = img.naturalWidth * cs, iH = img.naturalHeight * cs;
+  const xPct = Math.round((0.5 - cropOffsetX / iW) * 100);
+  const yPct = Math.round((0.5 - cropOffsetY / iH) * 100);
+  const z    = parseFloat(cropZoom.toFixed(2));
+  const url  = `${cropBaseUrl}#pos=${xPct},${yPct},${z}`;
+  if (cropTarget.type === 'main') {
+    document.getElementById('f-image').value = url;
+    applyImgTransform(document.getElementById('img-preview-img'), xPct, yPct, z);
+  } else {
+    const row = document.getElementById(cropTarget.id);
+    if (!row) return;
+    row.querySelector('.step-img-url').value = url;
+    applyImgTransform(row.querySelector('.step-img-preview img'), xPct, yPct, z);
+  }
+  document.getElementById('crop-overlay').classList.remove('show');
+}
+
+function cancelCrop() { document.getElementById('crop-overlay').classList.remove('show'); }
+
+function applyImgTransform(el, x, y, z) {
+  if (!el) return;
+  el.style.objectPosition  = `${x}% ${y}%`;
+  el.style.transform       = `scale(${z})`;
+  el.style.transformOrigin = `${x}% ${y}%`;
+}
+
+// Drag
+const _cvp = document.getElementById('crop-viewport');
+_cvp.addEventListener('mousedown', e => {
+  cropDrag = { sx: e.clientX, sy: e.clientY, ox: cropOffsetX, oy: cropOffsetY };
+  _cvp.classList.add('grabbing'); e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!cropDrag) return;
+  cropOffsetX = cropDrag.ox + (e.clientX - cropDrag.sx);
+  cropOffsetY = cropDrag.oy + (e.clientY - cropDrag.sy);
+  updateCropView();
+});
+document.addEventListener('mouseup', () => { if (cropDrag) { cropDrag = null; _cvp.classList.remove('grabbing'); } });
+_cvp.addEventListener('touchstart', e => {
+  if (e.touches.length !== 1) return;
+  cropDrag = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, ox: cropOffsetX, oy: cropOffsetY };
+  e.preventDefault();
+}, { passive: false });
+_cvp.addEventListener('touchmove', e => {
+  if (!cropDrag || e.touches.length !== 1) return;
+  cropOffsetX = cropDrag.ox + (e.touches[0].clientX - cropDrag.sx);
+  cropOffsetY = cropDrag.oy + (e.touches[0].clientY - cropDrag.sy);
+  updateCropView(); e.preventDefault();
+}, { passive: false });
+_cvp.addEventListener('touchend', () => { cropDrag = null; });
+_cvp.addEventListener('wheel', e => {
+  e.preventDefault();
+  cropZoom = Math.max(1, Math.min(3, cropZoom + (e.deltaY < 0 ? 0.05 : -0.05)));
+  document.getElementById('crop-zoom-slider').value = Math.round(cropZoom * 100);
+  document.getElementById('crop-zoom-label').textContent = Math.round(cropZoom * 100) + '%';
+  updateCropView();
+}, { passive: false });
+document.getElementById('crop-zoom-slider').addEventListener('input', e => {
+  cropZoom = parseInt(e.target.value) / 100;
+  document.getElementById('crop-zoom-label').textContent = e.target.value + '%';
+  updateCropView();
+});
+
+// ── Step image handlers ────────────────────────────────────────────────────
+
+function handleStepFileSelect(input, stepId) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const row = document.getElementById(stepId);
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = row?.querySelector('.step-img-preview img');
+    const ph  = row?.querySelector('.step-img-ph');
+    if (img) { img.src = e.target.result; img.style.display = ''; img.style.transform = ''; img.style.objectPosition = ''; }
+    if (ph)  ph.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  if (row) row.querySelector('.step-img-preview').style.opacity = '.5';
+  uploadToCloudinary(file, url => {
+    if (row) {
+      row.querySelector('.step-img-preview').style.opacity = '1';
+      row.querySelector('.step-img-url').value = url;
+      const actions = document.getElementById(`${stepId}-actions`);
+      if (actions) actions.style.display = '';
+    }
+    openCropEditor(url, { type: 'step', id: stepId });
+  });
+}
+
+function clearStepImg(stepId) {
+  const row = document.getElementById(stepId);
+  if (!row) return;
+  row.querySelector('.step-img-url').value = '';
+  const img     = row.querySelector('.step-img-preview img');
+  const ph      = row.querySelector('.step-img-ph');
+  const actions = document.getElementById(`${stepId}-actions`);
+  if (img)     { img.src = ''; img.style.cssText = 'display:none'; }
+  if (ph)      ph.style.display = '';
+  if (actions) actions.style.display = 'none';
+}
+
+function toggleMainAdjustBtn() {
+  const val = document.getElementById('f-image')?.value.trim();
+  const row = document.getElementById('img-adjust-row');
+  if (row) row.style.display = val ? '' : 'none';
+}
+
+function initFormTransforms() {
+  const mainUrl = document.getElementById('f-image')?.value;
+  if (mainUrl) {
+    const m = mainUrl.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+    if (m) applyImgTransform(document.getElementById('img-preview-img'), m[1], m[2], m[3]);
+  }
+  document.querySelectorAll('.step-row').forEach(row => {
+    const url = row.querySelector('.step-img-url')?.value;
+    if (!url) return;
+    const m = url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+    if (m) applyImgTransform(row.querySelector('.step-img-preview img'), m[1], m[2], m[3]);
+  });
 }
 
 if ('serviceWorker' in navigator) {

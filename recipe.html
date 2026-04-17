@@ -544,6 +544,13 @@
 <script>
 const API = CONFIG.API;
 const DIFF_LABEL = { easy: 'קל', medium: 'בינוני', hard: 'מאתגר' };
+
+function imgTransformStyle(url) {
+  if (!url) return '';
+  const m = url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+  if (!m) return '';
+  return `object-position:${m[1]}% ${m[2]}%;transform:scale(${m[3]});transform-origin:${m[1]}% ${m[2]}%;`;
+}
 const DIFF_CLASS = { easy: 'easy', medium: 'medium', hard: 'hard' };
 const CATEGORY_EMOJI = {
   'אפייה':'🥐','עוגות':'🎂','עוגיות':'🍪','לחם':'🍞',
@@ -627,7 +634,12 @@ function renderHero() {
           </div>` : ''}
         </div>
       </div>
-    </div>`;
+    </div>
+    ${recipe.image_url ? `
+    <div style="width:100%;height:320px;overflow:hidden;position:relative">
+      <img src="${recipe.image_url.split('#')[0]}" alt="${recipe.title}"
+        style="width:100%;height:100%;object-fit:cover;${imgTransformStyle(recipe.image_url)}" />
+    </div>` : ''}`;
 }
 
 // ── Ingredients ──────────────────────────────────────────────────────────────
@@ -705,6 +717,7 @@ function renderSteps() {
         </div>
         <div class="step-body" id="step-body-${s.id}">
           <div class="step-content-inner">
+            ${s.image_url ? `<div style="width:100%;height:200px;overflow:hidden;border-radius:var(--radius);margin-bottom:.85rem"><img src="${s.image_url.split('#')[0]}" alt="שלב ${s.step_order}" style="width:100%;height:100%;object-fit:cover;${imgTransformStyle(s.image_url)}" /></div>` : ''}
             <div class="step-text">${highlighted}</div>
             ${hasTimer ? `
             <div class="timer-wrap">
