@@ -567,7 +567,7 @@ async function autoSearch() {
     const res = await fetch(`${API}/api/recipes/by-ingredients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ingredient_ids: [...selected], mode: 'intersect' }),
+      body: JSON.stringify({ ingredient_ids: [...selected], mode: 'simple' }),
     });
     renderResults(await res.json(), true);
   } catch {
@@ -606,14 +606,14 @@ function renderResults(recipes, simpleMode) {
       <div class="state-box">
         <div class="icon">🤷</div>
         <p>${simpleMode
-          ? 'אין מתכונים שמכילים את כל המרכיבים<br><small>נסה את כפתור "חפש עם % התאמה" לתוצאות חלקיות</small>'
+          ? 'לא נמצאו מתכונים עם המרכיבים שבחרת<br><small>נסה לבחור מרכיבים אחרים</small>'
           : 'לא נמצאו מתכונים עם המרכיבים שבחרת<br><small>נסה להוסיף עוד מרכיבים</small>'
         }</p>
       </div>`;
     return;
   }
   const subtitle = simpleMode
-    ? 'מתכונים שמכילים את כל המרכיבים'
+    ? 'מתכונים לפי המרכיבים שלך'
     : 'תוצאות לפי % התאמה';
   area.innerHTML = `
     <div class="results-header">

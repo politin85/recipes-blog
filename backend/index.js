@@ -169,26 +169,28 @@ app.get('/api/ingredients', async (req, res) => {
 
 app.post('/api/recipes/by-ingredients', async (req, res) => {
   const { ingredient_ids = [], include_pantry = true, mode } = req.body;
+  if (!ingredient_ids.length) return res.json([]);
 
   try {
-    // Intersect mode: recipes that contain ALL specified ingredients
-    if (mode === 'intersect') {
-      if (!ingredient_ids.length) return res.json([]);
+    if (mode === 'simple') {
+      // Simple mode: rank by how many selected ingredients appear in the recipe (at least 1)
       const { rows } = await pool.query(
-        `SELECT r.*
+        `SELECT r.*,
+           COUNT(DISTINCT ri.ingredient_id)
+             FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_count
          FROM recipes r
-         WHERE r.is_hidden = FALSE
-           AND (
-             SELECT COUNT(DISTINCT ri.ingredient_id)
-             FROM recipe_ingredients ri
-             WHERE ri.recipe_id = r.id AND ri.ingredient_id = ANY($1::int[])
-           ) = $2
-         ORDER BY r.created_at DESC`,
-        [ingredient_ids, ingredient_ids.length]
+         JOIN recipe_ingredients ri ON ri.recipe_id = r.id
+         WHERE r.is_hidden IS NOT TRUE
+         GROUP BY r.id
+         HAVING COUNT(DISTINCT ri.ingredient_id)
+           FILTER (WHERE ri.ingredient_id = ANY($1::int[])) > 0
+         ORDER BY matched_count DESC, r.created_at DESC`,
+        [ingredient_ids]
       );
       return res.json(rows);
     }
 
+    // % match mode: rank by selected matches first, then by coverage with pantry
     let available;
     if (include_pantry) {
       const { rows: staples } = await pool.query(
@@ -199,27 +201,28 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
       available = [...new Set(ingredient_ids)];
     }
 
-    // Per-recipe: total ingredients vs how many are available
     const { rows: recipes } = await pool.query(
       `SELECT
          r.*,
          COUNT(DISTINCT ri.ingredient_id)::int AS total_ingredients,
          COUNT(DISTINCT ri.ingredient_id)
-           FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_ingredients
+           FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_selected,
+         COUNT(DISTINCT ri.ingredient_id)
+           FILTER (WHERE ri.ingredient_id = ANY($2::int[]))::int AS matched_available
        FROM recipes r
        JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-       WHERE r.is_hidden = FALSE
+       WHERE r.is_hidden IS NOT TRUE
        GROUP BY r.id
-       HAVING COUNT(DISTINCT ri.ingredient_id) > 0`,
-      [available]
+       HAVING COUNT(DISTINCT ri.ingredient_id)
+         FILTER (WHERE ri.ingredient_id = ANY($1::int[])) > 0`,
+      [ingredient_ids, available]
     );
 
     const result = await Promise.all(
       recipes.map(async (recipe) => {
         const pct = Math.round(
-          (recipe.matched_ingredients / recipe.total_ingredients) * 100
+          (recipe.matched_available / recipe.total_ingredients) * 100
         );
-
         let missing = [];
         if (pct < 100) {
           const { rows } = await pool.query(
@@ -232,15 +235,14 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
           );
           missing = rows;
         }
-
         return { ...recipe, match_percent: pct, missing_ingredients: missing };
       })
     );
 
     res.json(
-      result
-        .filter((r) => r.match_percent >= 60)
-        .sort((a, b) => b.match_percent - a.match_percent)
+      result.sort((a, b) =>
+        b.matched_selected - a.matched_selected || b.match_percent - a.match_percent
+      )
     );
   } catch (err) {
     console.error(err);
