@@ -33,6 +33,9 @@ self.addEventListener('activate', e => {
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', e => {
+  // Skip non-http(s) requests (chrome-extension://, etc.)
+  if (!e.request.url.startsWith('http')) return;
+
   const url = new URL(e.request.url);
 
   // API calls: network first, cache fallback (GET only)

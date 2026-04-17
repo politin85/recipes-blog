@@ -965,7 +965,11 @@ async function speakStep(sid) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: step.text, voice: 'he-IL-Wavenet-A', gender: 'FEMALE' }),
     });
-    console.log('[TTS step] status:', res.status);
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error('[TTS step] error', res.status, errBody);
+      throw new Error(errBody);
+    }
     const data = await res.json();
     if (!data.audioContent) throw new Error();
     const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
