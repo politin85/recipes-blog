@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>מתכון | המטבח שלי</title>
+  <meta name="description"        content="מתכון מהמטבח שלי" />
+  <meta property="og:type"        content="article" />
+  <meta property="og:title"       content="מתכון | המטבח שלי" />
+  <meta property="og:description" content="מתכון מהמטבח שלי" />
+  <meta property="og:url"         content="" />
+  <meta property="og:image"       content="" />
+  <meta property="og:locale"      content="he_IL" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <meta name="twitter:title"      content="מתכון | המטבח שלי" />
+  <meta name="twitter:description" content="" />
+  <meta name="twitter:image"      content="" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#C2622F" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;600;700&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -469,6 +483,7 @@ if (!id) {
     .then(data => {
       recipe = data;
       document.title = `${recipe.title} | המטבח שלי`;
+      setOGTags(recipe);
       baseServings = recipe.servings || 1;
       currentServings = baseServings;
       renderHero();
@@ -809,6 +824,35 @@ function renderRelated() {
         </div>
       </a>`;
   }).join('');
+}
+
+// ── OG / Meta tags ────────────────────────────────────────────────────────────
+
+function setOGTags(r) {
+  const url   = `${CONFIG.SITE_URL}/recipe.html?id=${r.id}`;
+  const img   = r.image_url || '';
+  const desc  = r.description || `${r.title} — מתכון מהמטבח שלי`;
+  const title = `${r.title} | המטבח שלי`;
+
+  const set = (sel, val) => {
+    const el = document.querySelector(sel);
+    if (el && val) el.setAttribute(el.hasAttribute('content') ? 'content' : 'href', val);
+  };
+
+  set('meta[property="og:title"]',       title);
+  set('meta[property="og:description"]', desc);
+  set('meta[property="og:url"]',         url);
+  set('meta[property="og:image"]',       img);
+  set('meta[name="description"]',        desc);
+  set('meta[name="twitter:title"]',      title);
+  set('meta[name="twitter:description"]', desc);
+  set('meta[name="twitter:image"]',      img);
+}
+
+// ── Service Worker ────────────────────────────────────────────────────────────
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/recipes-blog/sw.js').catch(() => {});
 }
 </script>
 </body>

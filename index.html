@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>המטבח שלי</title>
+  <title>המטבח שלי — מתכונים ביתיים</title>
+  <meta name="description" content="מתכונים ביתיים — חיפוש לפי מרכיבים, טיימרים וקריינות בעברית" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="המטבח שלי — מתכונים ביתיים" />
+  <meta property="og:description" content="מתכונים ביתיים — חיפוש לפי מרכיבים, טיימרים וקריינות בעברית" />
+  <meta property="og:url"         content="https://politin85.github.io/recipes-blog/" />
+  <meta property="og:locale"      content="he_IL" />
+  <meta name="twitter:card"       content="summary" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#C2622F" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;600;700&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -527,6 +537,10 @@
   });
 
   loadRecipes();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/recipes-blog/sw.js').catch(() => {});
+  }
 </script>
 </body>
 </html>
