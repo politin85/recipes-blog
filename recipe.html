@@ -199,47 +199,121 @@
     .tts-btn:disabled { opacity: .6; cursor: not-allowed; }
     #tts-audio { width: 100%; margin-top: .75rem; display: none; }
 
-    /* ── Steps ── */
-    .steps-section {}
+    /* ── Steps bar ── */
+    .steps-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .75rem; margin-bottom: 1.75rem;
+    }
+    .steps-bar h2 { font-family:'Noto Serif Hebrew',serif; font-size:1.5rem; font-weight:600; color:var(--ink); }
+    .steps-bar-right { display:flex; gap:.6rem; align-items:center; }
+    .open-all-btn {
+      padding:.4rem 1rem; border:1.5px solid var(--sand-dark);
+      background:var(--white); color:var(--ink-light);
+      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.83rem;
+      cursor:pointer; transition:all .2s;
+    }
+    .open-all-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
+    .cooking-toggle {
+      padding:.4rem 1.1rem; background:var(--olive); color:var(--white);
+      border:none; border-radius:50px; font-family:'Heebo',sans-serif;
+      font-size:.83rem; cursor:pointer; transition:background .2s;
+      display:flex; align-items:center; gap:.35rem;
+    }
+    .cooking-toggle:hover { background:var(--olive-light); }
+    .cooking-toggle.active { background:var(--terracotta); }
+
+    /* Cooking mode progress bar */
+    .cooking-bar {
+      display:none; background:var(--white); border-radius:var(--radius);
+      padding:1rem 1.25rem; margin-bottom:1.25rem;
+      box-shadow:var(--shadow-sm);
+    }
+    .cooking-bar.visible { display:block; }
+    .cooking-bar-label { font-size:.85rem; color:var(--ink-muted); margin-bottom:.5rem; }
+    .cooking-track { height:8px; background:var(--sand); border-radius:4px; overflow:hidden; }
+    .cooking-fill { height:100%; background:var(--terracotta); border-radius:4px; transition:width .4s ease; }
+
+    /* ── Step cards (accordion) ── */
     .step {
-      display: flex; gap: 1.25rem;
-      margin-bottom: 2rem; position: relative;
+      background:var(--white); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); margin-bottom:1rem;
+      transition:box-shadow .2s, opacity .2s;
+      overflow:hidden;
     }
-    .step:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      right: 19px; top: 44px;
-      width: 2px; bottom: -2rem;
-      background: var(--sand-dark);
+    .step.cooking-dim { opacity:.35; pointer-events:none; }
+
+    .step-header-row {
+      display:flex; align-items:center; gap:.85rem;
+      padding:1rem 1.25rem; cursor:pointer; user-select:none;
     }
+    .step-header-row:hover { background:var(--cream); }
     .step-num {
-      flex-shrink: 0;
-      width: 40px; height: 40px;
-      background: var(--terracotta);
-      color: var(--white);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: .95rem;
-      position: relative; z-index: 1;
+      flex-shrink:0; width:36px; height:36px;
+      background:var(--terracotta); color:var(--white);
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:.9rem; transition:background .2s;
     }
-    .step.done .step-num { background: var(--olive); }
-    .step-content {
-      flex: 1; background: var(--white);
-      border-radius: var(--radius); padding: 1.25rem 1.5rem;
-      box-shadow: var(--shadow-sm);
-      cursor: pointer; transition: box-shadow .2s;
+    .step.done .step-num { background:var(--olive); }
+    .step-header-title {
+      flex:1; font-family:'Noto Serif Hebrew',serif;
+      font-size:1rem; font-weight:600; color:var(--ink);
     }
-    .step-content:hover { box-shadow: var(--shadow-md); }
-    .step.done .step-content { opacity: .7; }
-    .step-title {
-      font-family: 'Noto Serif Hebrew', serif;
-      font-size: 1.05rem; font-weight: 600;
-      color: var(--ink); margin-bottom: .5rem;
+    .step-header-right { display:flex; align-items:center; gap:.5rem; }
+    .step-check { color:var(--olive); font-size:1rem; display:none; }
+    .step.done .step-check { display:inline; }
+    .step-arrow {
+      color:var(--ink-muted); font-size:1.2rem; line-height:1;
+      transition:transform .25s; display:inline-block;
     }
+    .step.open .step-arrow { transform:rotate(90deg); }
+
+    /* Accordion body */
+    .step-body {
+      max-height:0; overflow:hidden; transition:max-height .32s ease;
+    }
+    .step.open .step-body { max-height:1400px; }
+    .step-content-inner { padding:.25rem 1.25rem 1.25rem 1.25rem; }
+
     .step-text {
-      font-size: .95rem; color: var(--ink-light);
-      line-height: 1.75;
+      font-size:.95rem; color:var(--ink-light); line-height:1.8;
     }
+    .step-text strong { color:var(--ink); font-weight:700; }
+
+    /* Step footer */
+    .step-footer {
+      display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
+      margin-top:.85rem; padding-top:.85rem; border-top:1px solid var(--sand);
+    }
+    .step-tts-btn {
+      padding:.3rem .85rem; border:1.5px solid var(--sand-dark);
+      background:transparent; color:var(--ink-muted);
+      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s;
+    }
+    .step-tts-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
+    .step-done-btn {
+      padding:.3rem .85rem; border:1.5px solid var(--sand-dark);
+      background:transparent; color:var(--ink-muted);
+      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s;
+    }
+    .step-done-btn:hover { border-color:var(--olive); color:var(--olive); }
+    .step.done .step-done-btn { background:var(--olive); color:var(--white); border-color:var(--olive); }
+
+    /* Cooking mode nav */
+    .step-cooking-nav {
+      display:none; align-items:center; justify-content:space-between;
+      margin-top:1rem; padding-top:1rem; border-top:1px solid var(--sand);
+    }
+    .cooking-mode-on .step-cooking-nav { display:flex; }
+    .nav-btn {
+      padding:.55rem 1.2rem; border-radius:50px; border:none;
+      font-family:'Heebo',sans-serif; font-size:.9rem; font-weight:500; cursor:pointer; transition:all .2s;
+    }
+    .nav-next { background:var(--terracotta); color:var(--white); }
+    .nav-next:hover { background:var(--terracotta-light); }
+    .nav-prev { background:var(--sand); color:var(--ink); }
+    .nav-prev:hover { background:var(--sand-dark); }
+    .nav-btn:disabled { opacity:.35; cursor:not-allowed; }
+    .nav-step-label { font-size:.85rem; color:var(--ink-muted); }
 
     /* Timer */
     .timer-wrap { margin-top: 1rem; }
@@ -423,10 +497,20 @@
     <!-- Main content -->
     <div>
       <!-- Steps -->
-      <section>
-        <h2 style="font-family:'Noto Serif Hebrew',serif;font-size:1.5rem;font-weight:600;margin-bottom:1.75rem;color:var(--ink)">
-          הוראות הכנה
-        </h2>
+      <section id="steps-section">
+        <div class="steps-bar">
+          <h2>הוראות הכנה</h2>
+          <div class="steps-bar-right">
+            <button class="open-all-btn" id="open-all-btn" onclick="openAllSteps()">פתח את כל הצעדים</button>
+            <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">
+              👨‍🍳 מצב בישול
+            </button>
+          </div>
+        </div>
+        <div class="cooking-bar" id="cooking-bar">
+          <div class="cooking-bar-label" id="cooking-bar-label">שלב 1 מתוך 1</div>
+          <div class="cooking-track"><div class="cooking-fill" id="cooking-fill" style="width:0%"></div></div>
+        </div>
         <div id="steps-list"></div>
       </section>
 
@@ -597,40 +681,150 @@ function renderTags() {
 
 // ── Steps ────────────────────────────────────────────────────────────────────
 
+let cookingMode = false;
+let cookingIdx  = 0;
+
 function renderSteps() {
   const container = document.getElementById('steps-list');
+  const total = (recipe.steps || []).length;
   container.innerHTML = (recipe.steps || []).map((s, i) => {
     const hasTimer = s.timer_seconds > 0;
+    const isFirst  = i === 0;
+    const highlighted = highlightIngredients(s.text);
+    const isLast = i === total - 1;
     return `
-      <div class="step" id="step-${s.id}" data-idx="${i}">
-        <div class="step-num">${s.step_order}</div>
-        <div class="step-content" onclick="toggleStep(${s.id})">
-          ${s.title ? `<div class="step-title">${s.title}</div>` : ''}
-          <div class="step-text">${s.text}</div>
-          ${hasTimer ? `
-          <div class="timer-wrap" id="timer-wrap-${s.id}">
-            <div class="timer-display">
-              <span class="timer-time" id="timer-display-${s.id}">${formatTime(s.timer_seconds)}</span>
-              <button class="timer-btn" id="timer-btn-${s.id}"
-                onclick="event.stopPropagation(); toggleTimer(${s.id}, ${s.timer_seconds})">
-                ▶ הפעל טיימר
-              </button>
-              <button class="timer-btn reset" id="timer-reset-${s.id}"
-                onclick="event.stopPropagation(); resetTimer(${s.id}, ${s.timer_seconds})"
-                style="display:none">↺</button>
+      <div class="step${isFirst ? ' open' : ''}" id="step-${s.id}" data-idx="${i}" data-sid="${s.id}">
+        <div class="step-header-row" onclick="toggleStepOpen(${s.id})">
+          <div class="step-num">${s.step_order}</div>
+          <div class="step-header-title">${s.title || 'שלב ' + s.step_order}</div>
+          <div class="step-header-right">
+            <span class="step-check">✓</span>
+            <span class="step-arrow">›</span>
+          </div>
+        </div>
+        <div class="step-body" id="step-body-${s.id}">
+          <div class="step-content-inner">
+            <div class="step-text">${highlighted}</div>
+            ${hasTimer ? `
+            <div class="timer-wrap">
+              <div class="timer-display">
+                <span class="timer-time" id="timer-display-${s.id}">${formatTime(s.timer_seconds)}</span>
+                <button class="timer-btn" id="timer-btn-${s.id}"
+                  onclick="toggleTimer(${s.id}, ${s.timer_seconds})">▶ הפעל טיימר</button>
+                <button class="timer-btn reset" id="timer-reset-${s.id}"
+                  onclick="resetTimer(${s.id}, ${s.timer_seconds})"
+                  style="display:none">↺</button>
+              </div>
+              <div class="timer-progress">
+                <div class="timer-progress-bar" id="timer-bar-${s.id}" style="width:100%"></div>
+              </div>
+            </div>` : ''}
+            <div class="step-footer">
+              <button class="step-tts-btn" data-sid="${s.id}" onclick="speakStep(${s.id})">🔊 הקרא שלב</button>
+              <button class="step-done-btn" id="done-btn-${s.id}" onclick="toggleDone(${s.id})">✓ סמן כבוצע</button>
             </div>
-            <div class="timer-progress">
-              <div class="timer-progress-bar" id="timer-bar-${s.id}" style="width:100%"></div>
+            <div class="step-cooking-nav">
+              <button class="nav-btn nav-prev" onclick="goToStep(${i - 1})" ${i === 0 ? 'disabled' : ''}>← הקודם</button>
+              <span class="nav-step-label" id="nav-label-${s.id}">${i + 1} / ${total}</span>
+              <button class="nav-btn nav-next" onclick="goToStep(${i + 1})">${isLast ? 'סיום ✓' : 'הבא →'}</button>
             </div>
-          </div>` : ''}
+          </div>
         </div>
       </div>`;
   }).join('');
 }
 
-function toggleStep(id) {
-  const el = document.getElementById(`step-${id}`);
+function highlightIngredients(text) {
+  if (!recipe.ingredients?.length) return text;
+  let result = text;
+  const sorted = [...recipe.ingredients].sort((a, b) => b.name.length - a.name.length);
+  for (const ing of sorted) {
+    if (!result.includes(ing.name)) continue;
+    const ratio = currentServings / baseServings;
+    const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
+    const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
+    result = result.split(ing.name).join(
+      `<strong>${ing.name}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`
+    );
+  }
+  return result;
+}
+
+function toggleStepOpen(sid) {
+  const el = document.getElementById(`step-${sid}`);
+  el.classList.toggle('open');
+}
+
+function openAllSteps() {
+  document.querySelectorAll('.step').forEach(el => el.classList.add('open'));
+}
+
+function toggleDone(sid) {
+  const el = document.getElementById(`step-${sid}`);
   el.classList.toggle('done');
+  const btn = document.getElementById(`done-btn-${sid}`);
+  btn.textContent = el.classList.contains('done') ? '✓ בוצע' : '✓ סמן כבוצע';
+}
+
+// ── Cooking mode ──────────────────────────────────────────────────────────────
+
+function toggleCookingMode() {
+  cookingMode = !cookingMode;
+  const toggle = document.getElementById('cooking-toggle');
+  const section = document.getElementById('steps-section');
+  const bar = document.getElementById('cooking-bar');
+
+  if (cookingMode) {
+    cookingIdx = 0;
+    toggle.classList.add('active');
+    toggle.textContent = '✕ צא ממצב בישול';
+    section.classList.add('cooking-mode-on');
+    bar.classList.add('visible');
+    goToStep(0);
+  } else {
+    toggle.classList.remove('active');
+    toggle.innerHTML = '👨‍🍳 מצב בישול';
+    section.classList.remove('cooking-mode-on');
+    bar.classList.remove('visible');
+    document.querySelectorAll('.step').forEach(el => {
+      el.classList.remove('cooking-dim');
+    });
+    openAllSteps();
+  }
+}
+
+function goToStep(idx) {
+  const steps = recipe.steps || [];
+  if (idx < 0 || idx >= steps.length) {
+    if (idx >= steps.length) showCookingComplete();
+    return;
+  }
+  cookingIdx = idx;
+  const total = steps.length;
+
+  document.querySelectorAll('.step').forEach((el, i) => {
+    const isCurrent = i === idx;
+    el.classList.toggle('cooking-dim', !isCurrent);
+    if (isCurrent) {
+      el.classList.add('open');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  const pct = ((idx) / total) * 100;
+  document.getElementById('cooking-fill').style.width = pct + '%';
+  document.getElementById('cooking-bar-label').textContent = `שלב ${idx + 1} מתוך ${total}`;
+}
+
+function showCookingComplete() {
+  const bar = document.getElementById('cooking-bar');
+  document.getElementById('cooking-fill').style.width = '100%';
+  document.getElementById('cooking-bar-label').textContent = '🎉 המתכון הושלם!';
+  document.querySelectorAll('.step').forEach(el => {
+    el.classList.remove('cooking-dim');
+    el.classList.add('done');
+  });
+  toggleCookingMode();
 }
 
 // ── Timers ───────────────────────────────────────────────────────────────────
@@ -735,7 +929,7 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
     const res = await fetch(`${API}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, voice: 'he-IL-Wavenet-A', gender: 'female' }),
     });
     const data = await res.json();
     if (!data.audioContent) throw new Error();
@@ -749,6 +943,31 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
     btn.disabled = false;
   }
 });
+
+async function speakStep(sid) {
+  const step = (recipe.steps || []).find(s => s.id === sid);
+  if (!step) return;
+  const btn = document.querySelector(`.step-tts-btn[data-sid="${sid}"]`);
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '🔊 ...';
+  try {
+    const res = await fetch(`${API}/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: step.text, voice: 'he-IL-Wavenet-A', gender: 'female' }),
+    });
+    const data = await res.json();
+    if (!data.audioContent) throw new Error();
+    const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+    audio.play();
+    btn.textContent = '🔊 מנגן...';
+    audio.onended = () => { btn.textContent = origText; btn.disabled = false; };
+  } catch {
+    btn.textContent = 'שגיאה';
+    setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
+  }
+}
 
 function buildTTSText() {
   const lines = [`מתכון: ${recipe.title}.`];
