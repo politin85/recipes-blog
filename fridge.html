@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מה יש לי במקרר | המטבח שלי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;600;700&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --terracotta:       #C2622F;
+      --terracotta-light: #D97B4A;
+      --terracotta-pale:  #F5E2D4;
+      --olive:            #6B7A3A;
+      --olive-light:      #8A9A50;
+      --sand:             #F0E4CE;
+      --sand-dark:        #E2CDA8;
+      --cream:            #FAF6F0;
+      --ink:              #2C1F14;
+      --ink-light:        #5A4030;
+      --ink-muted:        #9A7B65;
+      --white:            #FFFFFF;
+      --shadow-sm: 0 2px 8px rgba(44,31,20,.08);
+      --shadow-md: 0 6px 24px rgba(44,31,20,.12);
+      --shadow-lg: 0 16px 48px rgba(44,31,20,.16);
+      --radius:    12px;
+      --radius-lg: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--terracotta); padding: 0 2rem;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(44,31,20,.2);
+    }
+    .header-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .logo { font-family:'Noto Serif Hebrew',serif; font-size:1.4rem; font-weight:700; color:var(--white); text-decoration:none; }
+    .logo span { color: var(--sand); }
+    .back-btn {
+      display:flex; align-items:center; gap:.45rem;
+      color:rgba(255,255,255,.85); text-decoration:none; font-size:.9rem; transition:color .2s;
+    }
+    .back-btn:hover { color:var(--white); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--olive) 0%, #4A5828 100%);
+      padding: 4rem 2rem 3rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content:''; position:absolute; inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/svg%3E");
+      pointer-events:none;
+    }
+    .hero h1 {
+      font-family:'Noto Serif Hebrew',serif;
+      font-size:clamp(1.8rem,4vw,3rem); font-weight:700; color:var(--white); margin-bottom:.75rem; position:relative;
+    }
+    .hero p { font-size:1.05rem; color:rgba(255,255,255,.8); font-weight:300; position:relative; }
+
+    /* ── Layout ── */
+    .page-layout {
+      max-width: 1100px; margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+    @media (max-width: 860px) { .page-layout { grid-template-columns: 1fr; } }
+
+    /* ── Ingredient picker ── */
+    .picker-card {
+      background: var(--white); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm); overflow: hidden;
+      position: sticky; top: 80px;
+    }
+    .picker-header {
+      background: var(--olive); padding: 1.25rem 1.5rem;
+      color: var(--white);
+    }
+    .picker-header h2 {
+      font-family:'Noto Serif Hebrew',serif; font-size:1.1rem; font-weight:600;
+      margin-bottom: .75rem;
+    }
+    .picker-search {
+      position: relative;
+    }
+    .picker-search input {
+      width:100%; padding:.65rem 2.5rem .65rem 1rem;
+      border-radius:50px; border:none;
+      font-family:'Heebo',sans-serif; font-size:.9rem;
+      background:rgba(255,255,255,.2); color:var(--white);
+      outline:none; direction:rtl;
+    }
+    .picker-search input::placeholder { color:rgba(255,255,255,.65); }
+    .picker-search input:focus { background:rgba(255,255,255,.3); }
+    .picker-search-icon {
+      position:absolute; left:.9rem; top:50%; transform:translateY(-50%);
+      color:rgba(255,255,255,.7); pointer-events:none;
+    }
+
+    .picker-body { padding: 1rem 1.5rem 1.5rem; }
+
+    .selected-chips {
+      display:flex; flex-wrap:wrap; gap:.4rem; min-height:36px;
+      margin-bottom:1rem;
+    }
+    .chip {
+      display:flex; align-items:center; gap:.35rem;
+      background:var(--terracotta-pale); color:var(--terracotta);
+      border:1.5px solid var(--terracotta); border-radius:50px;
+      font-size:.82rem; font-weight:500; padding:.3rem .75rem;
+      cursor:pointer; transition:all .2s;
+    }
+    .chip:hover { background:var(--terracotta); color:var(--white); }
+    .chip-x { font-size:.9rem; line-height:1; }
+
+    .empty-chips {
+      font-size:.83rem; color:var(--ink-muted); align-self:center;
+    }
+
+    .section-label {
+      font-size:.8rem; font-weight:600; color:var(--ink-muted);
+      text-transform:uppercase; letter-spacing:.07em;
+      margin: .9rem 0 .5rem;
+    }
+    .ing-group {
+      display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.6rem;
+    }
+    .ing-pill {
+      padding:.35rem .9rem; border-radius:50px;
+      border:1.5px solid var(--sand-dark);
+      background:var(--white); color:var(--ink-light);
+      font-family:'Heebo',sans-serif; font-size:.85rem;
+      cursor:pointer; transition:all .2s; user-select:none;
+    }
+    .ing-pill:hover { border-color:var(--olive); color:var(--olive); }
+    .ing-pill.selected { background:var(--olive); border-color:var(--olive); color:var(--white); }
+    .ing-pill.pantry { border-style:dashed; opacity:.65; cursor:not-allowed; }
+    .ing-pill.hidden { display:none; }
+
+    .search-btn {
+      width:100%; margin-top:1.25rem; padding:.85rem;
+      background:var(--terracotta); color:var(--white); border:none;
+      border-radius:var(--radius); font-family:'Heebo',sans-serif;
+      font-size:1rem; font-weight:500; cursor:pointer; transition:background .2s;
+    }
+    .search-btn:hover { background:var(--terracotta-light); }
+    .search-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    .pantry-note {
+      font-size:.78rem; color:var(--ink-muted); margin-top:.75rem;
+      text-align:center; line-height:1.5;
+    }
+
+    /* ── Results ── */
+    .results-area { min-height: 300px; }
+
+    .results-header {
+      display:flex; align-items:baseline; gap:.75rem; margin-bottom:1.5rem;
+    }
+    .results-title {
+      font-family:'Noto Serif Hebrew',serif; font-size:1.5rem; font-weight:600;
+    }
+    .results-count { font-size:.9rem; color:var(--ink-muted); }
+
+    .recipe-card {
+      background:var(--white); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); overflow:hidden;
+      display:flex; gap:0; margin-bottom:1.25rem;
+      text-decoration:none; color:inherit;
+      transition:transform .25s, box-shadow .25s;
+    }
+    .recipe-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+
+    .card-thumb {
+      width:130px; flex-shrink:0;
+      background:var(--terracotta-pale);
+      display:flex; align-items:center; justify-content:center;
+      font-size:3rem; overflow:hidden;
+    }
+    .card-thumb img { width:100%; height:100%; object-fit:cover; }
+
+    .card-body { flex:1; padding:1.1rem 1.4rem; }
+    .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; margin-bottom:.5rem; }
+    .card-title { font-family:'Noto Serif Hebrew',serif; font-size:1.1rem; font-weight:600; line-height:1.3; }
+    .card-desc { font-size:.88rem; color:var(--ink-muted); line-height:1.6; margin-bottom:.75rem;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+    /* Match meter */
+    .match-wrap { display:flex; align-items:center; gap:.75rem; margin-bottom:.65rem; }
+    .match-label { font-size:.8rem; color:var(--ink-muted); white-space:nowrap; }
+    .match-bar { flex:1; height:6px; background:var(--sand); border-radius:3px; overflow:hidden; }
+    .match-fill { height:100%; border-radius:3px; transition:width .5s; }
+    .match-pct { font-size:.85rem; font-weight:700; white-space:nowrap; }
+
+    .missing-list {
+      display:flex; flex-wrap:wrap; gap:.35rem;
+    }
+    .missing-chip {
+      background:#fff0eb; color:var(--terracotta);
+      border:1px solid var(--terracotta-pale);
+      border-radius:50px; font-size:.75rem; padding:.2rem .65rem;
+    }
+    .missing-chip::before { content:'−  '; }
+
+    /* Empty / loading */
+    .state-box { text-align:center; padding:5rem 2rem; color:var(--ink-muted); }
+    .state-box .icon { font-size:3rem; margin-bottom:1rem; }
+    .spinner {
+      width:36px; height:36px; border:3px solid var(--sand-dark);
+      border-top-color:var(--olive); border-radius:50%;
+      animation:spin .8s linear infinite; margin:0 auto 1rem;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    footer { background:var(--ink); color:rgba(255,255,255,.5); text-align:center; padding:2rem; font-size:.85rem; }
+    footer span { color:var(--terracotta-light); }
+
+    @media (max-width:640px) {
+      .hero { padding:2.5rem 1.25rem 2rem; }
+      .page-layout { padding:1.5rem 1.25rem 4rem; }
+      .picker-card { position:static; }
+      .card-thumb { width:90px; font-size:2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">המטבח <span>שלי</span></a>
+    <a href="index.html" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+      כל המתכונים
+    </a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>מה יש לי במקרר? 🧊</h1>
+  <p>סמן את המרכיבים שיש לך — נמצא מה אפשר להכין</p>
+</section>
+
+<div class="page-layout">
+
+  <!-- Ingredient picker -->
+  <aside>
+    <div class="picker-card">
+      <div class="picker-header">
+        <h2>המרכיבים שלי</h2>
+        <div class="picker-search">
+          <input type="text" id="ing-search" placeholder="חפש מרכיב..." autocomplete="off" />
+          <span class="picker-search-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="picker-body">
+        <div class="selected-chips" id="selected-chips">
+          <span class="empty-chips">עדיין לא בחרת מרכיבים</span>
+        </div>
+
+        <div id="ing-groups-wrap">
+          <div class="state-box" style="padding:2rem">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <button class="search-btn" id="search-btn" disabled>
+          חפש מתכונים
+        </button>
+        <p class="pantry-note">תבלינים בסיסיים (מלח, שמן, ביצים וכו') נחשבים אוטומטית כזמינים</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Results -->
+  <div class="results-area" id="results-area">
+    <div class="state-box">
+      <div class="icon">🛒</div>
+      <p>בחר מרכיבים וחפש מתכונים</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span>המטבח שלי</span> &nbsp;© 2026</p>
+</footer>
+
+<script src="config.js"></script>
+<script>
+const API = CONFIG.API;
+const CATEGORY_EMOJI = {
+  'אפייה':'🥐','עוגות':'🎂','עוגיות':'🍪','לחם':'🍞',
+  'מרקים':'🍲','סלטים':'🥗','עיקריות':'🍽️','קינוחים':'🍮',
+  'חטיפים':'🥨','שתייה':'🥤','ארוחת בוקר':'🍳',
+};
+const DIFF_LABEL = { easy:'קל', medium:'בינוני', hard:'מאתגר' };
+
+let allIngredients = [];
+let selected = new Set();
+
+// ── Load ingredients ──────────────────────────────────────────────────────────
+
+fetch(`${API}/api/ingredients`)
+  .then(r => r.json())
+  .then(data => {
+    allIngredients = data;
+    renderGroups(data);
+  })
+  .catch(() => {
+    document.getElementById('ing-groups-wrap').innerHTML =
+      '<p style="color:var(--ink-muted);font-size:.9rem;padding:.5rem 0">לא ניתן לטעון מרכיבים</p>';
+  });
+
+// ── Render ingredient groups ──────────────────────────────────────────────────
+
+function renderGroups(list) {
+  const nonPantry = list.filter(i => !i.is_pantry_staple);
+  const pantry    = list.filter(i =>  i.is_pantry_staple);
+
+  let html = '';
+  if (nonPantry.length) {
+    html += `<div class="section-label">מרכיבים</div>
+    <div class="ing-group" id="group-main">
+      ${nonPantry.map(i => pillHtml(i)).join('')}
+    </div>`;
+  }
+  if (pantry.length) {
+    html += `<div class="section-label">תבלינים בסיסיים (כלולים אוטומטית)</div>
+    <div class="ing-group" id="group-pantry">
+      ${pantry.map(i => pantryPillHtml(i)).join('')}
+    </div>`;
+  }
+  document.getElementById('ing-groups-wrap').innerHTML = html;
+
+  document.querySelectorAll('.ing-pill:not(.pantry)').forEach(btn => {
+    btn.addEventListener('click', () => toggleIng(parseInt(btn.dataset.id), btn.dataset.name, btn));
+  });
+}
+
+function pillHtml(i) {
+  const sel = selected.has(i.id);
+  return `<button class="ing-pill${sel?' selected':''}" data-id="${i.id}" data-name="${i.name}">${i.name}</button>`;
+}
+function pantryPillHtml(i) {
+  return `<span class="ing-pill pantry" title="כלול אוטומטית">${i.name}</span>`;
+}
+
+// ── Toggle ingredient ─────────────────────────────────────────────────────────
+
+function toggleIng(id, name, btn) {
+  if (selected.has(id)) {
+    selected.delete(id);
+    btn.classList.remove('selected');
+  } else {
+    selected.add(id);
+    btn.classList.add('selected');
+  }
+  renderChips();
+  document.getElementById('search-btn').disabled = selected.size === 0;
+}
+
+function renderChips() {
+  const wrap = document.getElementById('selected-chips');
+  if (!selected.size) {
+    wrap.innerHTML = '<span class="empty-chips">עדיין לא בחרת מרכיבים</span>';
+    return;
+  }
+  wrap.innerHTML = [...selected].map(id => {
+    const ing = allIngredients.find(i => i.id === id);
+    if (!ing) return '';
+    return `<span class="chip" data-id="${id}" onclick="removeChip(${id})">${ing.name} <span class="chip-x">×</span></span>`;
+  }).join('');
+}
+
+function removeChip(id) {
+  selected.delete(id);
+  const btn = document.querySelector(`.ing-pill[data-id="${id}"]`);
+  if (btn) btn.classList.remove('selected');
+  renderChips();
+  document.getElementById('search-btn').disabled = selected.size === 0;
+}
+
+// ── Ingredient search ─────────────────────────────────────────────────────────
+
+document.getElementById('ing-search').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.ing-pill:not(.pantry)').forEach(btn => {
+    const match = !q || btn.dataset.name.includes(q);
+    btn.classList.toggle('hidden', !match);
+  });
+});
+
+// ── Search recipes ────────────────────────────────────────────────────────────
+
+document.getElementById('search-btn').addEventListener('click', searchRecipes);
+
+async function searchRecipes() {
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true;
+  btn.textContent = 'מחפש...';
+
+  document.getElementById('results-area').innerHTML = `
+    <div class="state-box"><div class="spinner"></div><p>מחפש מתכונים מתאימים...</p></div>`;
+
+  try {
+    const res = await fetch(`${API}/api/recipes/by-ingredients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ingredient_ids: [...selected] }),
+    });
+    const recipes = await res.json();
+    renderResults(recipes);
+  } catch {
+    document.getElementById('results-area').innerHTML = `
+      <div class="state-box"><div class="icon">⚠️</div><p>שגיאה בחיפוש — נסה שוב</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'חפש מתכונים';
+  }
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+
+function renderResults(recipes) {
+  const area = document.getElementById('results-area');
+  if (!recipes.length) {
+    area.innerHTML = `
+      <div class="state-box">
+        <div class="icon">🤷</div>
+        <p>לא נמצאו מתכונים עם המרכיבים שבחרת<br>
+        <small style="font-size:.85rem">נסה להוסיף עוד מרכיבים</small></p>
+      </div>`;
+    return;
+  }
+
+  const countEl = `<span class="results-count">${recipes.length} מתכונים נמצאו</span>`;
+  const cards = recipes.map(r => recipeCardHtml(r)).join('');
+  area.innerHTML = `
+    <div class="results-header">
+      <h2 class="results-title">תוצאות</h2>
+      ${countEl}
+    </div>
+    ${cards}`;
+}
+
+function recipeCardHtml(r) {
+  const pct = r.match_percent;
+  const color = pct === 100 ? '#2E7D32' : pct >= 80 ? var_olive() : pct >= 60 ? '#E65100' : '#9A7B65';
+  const emoji = CATEGORY_EMOJI[r.category] || '🍴';
+  const totalMin = (r.prep_time || 0) + (r.cook_time || 0);
+  const missing = r.missing_ingredients || [];
+
+  const imgHtml = r.image_url
+    ? `<img src="${r.image_url}" alt="${r.title}">`
+    : emoji;
+
+  return `
+    <a class="recipe-card" href="recipe.html?id=${r.id}">
+      <div class="card-thumb">${imgHtml}</div>
+      <div class="card-body">
+        <div class="card-top">
+          <h3 class="card-title">${r.title}</h3>
+          ${r.category ? `<span style="font-size:.78rem;color:var(--ink-muted);white-space:nowrap">${r.category}</span>` : ''}
+        </div>
+        ${r.description ? `<p class="card-desc">${r.description}</p>` : ''}
+        <div class="match-wrap">
+          <span class="match-label">התאמה</span>
+          <div class="match-bar">
+            <div class="match-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <span class="match-pct" style="color:${color}">${pct}%</span>
+        </div>
+        ${missing.length ? `
+        <div class="missing-list">
+          ${missing.map(m => `<span class="missing-chip">${m.name}</span>`).join('')}
+        </div>` : `<div style="font-size:.82rem;color:#2E7D32;font-weight:500">✓ יש לך את כל המרכיבים!</div>`}
+        <div style="display:flex;gap:1rem;margin-top:.6rem">
+          ${totalMin ? `<span style="font-size:.8rem;color:var(--ink-muted)">⏱ ${totalMin} דק'</span>` : ''}
+          ${r.difficulty ? `<span style="font-size:.8rem;color:var(--ink-muted)">${DIFF_LABEL[r.difficulty]||''}</span>` : ''}
+        </div>
+      </div>
+    </a>`;
+}
+
+function var_olive() { return '#6B7A3A'; }
+</script>
+</body>
+</html>

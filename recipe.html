@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מתכון | המטבח שלי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;600;700&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --terracotta:       #C2622F;
+      --terracotta-light: #D97B4A;
+      --terracotta-pale:  #F5E2D4;
+      --olive:            #6B7A3A;
+      --olive-light:      #8A9A50;
+      --sand:             #F0E4CE;
+      --sand-dark:        #E2CDA8;
+      --cream:            #FAF6F0;
+      --ink:              #2C1F14;
+      --ink-light:        #5A4030;
+      --ink-muted:        #9A7B65;
+      --white:            #FFFFFF;
+      --shadow-sm: 0 2px 8px rgba(44,31,20,.08);
+      --shadow-md: 0 6px 24px rgba(44,31,20,.12);
+      --shadow-lg: 0 16px 48px rgba(44,31,20,.16);
+      --radius:    12px;
+      --radius-lg: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--terracotta);
+      padding: 0 2rem;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(44,31,20,.2);
+    }
+    .header-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .logo {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--white); text-decoration: none;
+    }
+    .logo span { color: var(--sand); }
+    .back-btn {
+      display: flex; align-items: center; gap: .45rem;
+      color: rgba(255,255,255,.85); text-decoration: none;
+      font-size: .9rem; transition: color .2s;
+    }
+    .back-btn:hover { color: var(--white); }
+
+    /* ── Hero ── */
+    .recipe-hero {
+      background: linear-gradient(135deg, var(--terracotta) 0%, #A0471E 100%);
+      padding: 3.5rem 2rem 2.5rem;
+    }
+    .recipe-hero-inner { max-width: 1100px; margin: 0 auto; }
+    .recipe-category-tag {
+      display: inline-block;
+      background: rgba(255,255,255,.2);
+      color: var(--white);
+      font-size: .8rem; font-weight: 600;
+      padding: .3rem .9rem; border-radius: 50px;
+      margin-bottom: 1rem;
+    }
+    .recipe-title {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700; color: var(--white);
+      line-height: 1.25; margin-bottom: .9rem;
+    }
+    .recipe-desc {
+      font-size: 1.05rem; color: rgba(255,255,255,.82);
+      max-width: 680px; line-height: 1.7; margin-bottom: 1.8rem;
+      font-weight: 300;
+    }
+    .recipe-stats {
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+    }
+    .stat {
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    .stat-label {
+      font-size: .75rem; color: rgba(255,255,255,.6);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: .2rem;
+    }
+    .stat-value {
+      font-size: 1.1rem; font-weight: 600; color: var(--white);
+    }
+    .stat-sep {
+      width: 1px; background: rgba(255,255,255,.25);
+      align-self: stretch; margin: .1rem 0;
+    }
+    .difficulty-pill {
+      padding: .3rem .9rem; border-radius: 50px; font-size: .82rem; font-weight: 600;
+    }
+    .difficulty-pill.easy   { background: #c8f0cc; color: #1a5c1e; }
+    .difficulty-pill.medium { background: #fde9a0; color: #7a4800; }
+    .difficulty-pill.hard   { background: #fdd0d0; color: #8b1a1a; }
+
+    /* ── Layout ── */
+    .recipe-layout {
+      max-width: 1100px; margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .recipe-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Sidebar ── */
+    .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+    .card {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 1.5rem; box-shadow: var(--shadow-sm);
+    }
+    .card-heading {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.1rem; font-weight: 600;
+      color: var(--ink); margin-bottom: 1.1rem;
+      padding-bottom: .75rem;
+      border-bottom: 2px solid var(--sand);
+    }
+
+    /* Ingredients */
+    .ingredient-list { list-style: none; }
+    .ingredient-item {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: .6rem 0;
+      border-bottom: 1px solid var(--sand);
+      gap: .5rem;
+    }
+    .ingredient-item:last-child { border-bottom: none; }
+    .ing-name { font-size: .95rem; color: var(--ink); }
+    .ing-amount {
+      font-size: .88rem; color: var(--ink-muted);
+      white-space: nowrap; flex-shrink: 0;
+      font-weight: 500;
+    }
+    .ing-note {
+      font-size: .78rem; color: var(--ink-muted);
+      font-style: italic; display: block; margin-top: .15rem;
+    }
+    .servings-ctrl {
+      display: flex; align-items: center; gap: .75rem;
+      margin-bottom: 1.1rem;
+    }
+    .servings-ctrl button {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1.5px solid var(--sand-dark);
+      background: var(--white); color: var(--ink);
+      font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .servings-ctrl button:hover { border-color: var(--terracotta); color: var(--terracotta); }
+    .servings-val { font-weight: 600; font-size: 1rem; min-width: 24px; text-align: center; }
+    .servings-label { font-size: .85rem; color: var(--ink-muted); }
+
+    /* Tags */
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .tag {
+      background: var(--sand); color: var(--ink-light);
+      font-size: .8rem; padding: .3rem .8rem; border-radius: 50px;
+    }
+
+    /* TTS */
+    .tts-btn {
+      width: 100%; padding: .8rem;
+      background: var(--terracotta); color: var(--white);
+      border: none; border-radius: var(--radius);
+      font-family: 'Heebo', sans-serif; font-size: .95rem; font-weight: 500;
+      cursor: pointer; transition: background .2s;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .tts-btn:hover { background: var(--terracotta-light); }
+    .tts-btn:disabled { opacity: .6; cursor: not-allowed; }
+    #tts-audio { width: 100%; margin-top: .75rem; display: none; }
+
+    /* ── Steps ── */
+    .steps-section {}
+    .step {
+      display: flex; gap: 1.25rem;
+      margin-bottom: 2rem; position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 19px; top: 44px;
+      width: 2px; bottom: -2rem;
+      background: var(--sand-dark);
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      background: var(--terracotta);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .95rem;
+      position: relative; z-index: 1;
+    }
+    .step.done .step-num { background: var(--olive); }
+    .step-content {
+      flex: 1; background: var(--white);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer; transition: box-shadow .2s;
+    }
+    .step-content:hover { box-shadow: var(--shadow-md); }
+    .step.done .step-content { opacity: .7; }
+    .step-title {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.05rem; font-weight: 600;
+      color: var(--ink); margin-bottom: .5rem;
+    }
+    .step-text {
+      font-size: .95rem; color: var(--ink-light);
+      line-height: 1.75;
+    }
+
+    /* Timer */
+    .timer-wrap { margin-top: 1rem; }
+    .timer-display {
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .timer-time {
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--terracotta); font-variant-numeric: tabular-nums;
+      min-width: 72px;
+    }
+    .timer-time.running { color: var(--olive); }
+    .timer-time.done    { color: #888; }
+    .timer-btn {
+      padding: .45rem 1.1rem;
+      border: 1.5px solid var(--terracotta);
+      background: transparent; color: var(--terracotta);
+      border-radius: 50px; font-family: 'Heebo', sans-serif;
+      font-size: .85rem; cursor: pointer; transition: all .2s;
+    }
+    .timer-btn:hover, .timer-btn.running {
+      background: var(--terracotta); color: var(--white);
+    }
+    .timer-btn.reset {
+      border-color: var(--ink-muted); color: var(--ink-muted);
+    }
+    .timer-btn.reset:hover { background: var(--ink-muted); color: var(--white); }
+    .timer-progress {
+      height: 4px; background: var(--sand);
+      border-radius: 2px; margin-top: .6rem; overflow: hidden;
+    }
+    .timer-progress-bar {
+      height: 100%; background: var(--terracotta);
+      border-radius: 2px; transition: width .5s linear;
+    }
+    .timer-progress-bar.running { background: var(--olive); }
+
+    /* Notes */
+    .notes-list { list-style: none; margin-bottom: 1rem; }
+    .note-item {
+      background: var(--sand); border-radius: var(--radius);
+      padding: .9rem 1rem; margin-bottom: .6rem;
+      display: flex; justify-content: space-between; gap: .5rem;
+    }
+    .note-text { font-size: .9rem; color: var(--ink); line-height: 1.5; flex: 1; }
+    .note-date { font-size: .75rem; color: var(--ink-muted); margin-top: .25rem; }
+    .note-del {
+      background: none; border: none; color: var(--ink-muted);
+      cursor: pointer; font-size: 1rem; padding: .1rem;
+      flex-shrink: 0; transition: color .2s;
+    }
+    .note-del:hover { color: #c0392b; }
+    .note-form { display: flex; gap: .6rem; }
+    .note-form textarea {
+      flex: 1; border: 1.5px solid var(--sand-dark);
+      border-radius: var(--radius); padding: .7rem 1rem;
+      font-family: 'Heebo', sans-serif; font-size: .9rem;
+      resize: none; outline: none; direction: rtl;
+      height: 70px; color: var(--ink);
+      transition: border-color .2s;
+    }
+    .note-form textarea:focus { border-color: var(--terracotta); }
+    .note-submit {
+      align-self: flex-end; padding: .7rem 1.2rem;
+      background: var(--terracotta); color: var(--white);
+      border: none; border-radius: var(--radius);
+      font-family: 'Heebo', sans-serif; font-size: .9rem;
+      cursor: pointer; transition: background .2s; white-space: nowrap;
+    }
+    .note-submit:hover { background: var(--terracotta-light); }
+
+    /* Related */
+    .related-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .related-card {
+      background: var(--sand); border-radius: var(--radius);
+      overflow: hidden; text-decoration: none; color: inherit;
+      transition: transform .2s, box-shadow .2s;
+      display: flex; flex-direction: column;
+    }
+    .related-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .related-img {
+      height: 100px; background: var(--terracotta-pale);
+      display: flex; align-items: center; justify-content: center; font-size: 2rem;
+    }
+    .related-img img { width:100%; height:100%; object-fit:cover; }
+    .related-info { padding: .75rem; }
+    .related-title { font-size: .9rem; font-weight: 600; color: var(--ink); line-height: 1.3; }
+    .related-meta { font-size: .78rem; color: var(--ink-muted); margin-top: .3rem; }
+
+    /* State */
+    .state-box {
+      text-align: center; padding: 5rem 2rem; color: var(--ink-muted);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--sand-dark); border-top-color: var(--terracotta);
+      border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      background: var(--ink); color: rgba(255,255,255,.5);
+      text-align: center; padding: 2rem; font-size: .85rem;
+    }
+    footer span { color: var(--terracotta-light); }
+
+    @media (max-width: 640px) {
+      .recipe-hero { padding: 2.5rem 1.25rem 2rem; }
+      .recipe-layout { padding: 1.5rem 1.25rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">המטבח <span>שלי</span></a>
+    <a href="fridge.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:.85rem;margin-left:.5rem">🧊 מה יש לי?</a>
+    <a href="index.html" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+      כל המתכונים
+    </a>
+  </div>
+</header>
+
+<div id="page-loading" class="state-box">
+  <div class="spinner"></div>
+  <p>טוען מתכון...</p>
+</div>
+
+<div id="page-error" class="state-box" style="display:none">
+  <p style="font-size:2rem;margin-bottom:.5rem">😕</p>
+  <p>המתכון לא נמצא או שאירעה שגיאה</p>
+</div>
+
+<div id="page-content" style="display:none">
+  <!-- Hero injected by JS -->
+  <div id="recipe-hero"></div>
+
+  <div class="recipe-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Ingredients -->
+      <div class="card">
+        <div class="servings-ctrl">
+          <button id="serv-dec">−</button>
+          <span class="servings-val" id="serv-val">4</span>
+          <span class="servings-label">מנות</span>
+          <button id="serv-inc">+</button>
+        </div>
+        <h2 class="card-heading">מרכיבים</h2>
+        <ul class="ingredient-list" id="ingredient-list"></ul>
+      </div>
+
+      <!-- Tags -->
+      <div class="card" id="tags-card" style="display:none">
+        <h2 class="card-heading">תגיות</h2>
+        <div class="tags-wrap" id="tags-wrap"></div>
+      </div>
+
+      <!-- TTS -->
+      <div class="card">
+        <h2 class="card-heading">האזנה למתכון</h2>
+        <button class="tts-btn" id="tts-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <span id="tts-label">הפעל קריינות</span>
+        </button>
+        <audio id="tts-audio" controls></audio>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div>
+      <!-- Steps -->
+      <section>
+        <h2 style="font-family:'Noto Serif Hebrew',serif;font-size:1.5rem;font-weight:600;margin-bottom:1.75rem;color:var(--ink)">
+          הוראות הכנה
+        </h2>
+        <div id="steps-list"></div>
+      </section>
+
+      <!-- Notes -->
+      <section class="card" style="margin-top:2rem">
+        <h2 class="card-heading">הערות אישיות</h2>
+        <ul class="notes-list" id="notes-list"></ul>
+        <div class="note-form">
+          <textarea id="note-input" placeholder="הוסף הערה..."></textarea>
+          <button class="note-submit" id="note-submit">שמור</button>
+        </div>
+      </section>
+
+      <!-- Related -->
+      <section id="related-section" style="margin-top:2rem;display:none">
+        <h2 style="font-family:'Noto Serif Hebrew',serif;font-size:1.3rem;font-weight:600;margin-bottom:1rem;color:var(--ink)">
+          מתכונים נוספים
+        </h2>
+        <div class="related-grid" id="related-grid"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span>המטבח שלי</span> &nbsp;© 2026</p>
+</footer>
+
+<script src="config.js"></script>
+<script>
+const API = CONFIG.API;
+const DIFF_LABEL = { easy: 'קל', medium: 'בינוני', hard: 'מאתגר' };
+const DIFF_CLASS = { easy: 'easy', medium: 'medium', hard: 'hard' };
+const CATEGORY_EMOJI = {
+  'אפייה':'🥐','עוגות':'🎂','עוגיות':'🍪','לחם':'🍞',
+  'מרקים':'🍲','סלטים':'🥗','עיקריות':'🍽️','קינוחים':'🍮',
+  'חטיפים':'🥨','שתייה':'🥤','ארוחת בוקר':'🍳',
+};
+
+let recipe = null;
+let baseServings = 1;
+let currentServings = 1;
+const timers = {};
+
+// ── Fetch & init ──────────────────────────────────────────────────────────────
+
+const id = new URLSearchParams(location.search).get('id');
+if (!id) {
+  document.getElementById('page-loading').style.display = 'none';
+  document.getElementById('page-error').style.display = 'block';
+} else {
+  fetch(`${API}/api/recipes/${id}`)
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(data => {
+      recipe = data;
+      document.title = `${recipe.title} | המטבח שלי`;
+      baseServings = recipe.servings || 1;
+      currentServings = baseServings;
+      renderHero();
+      renderIngredients();
+      renderTags();
+      renderSteps();
+      renderNotes();
+      renderRelated();
+      document.getElementById('page-loading').style.display = 'none';
+      document.getElementById('page-content').style.display = 'block';
+      document.getElementById('serv-val').textContent = currentServings;
+    })
+    .catch(() => {
+      document.getElementById('page-loading').style.display = 'none';
+      document.getElementById('page-error').style.display = 'block';
+    });
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────────────
+
+function renderHero() {
+  const totalMin = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  document.getElementById('recipe-hero').innerHTML = `
+    <div class="recipe-hero">
+      <div class="recipe-hero-inner">
+        ${recipe.category ? `<span class="recipe-category-tag">${recipe.category}</span>` : ''}
+        <h1 class="recipe-title">${recipe.title}</h1>
+        ${recipe.description ? `<p class="recipe-desc">${recipe.description}</p>` : ''}
+        <div class="recipe-stats">
+          ${recipe.prep_time ? `
+          <div class="stat">
+            <span class="stat-label">הכנה</span>
+            <span class="stat-value">${recipe.prep_time} דק'</span>
+          </div><div class="stat-sep"></div>` : ''}
+          ${recipe.cook_time ? `
+          <div class="stat">
+            <span class="stat-label">בישול</span>
+            <span class="stat-value">${recipe.cook_time} דק'</span>
+          </div><div class="stat-sep"></div>` : ''}
+          ${totalMin ? `
+          <div class="stat">
+            <span class="stat-label">סה"כ</span>
+            <span class="stat-value">${totalMin} דק'</span>
+          </div><div class="stat-sep"></div>` : ''}
+          ${recipe.servings ? `
+          <div class="stat">
+            <span class="stat-label">מנות</span>
+            <span class="stat-value">${recipe.servings}</span>
+          </div>` : ''}
+          ${recipe.difficulty ? `
+          <div class="stat">
+            <span class="stat-label">קושי</span>
+            <span class="difficulty-pill ${DIFF_CLASS[recipe.difficulty]}">
+              ${DIFF_LABEL[recipe.difficulty]}
+            </span>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Ingredients ──────────────────────────────────────────────────────────────
+
+function renderIngredients() {
+  const list = document.getElementById('ingredient-list');
+  list.innerHTML = (recipe.ingredients || []).map(ing => {
+    const ratio = currentServings / baseServings;
+    const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
+    return `
+      <li class="ingredient-item">
+        <span>
+          <span class="ing-name">${ing.name}</span>
+          ${ing.note ? `<span class="ing-note">${ing.note}</span>` : ''}
+        </span>
+        <span class="ing-amount">${amt}${ing.unit ? ' ' + ing.unit : ''}</span>
+      </li>`;
+  }).join('');
+}
+
+function formatAmount(n) {
+  if (!n) return '';
+  const rounded = Math.round(n * 4) / 4;
+  const fracs = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+  const whole = Math.floor(rounded);
+  const frac = rounded - whole;
+  if (frac === 0) return whole.toString();
+  if (whole === 0) return fracs[frac] || rounded.toFixed(2);
+  return whole + (fracs[frac] || '+' + frac.toFixed(2));
+}
+
+// Servings controls
+document.getElementById('serv-dec').addEventListener('click', () => {
+  if (currentServings > 1) { currentServings--; updateServings(); }
+});
+document.getElementById('serv-inc').addEventListener('click', () => {
+  currentServings++; updateServings();
+});
+function updateServings() {
+  document.getElementById('serv-val').textContent = currentServings;
+  renderIngredients();
+}
+
+// ── Tags ─────────────────────────────────────────────────────────────────────
+
+function renderTags() {
+  const tags = recipe.tags || [];
+  if (!tags.length) return;
+  document.getElementById('tags-card').style.display = 'block';
+  document.getElementById('tags-wrap').innerHTML = tags.map(t => `<span class="tag">${t}</span>`).join('');
+}
+
+// ── Steps ────────────────────────────────────────────────────────────────────
+
+function renderSteps() {
+  const container = document.getElementById('steps-list');
+  container.innerHTML = (recipe.steps || []).map((s, i) => {
+    const hasTimer = s.timer_seconds > 0;
+    return `
+      <div class="step" id="step-${s.id}" data-idx="${i}">
+        <div class="step-num">${s.step_order}</div>
+        <div class="step-content" onclick="toggleStep(${s.id})">
+          ${s.title ? `<div class="step-title">${s.title}</div>` : ''}
+          <div class="step-text">${s.text}</div>
+          ${hasTimer ? `
+          <div class="timer-wrap" id="timer-wrap-${s.id}">
+            <div class="timer-display">
+              <span class="timer-time" id="timer-display-${s.id}">${formatTime(s.timer_seconds)}</span>
+              <button class="timer-btn" id="timer-btn-${s.id}"
+                onclick="event.stopPropagation(); toggleTimer(${s.id}, ${s.timer_seconds})">
+                ▶ הפעל טיימר
+              </button>
+              <button class="timer-btn reset" id="timer-reset-${s.id}"
+                onclick="event.stopPropagation(); resetTimer(${s.id}, ${s.timer_seconds})"
+                style="display:none">↺</button>
+            </div>
+            <div class="timer-progress">
+              <div class="timer-progress-bar" id="timer-bar-${s.id}" style="width:100%"></div>
+            </div>
+          </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleStep(id) {
+  const el = document.getElementById(`step-${id}`);
+  el.classList.toggle('done');
+}
+
+// ── Timers ───────────────────────────────────────────────────────────────────
+
+function toggleTimer(id, total) {
+  if (timers[id]?.running) {
+    pauseTimer(id);
+  } else {
+    startTimer(id, total);
+  }
+}
+
+function startTimer(id, total) {
+  if (!timers[id]) timers[id] = { remaining: total, total };
+  timers[id].running = true;
+
+  const btn = document.getElementById(`timer-btn-${id}`);
+  const display = document.getElementById(`timer-display-${id}`);
+  const bar = document.getElementById(`timer-bar-${id}`);
+  const resetBtn = document.getElementById(`timer-reset-${id}`);
+
+  btn.textContent = '⏸ עצור';
+  btn.classList.add('running');
+  display.classList.add('running');
+  resetBtn.style.display = 'inline-flex';
+
+  timers[id].interval = setInterval(() => {
+    timers[id].remaining--;
+    display.textContent = formatTime(timers[id].remaining);
+    bar.style.width = (timers[id].remaining / timers[id].total * 100) + '%';
+
+    if (timers[id].remaining <= 0) {
+      clearInterval(timers[id].interval);
+      timers[id].running = false;
+      btn.textContent = '✓ הסתיים';
+      btn.disabled = true;
+      display.classList.remove('running');
+      display.classList.add('done');
+      bar.style.width = '0%';
+      playBeep();
+    }
+  }, 1000);
+}
+
+function pauseTimer(id) {
+  clearInterval(timers[id].interval);
+  timers[id].running = false;
+  const btn = document.getElementById(`timer-btn-${id}`);
+  btn.textContent = '▶ המשך';
+  btn.classList.remove('running');
+}
+
+function resetTimer(id, total) {
+  if (timers[id]?.interval) clearInterval(timers[id].interval);
+  timers[id] = { remaining: total, total, running: false };
+  document.getElementById(`timer-display-${id}`).textContent = formatTime(total);
+  document.getElementById(`timer-display-${id}`).className = 'timer-time';
+  document.getElementById(`timer-bar-${id}`).style.width = '100%';
+  document.getElementById(`timer-btn-${id}`).textContent = '▶ הפעל טיימר';
+  document.getElementById(`timer-btn-${id}`).classList.remove('running');
+  document.getElementById(`timer-btn-${id}`).disabled = false;
+  document.getElementById(`timer-reset-${id}`).style.display = 'none';
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s = (sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.25);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.25);
+    });
+  } catch {}
+}
+
+// ── TTS ───────────────────────────────────────────────────────────────────────
+
+document.getElementById('tts-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('tts-btn');
+  const label = document.getElementById('tts-label');
+  const audio = document.getElementById('tts-audio');
+
+  if (audio.src && !audio.paused) { audio.pause(); label.textContent = 'הפעל קריינות'; return; }
+  if (audio.src && audio.paused)  { audio.play(); label.textContent = 'עצור'; return; }
+
+  btn.disabled = true;
+  label.textContent = 'מכין קריינות...';
+
+  const text = buildTTSText();
+  try {
+    const res = await fetch(`${API}/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!data.audioContent) throw new Error();
+    audio.src = `data:audio/mp3;base64,${data.audioContent}`;
+    audio.style.display = 'block';
+    audio.play();
+    label.textContent = 'עצור';
+  } catch {
+    label.textContent = 'שגיאה — נסה שוב';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function buildTTSText() {
+  const lines = [`מתכון: ${recipe.title}.`];
+  if (recipe.description) lines.push(recipe.description);
+  lines.push('מרכיבים:');
+  (recipe.ingredients || []).forEach(i => {
+    lines.push(`${i.name}${i.amount ? ', ' + i.amount : ''}${i.unit ? ' ' + i.unit : ''}.`);
+  });
+  lines.push('הוראות הכנה:');
+  (recipe.steps || []).forEach((s, i) => {
+    lines.push(`שלב ${i + 1}${s.title ? ', ' + s.title : ''}. ${s.text}`);
+  });
+  return lines.join(' ');
+}
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  const notes = recipe.notes || [];
+  list.innerHTML = notes.map(n => `
+    <li class="note-item">
+      <div>
+        <div class="note-text">${n.note_text}</div>
+        <div class="note-date">${new Date(n.created_at).toLocaleDateString('he-IL')}</div>
+      </div>
+      <button class="note-del" onclick="deleteNote(${n.id})" title="מחק">✕</button>
+    </li>`).join('');
+}
+
+document.getElementById('note-submit').addEventListener('click', async () => {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    const res = await fetch(`${API}/api/recipes/${id}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note_text: text }),
+    });
+    const note = await res.json();
+    recipe.notes = [note, ...(recipe.notes || [])];
+    renderNotes();
+    input.value = '';
+  } catch {}
+});
+
+async function deleteNote(noteId) {
+  try {
+    await fetch(`${API}/api/recipes/${id}/notes/${noteId}`, { method: 'DELETE' });
+    recipe.notes = recipe.notes.filter(n => n.id !== noteId);
+    renderNotes();
+  } catch {}
+}
+
+// ── Related ───────────────────────────────────────────────────────────────────
+
+function renderRelated() {
+  const related = recipe.related || [];
+  if (!related.length) return;
+  document.getElementById('related-section').style.display = 'block';
+  document.getElementById('related-grid').innerHTML = related.map(r => {
+    const emoji = CATEGORY_EMOJI[r.category] || '🍴';
+    const total = (r.prep_time || 0) + (r.cook_time || 0);
+    return `
+      <a class="related-card" href="recipe.html?id=${r.id}">
+        <div class="related-img">
+          ${r.image_url ? `<img src="${r.image_url}" alt="${r.title}">` : emoji}
+        </div>
+        <div class="related-info">
+          <div class="related-title">${r.title}</div>
+          ${total ? `<div class="related-meta">⏱ ${total} דק'</div>` : ''}
+        </div>
+      </a>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

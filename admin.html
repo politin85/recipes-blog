@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ניהול מתכונים | המטבח שלי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;600;700&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --terracotta:       #C2622F;
+      --terracotta-light: #D97B4A;
+      --terracotta-pale:  #F5E2D4;
+      --olive:            #6B7A3A;
+      --olive-light:      #8A9A50;
+      --sand:             #F0E4CE;
+      --sand-dark:        #E2CDA8;
+      --cream:            #FAF6F0;
+      --ink:              #2C1F14;
+      --ink-light:        #5A4030;
+      --ink-muted:        #9A7B65;
+      --white:            #FFFFFF;
+      --danger:           #C0392B;
+      --danger-light:     #FDECEA;
+      --shadow-sm: 0 2px 8px rgba(44,31,20,.08);
+      --shadow-md: 0 6px 24px rgba(44,31,20,.12);
+      --radius:    12px;
+      --radius-lg: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+    /* ── Header ── */
+    header { background: var(--ink); padding: 0 2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
+    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { font-family:'Noto Serif Hebrew',serif; font-size:1.4rem; font-weight:700; color:var(--white); text-decoration:none; }
+    .logo span { color: var(--terracotta-light); }
+    .admin-badge { background: var(--terracotta); color: var(--white); font-size: .75rem; font-weight: 600; padding: .25rem .75rem; border-radius: 50px; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .back-btn { color: rgba(255,255,255,.7); text-decoration: none; font-size: .88rem; transition: color .2s; }
+    .back-btn:hover { color: var(--white); }
+
+    /* ── Login gate ── */
+    .login-wrap {
+      min-height: calc(100vh - 64px);
+      display: flex; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .login-card {
+      background: var(--white); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md); padding: 2.5rem 2rem;
+      width: 100%; max-width: 380px; text-align: center;
+    }
+    .login-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .login-card h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1.4rem; margin-bottom: .4rem; }
+    .login-card p { color: var(--ink-muted); font-size: .9rem; margin-bottom: 1.5rem; }
+    .login-input {
+      width: 100%; padding: .8rem 1rem; border: 1.5px solid var(--sand-dark);
+      border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem;
+      outline: none; direction: ltr; text-align: center; letter-spacing: .1em;
+      margin-bottom: .75rem; transition: border-color .2s;
+    }
+    .login-input:focus { border-color: var(--terracotta); }
+    .login-btn {
+      width: 100%; padding: .85rem; background: var(--terracotta); color: var(--white);
+      border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif;
+      font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s;
+    }
+    .login-btn:hover { background: var(--terracotta-light); }
+    .login-error { color: var(--danger); font-size: .85rem; margin-top: .6rem; min-height: 1.2rem; }
+
+    /* ── Main layout ── */
+    .main-layout {
+      max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 5rem;
+      display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;
+    }
+    @media (max-width: 860px) { .main-layout { grid-template-columns: 1fr; } }
+
+    /* ── Recipe list ── */
+    .sidebar-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .sidebar-head {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--sand);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-head h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1.05rem; font-weight: 600; }
+    .new-btn {
+      padding: .4rem 1rem; background: var(--terracotta); color: var(--white);
+      border: none; border-radius: 50px; font-family: 'Heebo', sans-serif;
+      font-size: .85rem; cursor: pointer; transition: background .2s;
+    }
+    .new-btn:hover { background: var(--terracotta-light); }
+
+    .recipe-list { list-style: none; }
+    .recipe-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .85rem 1.5rem; border-bottom: 1px solid var(--sand);
+      cursor: pointer; transition: background .15s; gap: .5rem;
+    }
+    .recipe-list-item:last-child { border-bottom: none; }
+    .recipe-list-item:hover { background: var(--cream); }
+    .recipe-list-item.active { background: var(--terracotta-pale); }
+    .rli-title { font-size: .92rem; font-weight: 500; color: var(--ink); flex: 1; }
+    .rli-cat { font-size: .75rem; color: var(--ink-muted); }
+    .rli-del {
+      background: none; border: none; color: var(--ink-muted);
+      cursor: pointer; font-size: 1rem; padding: .2rem; transition: color .2s; flex-shrink: 0;
+    }
+    .rli-del:hover { color: var(--danger); }
+    .list-empty { padding: 2rem 1.5rem; text-align: center; color: var(--ink-muted); font-size: .9rem; }
+
+    /* ── Form ── */
+    .form-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 2rem; }
+    .form-title { font-family:'Noto Serif Hebrew',serif; font-size: 1.4rem; font-weight: 600; margin-bottom: 1.75rem; padding-bottom: .75rem; border-bottom: 2px solid var(--sand); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 600px) { .form-grid, .form-grid.three { grid-template-columns: 1fr; } }
+    .form-full { margin-bottom: 1.25rem; }
+
+    label { display: block; font-size: .85rem; font-weight: 500; color: var(--ink-light); margin-bottom: .4rem; }
+    input[type=text], input[type=number], input[type=url], select, textarea {
+      width: 100%; padding: .7rem 1rem; border: 1.5px solid var(--sand-dark);
+      border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: .95rem;
+      color: var(--ink); background: var(--white); outline: none; direction: rtl;
+      transition: border-color .2s;
+    }
+    input[type=text]:focus, input[type=number]:focus, input[type=url]:focus, select:focus, textarea:focus {
+      border-color: var(--terracotta);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .section-divider {
+      font-family:'Noto Serif Hebrew',serif; font-size: 1.1rem; font-weight: 600;
+      color: var(--ink); margin: 1.75rem 0 1.1rem; padding-bottom: .6rem;
+      border-bottom: 1.5px solid var(--sand);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .add-row-btn {
+      font-family:'Heebo',sans-serif; font-size: .82rem; font-weight: 500;
+      color: var(--olive); background: none; border: 1.5px solid var(--olive);
+      border-radius: 50px; padding: .3rem .9rem; cursor: pointer; transition: all .2s;
+    }
+    .add-row-btn:hover { background: var(--olive); color: var(--white); }
+
+    /* Ingredient rows */
+    .ing-row {
+      display: grid; grid-template-columns: 1fr 80px 80px 1fr auto;
+      gap: .6rem; margin-bottom: .6rem; align-items: center;
+    }
+    @media (max-width: 600px) { .ing-row { grid-template-columns: 1fr 70px 70px; } .ing-row .ing-note-col, .ing-row .del-col { grid-column: span 3; } }
+
+    /* Step rows */
+    .step-row { background: var(--cream); border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem; }
+    .step-row-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+    .step-num-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--terracotta); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .82rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step-row-grid { display: grid; grid-template-columns: 1fr 120px; gap: .6rem; }
+    @media (max-width: 600px) { .step-row-grid { grid-template-columns: 1fr; } }
+
+    .del-btn {
+      background: none; border: none; color: var(--ink-muted);
+      cursor: pointer; font-size: 1.1rem; padding: .2rem; line-height: 1;
+      transition: color .2s; flex-shrink: 0;
+    }
+    .del-btn:hover { color: var(--danger); }
+
+    /* Submit */
+    .form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
+    .submit-btn {
+      flex: 1; padding: .9rem; background: var(--terracotta); color: var(--white);
+      border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif;
+      font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s;
+    }
+    .submit-btn:hover { background: var(--terracotta-light); }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .cancel-btn {
+      padding: .9rem 1.75rem; background: none; border: 1.5px solid var(--sand-dark);
+      color: var(--ink-light); border-radius: var(--radius); font-family: 'Heebo', sans-serif;
+      font-size: 1rem; cursor: pointer; transition: all .2s;
+    }
+    .cancel-btn:hover { border-color: var(--ink-muted); color: var(--ink); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      background: var(--ink); color: var(--white);
+      padding: .8rem 1.75rem; border-radius: 50px; font-size: .92rem;
+      box-shadow: var(--shadow-md); z-index: 999;
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: var(--olive); }
+    .toast.error   { background: var(--danger); }
+
+    /* Confirm dialog */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .overlay.show { opacity: 1; pointer-events: all; }
+    .dialog {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 2rem; max-width: 360px; width: 90%; text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .dialog h3 { font-family:'Noto Serif Hebrew',serif; font-size: 1.2rem; margin-bottom: .6rem; }
+    .dialog p { color: var(--ink-muted); font-size: .9rem; margin-bottom: 1.5rem; }
+    .dialog-actions { display: flex; gap: .75rem; }
+    .dialog-actions button { flex: 1; padding: .75rem; border-radius: var(--radius); border: none; font-family: 'Heebo', sans-serif; font-size: .95rem; cursor: pointer; transition: background .2s; }
+    .btn-cancel-dlg { background: var(--sand); color: var(--ink); }
+    .btn-cancel-dlg:hover { background: var(--sand-dark); }
+    .btn-confirm-dlg { background: var(--danger); color: var(--white); }
+    .btn-confirm-dlg:hover { background: #a93226; }
+
+    .spinner { width:32px;height:32px;border:3px solid var(--sand-dark);border-top-color:var(--terracotta);border-radius:50%;animation:spin .8s linear infinite;margin:2rem auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">המטבח <span>שלי</span></a>
+    <div class="header-right">
+      <a href="index.html" class="back-btn">← לאתר</a>
+      <span class="admin-badge">ניהול</span>
+    </div>
+  </div>
+</header>
+
+<!-- Login gate -->
+<div id="login-gate" class="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <h2>כניסת מנהל</h2>
+    <p>הזן את סיסמת הניהול להמשך</p>
+    <input type="password" id="pw-input" class="login-input" placeholder="סיסמה" />
+    <button class="login-btn" id="pw-btn">כניסה</button>
+    <div class="login-error" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- Admin UI (hidden until auth) -->
+<div id="admin-ui" style="display:none">
+  <div class="main-layout">
+
+    <!-- Recipe list sidebar -->
+    <aside>
+      <div class="sidebar-card">
+        <div class="sidebar-head">
+          <h2>מתכונים</h2>
+          <button class="new-btn" id="new-btn">+ חדש</button>
+        </div>
+        <div id="recipe-list-wrap"><div class="spinner"></div></div>
+      </div>
+    </aside>
+
+    <!-- Form -->
+    <div class="form-card" id="form-card">
+      <div style="text-align:center;padding:3rem;color:var(--ink-muted)">
+        <div style="font-size:2rem;margin-bottom:.75rem">✏️</div>
+        <p>בחר מתכון לעריכה או לחץ "+ חדש"</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete confirm dialog -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <h3>מחיקת מתכון</h3>
+    <p id="confirm-msg">האם למחוק את המתכון?</p>
+    <div class="dialog-actions">
+      <button class="btn-cancel-dlg" onclick="closeConfirm()">ביטול</button>
+      <button class="btn-confirm-dlg" id="confirm-ok-btn">מחק</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const API = CONFIG.API;
+let adminPw = sessionStorage.getItem('admin_pw') || '';
+let recipes  = [];
+let editingId = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+async function tryLogin(pw) {
+  const res = await fetch(`${API}/api/recipes`, {
+    headers: { 'x-admin-password': pw }
+  });
+  return res.ok;
+}
+
+if (adminPw) initAdmin();
+
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pw-btn').click();
+});
+
+document.getElementById('pw-btn').addEventListener('click', async () => {
+  const pw = document.getElementById('pw-input').value.trim();
+  if (!pw) return;
+  document.getElementById('pw-btn').textContent = '...';
+  try {
+    // Validate by attempting a write-gated request
+    const res = await fetch(`${API}/api/recipes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pw },
+      body: JSON.stringify({}),
+    });
+    // 401 = wrong pw; anything else = pw accepted (even 400 for missing fields)
+    if (res.status === 401) {
+      document.getElementById('pw-error').textContent = 'סיסמה שגויה';
+      document.getElementById('pw-btn').textContent = 'כניסה';
+      return;
+    }
+    adminPw = pw;
+    sessionStorage.setItem('admin_pw', pw);
+    initAdmin();
+  } catch {
+    document.getElementById('pw-error').textContent = 'שגיאת רשת — נסה שוב';
+    document.getElementById('pw-btn').textContent = 'כניסה';
+  }
+});
+
+function initAdmin() {
+  document.getElementById('login-gate').style.display  = 'none';
+  document.getElementById('admin-ui').style.display    = 'block';
+  loadRecipes();
+}
+
+// ── Recipe list ───────────────────────────────────────────────────────────────
+
+async function loadRecipes() {
+  try {
+    const res = await fetch(`${API}/api/recipes`);
+    recipes = await res.json();
+    renderList();
+  } catch {
+    document.getElementById('recipe-list-wrap').innerHTML =
+      '<div class="list-empty">שגיאה בטעינה</div>';
+  }
+}
+
+function renderList() {
+  const wrap = document.getElementById('recipe-list-wrap');
+  if (!recipes.length) {
+    wrap.innerHTML = '<div class="list-empty">אין מתכונים עדיין</div>';
+    return;
+  }
+  wrap.innerHTML = `<ul class="recipe-list">${
+    recipes.map(r => `
+      <li class="recipe-list-item${editingId===r.id?' active':''}" data-id="${r.id}">
+        <span class="rli-title">${r.title}</span>
+        <span class="rli-cat">${r.category||''}</span>
+        <button class="rli-del" title="מחק" onclick="event.stopPropagation();confirmDelete(${r.id},'${r.title.replace(/'/g,"\\'")}')">🗑</button>
+      </li>`).join('')
+  }</ul>`;
+  wrap.querySelectorAll('.recipe-list-item').forEach(li => {
+    li.addEventListener('click', () => openEdit(parseInt(li.dataset.id)));
+  });
+}
+
+document.getElementById('new-btn').addEventListener('click', () => openForm(null));
+
+// ── Open edit / new form ──────────────────────────────────────────────────────
+
+async function openEdit(id) {
+  editingId = id;
+  renderList();
+  document.getElementById('form-card').innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await fetch(`${API}/api/recipes/${id}`);
+    const data = await res.json();
+    renderForm(data);
+  } catch {
+    showToast('שגיאה בטעינת המתכון', 'error');
+  }
+}
+
+function openForm(data) {
+  editingId = data?.id || null;
+  renderList();
+  renderForm(data || {
+    title:'', description:'', category:'', difficulty:'easy',
+    prep_time:'', cook_time:'', servings:'', tags:[], image_url:'',
+    ingredients:[], steps:[],
+  });
+}
+
+// ── Form render ───────────────────────────────────────────────────────────────
+
+function renderForm(data) {
+  const isNew = !data.id;
+  const tags = (data.tags || []).join(', ');
+
+  document.getElementById('form-card').innerHTML = `
+    <h2 class="form-title">${isNew ? 'מתכון חדש' : 'עריכת מתכון'}</h2>
+
+    <div class="form-grid">
+      <div><label>שם המתכון *</label><input type="text" id="f-title" value="${esc(data.title||'')}" placeholder="שם המתכון" /></div>
+      <div><label>קטגוריה</label><input type="text" id="f-category" value="${esc(data.category||'')}" placeholder="אפייה, עיקריות..." /></div>
+    </div>
+    <div class="form-full"><label>תיאור</label><textarea id="f-desc" rows="3" placeholder="תיאור קצר של המתכון...">${esc(data.description||'')}</textarea></div>
+    <div class="form-grid three">
+      <div><label>זמן הכנה (דק')</label><input type="number" id="f-prep" value="${data.prep_time||''}" min="0" /></div>
+      <div><label>זמן בישול (דק')</label><input type="number" id="f-cook" value="${data.cook_time||''}" min="0" /></div>
+      <div><label>מנות</label><input type="number" id="f-servings" value="${data.servings||''}" min="1" /></div>
+    </div>
+    <div class="form-grid">
+      <div><label>רמת קושי</label>
+        <select id="f-difficulty">
+          <option value="easy"   ${data.difficulty==='easy'  ?'selected':''}>קל</option>
+          <option value="medium" ${data.difficulty==='medium'?'selected':''}>בינוני</option>
+          <option value="hard"   ${data.difficulty==='hard'  ?'selected':''}>מאתגר</option>
+        </select>
+      </div>
+      <div><label>תגיות (מופרדות בפסיק)</label><input type="text" id="f-tags" value="${esc(tags)}" placeholder="ביסקוויטים, אפייה..." /></div>
+    </div>
+    <div class="form-full"><label>URL תמונה</label><input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://..." style="direction:ltr" /></div>
+
+    <div class="section-divider">
+      מרכיבים
+      <button class="add-row-btn" onclick="addIngRow()">+ הוסף</button>
+    </div>
+    <div id="ing-rows">
+      ${(data.ingredients||[]).map((i,idx) => ingRowHtml(idx, i)).join('')}
+    </div>
+
+    <div class="section-divider">
+      שלבי הכנה
+      <button class="add-row-btn" onclick="addStepRow()">+ הוסף</button>
+    </div>
+    <div id="step-rows">
+      ${(data.steps||[]).map((s,idx) => stepRowHtml(idx, s)).join('')}
+    </div>
+
+    <div class="form-actions">
+      ${!isNew ? `<button class="cancel-btn" onclick="openForm(null)">ביטול</button>` : ''}
+      <button class="submit-btn" id="submit-btn" onclick="submitForm()">${isNew ? 'צור מתכון' : 'שמור שינויים'}</button>
+    </div>`;
+}
+
+// ── Ingredient rows ───────────────────────────────────────────────────────────
+
+let ingCount = 0;
+function ingRowHtml(idx, i={}) {
+  const id = ingCount++;
+  return `
+    <div class="ing-row" id="ing-${id}">
+      <input type="text"   placeholder="שם מרכיב *" value="${esc(i.name||'')}"   class="ing-name" />
+      <input type="number" placeholder="כמות"        value="${i.amount||''}"     class="ing-amount" min="0" step="0.01" />
+      <input type="text"   placeholder="יחידה"       value="${esc(i.unit||'')}"   class="ing-unit" />
+      <input type="text"   placeholder="הערה"        value="${esc(i.note||'')}"   class="ing-note-col" />
+      <button class="del-btn" onclick="delRow('ing-${id}')">✕</button>
+    </div>`;
+}
+function addIngRow() {
+  document.getElementById('ing-rows').insertAdjacentHTML('beforeend', ingRowHtml(ingCount));
+}
+
+// ── Step rows ─────────────────────────────────────────────────────────────────
+
+let stepCount = 0;
+function stepRowHtml(idx, s={}) {
+  const id = stepCount++;
+  return `
+    <div class="step-row" id="step-${id}">
+      <div class="step-row-head">
+        <div class="step-num-badge">${idx+1}</div>
+        <input type="text" placeholder="כותרת השלב (אופציונלי)" value="${esc(s.title||'')}" class="step-title-inp" style="flex:1" />
+        <button class="del-btn" onclick="delRow('step-${id}');reNumberSteps()">✕</button>
+      </div>
+      <textarea class="step-text-inp" placeholder="הוראות השלב *" rows="3">${esc(s.text||'')}</textarea>
+      <div style="margin-top:.6rem">
+        <label style="font-size:.8rem">טיימר (שניות, אופציונלי)</label>
+        <input type="number" placeholder="למשל 1800 = חצי שעה" value="${s.timer_seconds||''}" class="step-timer-inp" min="0" style="margin-top:.3rem" />
+      </div>
+    </div>`;
+}
+function addStepRow() {
+  const rows = document.getElementById('step-rows');
+  const idx = rows.querySelectorAll('.step-row').length;
+  rows.insertAdjacentHTML('beforeend', stepRowHtml(idx));
+  reNumberSteps();
+}
+function reNumberSteps() {
+  document.querySelectorAll('.step-row').forEach((row, i) => {
+    row.querySelector('.step-num-badge').textContent = i + 1;
+  });
+}
+
+function delRow(id) { document.getElementById(id)?.remove(); }
+
+// ── Collect form data ─────────────────────────────────────────────────────────
+
+function collectForm() {
+  const tags = document.getElementById('f-tags').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+
+  const ingredients = [...document.querySelectorAll('.ing-row')].map(row => ({
+    name:   row.querySelector('.ing-name').value.trim(),
+    amount: parseFloat(row.querySelector('.ing-amount').value) || null,
+    unit:   row.querySelector('.ing-unit').value.trim() || null,
+    note:   row.querySelector('.ing-note-col').value.trim() || null,
+  })).filter(i => i.name);
+
+  const steps = [...document.querySelectorAll('.step-row')].map(row => ({
+    title:         row.querySelector('.step-title-inp').value.trim() || null,
+    text:          row.querySelector('.step-text-inp').value.trim(),
+    timer_seconds: parseInt(row.querySelector('.step-timer-inp').value) || null,
+    image_url:     null,
+  })).filter(s => s.text);
+
+  return {
+    title:       document.getElementById('f-title').value.trim(),
+    description: document.getElementById('f-desc').value.trim() || null,
+    category:    document.getElementById('f-category').value.trim() || null,
+    difficulty:  document.getElementById('f-difficulty').value,
+    prep_time:   parseInt(document.getElementById('f-prep').value) || null,
+    cook_time:   parseInt(document.getElementById('f-cook').value) || null,
+    servings:    parseInt(document.getElementById('f-servings').value) || null,
+    tags, ingredients, steps,
+    image_url:   document.getElementById('f-image').value.trim() || null,
+  };
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+
+async function submitForm() {
+  const data = collectForm();
+  if (!data.title) { showToast('שם המתכון הוא שדה חובה', 'error'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'שומר...';
+
+  const isNew = !editingId;
+  const url    = isNew ? `${API}/api/recipes` : `${API}/api/recipes/${editingId}`;
+  const method = isNew ? 'POST' : 'PUT';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(res.status);
+    const saved = await res.json();
+    showToast(isNew ? 'המתכון נוצר בהצלחה ✓' : 'השינויים נשמרו ✓', 'success');
+    await loadRecipes();
+    editingId = saved.id;
+    renderList();
+  } catch {
+    showToast('שגיאה בשמירה — נסה שוב', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingId && !isNew ? 'שמור שינויים' : 'צור מתכון';
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+let pendingDeleteId = null;
+function confirmDelete(id, title) {
+  pendingDeleteId = id;
+  document.getElementById('confirm-msg').textContent = `האם למחוק את "${title}"?`;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm() {
+  pendingDeleteId = null;
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+document.getElementById('confirm-ok-btn').addEventListener('click', async () => {
+  const id = pendingDeleteId;
+  closeConfirm();
+  try {
+    await fetch(`${API}/api/recipes/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': adminPw },
+    });
+    showToast('המתכון נמחק', 'success');
+    if (editingId === id) {
+      editingId = null;
+      document.getElementById('form-card').innerHTML =
+        '<div style="text-align:center;padding:3rem;color:var(--ink-muted)"><div style="font-size:2rem;margin-bottom:.75rem">✏️</div><p>בחר מתכון לעריכה או לחץ "+ חדש"</p></div>';
+    }
+    await loadRecipes();
+  } catch {
+    showToast('שגיאה במחיקה', 'error');
+  }
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast${type?' '+type:''} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+</script>
+</body>
+</html>
