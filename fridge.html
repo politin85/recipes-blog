@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>מה יש לי במקרר | המטבח שלי</title>
-  <meta name="description" content="בחר מרכיבים שיש לך בבית — נמצא מתכונים שאפשר להכין עכשיו" />
-  <meta property="og:title"       content="מה יש לי במקרר | המטבח שלי" />
-  <meta property="og:description" content="בחר מרכיבים שיש לך בבית — נמצא מתכונים שאפשר להכין עכשיו" />
+  <title>מתכון לפי מצרכים | המטבח שלי</title>
+  <meta name="description" content="הקלד מרכיבים שיש לך בבית — נמצא מתכונים שאפשר להכין עכשיו" />
+  <meta property="og:title"       content="מתכון לפי מצרכים | המטבח שלי" />
+  <meta property="og:description" content="הקלד מרכיבים שיש לך בבית — נמצא מתכונים שאפשר להכין עכשיו" />
   <meta property="og:url"         content="https://politin85.github.io/recipes-blog/fridge.html" />
   <meta name="twitter:card"       content="summary" />
   <link rel="icon" href="favicon.ico" />
@@ -60,7 +60,7 @@
     /* ── Hero ── */
     .hero {
       background: linear-gradient(135deg, var(--olive) 0%, #4A5828 100%);
-      padding: 4rem 2rem 3rem; text-align: center; position: relative; overflow: hidden;
+      padding: 3.5rem 2rem 2.5rem; text-align: center; position: relative; overflow: hidden;
     }
     .hero::before {
       content:''; position:absolute; inset:0;
@@ -69,9 +69,9 @@
     }
     .hero h1 {
       font-family:'Noto Serif Hebrew',serif;
-      font-size:clamp(1.8rem,4vw,3rem); font-weight:700; color:var(--white); margin-bottom:.75rem; position:relative;
+      font-size:clamp(1.8rem,4vw,2.8rem); font-weight:700; color:var(--white); margin-bottom:.6rem; position:relative;
     }
-    .hero p { font-size:1.05rem; color:rgba(255,255,255,.8); font-weight:300; position:relative; }
+    .hero p { font-size:1rem; color:rgba(255,255,255,.8); font-weight:300; position:relative; }
 
     /* ── Layout ── */
     .page-layout {
@@ -84,42 +84,51 @@
     }
     @media (max-width: 860px) { .page-layout { grid-template-columns: 1fr; } }
 
-    /* ── Ingredient picker ── */
+    /* ── Picker card ── */
     .picker-card {
       background: var(--white); border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm); overflow: hidden;
+      box-shadow: var(--shadow-sm); overflow: visible;
       position: sticky; top: 80px;
     }
     .picker-header {
       background: var(--olive); padding: 1.25rem 1.5rem;
-      color: var(--white);
+      color: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
     .picker-header h2 {
       font-family:'Noto Serif Hebrew',serif; font-size:1.1rem; font-weight:600;
       margin-bottom: .75rem;
     }
-    .picker-search {
-      position: relative;
-    }
-    .picker-search input {
-      width:100%; padding:.65rem 2.5rem .65rem 1rem;
+
+    /* Free text search */
+    .free-search-wrap { position: relative; }
+    .free-search-inp {
+      width:100%; padding:.65rem 1rem;
       border-radius:50px; border:none;
       font-family:'Heebo',sans-serif; font-size:.9rem;
       background:rgba(255,255,255,.2); color:var(--white);
       outline:none; direction:rtl;
     }
-    .picker-search input::placeholder { color:rgba(255,255,255,.65); }
-    .picker-search input:focus { background:rgba(255,255,255,.3); }
-    .picker-search-icon {
-      position:absolute; left:.9rem; top:50%; transform:translateY(-50%);
-      color:rgba(255,255,255,.7); pointer-events:none;
+    .free-search-inp::placeholder { color:rgba(255,255,255,.6); }
+    .free-search-inp:focus { background:rgba(255,255,255,.3); }
+
+    .autocomplete-drop {
+      position: absolute; top: calc(100% + 4px); right: 0; left: 0;
+      background: var(--white); border: 1.5px solid var(--sand-dark);
+      border-radius: var(--radius); box-shadow: var(--shadow-md);
+      z-index: 200; overflow: hidden; max-height: 220px; overflow-y: auto;
     }
+    .autocomplete-item {
+      padding: .6rem 1rem; cursor: pointer; font-size: .9rem; color: var(--ink);
+      border-bottom: 1px solid var(--sand); transition: background .15s;
+    }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover, .autocomplete-item.active { background: var(--cream); color: var(--terracotta); }
 
     .picker-body { padding: 1rem 1.5rem 1.5rem; }
 
+    /* Chips */
     .selected-chips {
-      display:flex; flex-wrap:wrap; gap:.4rem; min-height:36px;
-      margin-bottom:1rem;
+      display:flex; flex-wrap:wrap; gap:.4rem; min-height:32px; margin-bottom:.9rem;
     }
     .chip {
       display:flex; align-items:center; gap:.35rem;
@@ -130,19 +139,23 @@
     }
     .chip:hover { background:var(--terracotta); color:var(--white); }
     .chip-x { font-size:.9rem; line-height:1; }
+    .empty-chips { font-size:.83rem; color:var(--ink-muted); align-self:center; }
 
-    .empty-chips {
-      font-size:.83rem; color:var(--ink-muted); align-self:center;
+    /* Section label */
+    .section-row {
+      display:flex; justify-content:space-between; align-items:center;
+      margin:.9rem 0 .5rem;
     }
+    .section-label { font-size:.8rem; font-weight:600; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.07em; }
+    .show-all-btn {
+      font-size:.78rem; background:none; border:1.5px solid var(--olive);
+      color:var(--olive); border-radius:50px; padding:.2rem .75rem;
+      cursor:pointer; font-family:'Heebo',sans-serif; transition:all .2s;
+    }
+    .show-all-btn:hover { background:var(--olive); color:var(--white); }
 
-    .section-label {
-      font-size:.8rem; font-weight:600; color:var(--ink-muted);
-      text-transform:uppercase; letter-spacing:.07em;
-      margin: .9rem 0 .5rem;
-    }
-    .ing-group {
-      display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.6rem;
-    }
+    /* Pills */
+    .ing-group { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.6rem; }
     .ing-pill {
       padding:.35rem .9rem; border-radius:50px;
       border:1.5px solid var(--sand-dark);
@@ -152,11 +165,24 @@
     }
     .ing-pill:hover { border-color:var(--olive); color:var(--olive); }
     .ing-pill.selected { background:var(--olive); border-color:var(--olive); color:var(--white); }
-    .ing-pill.pantry { border-style:dashed; opacity:.65; cursor:not-allowed; }
-    .ing-pill.hidden { display:none; }
 
+    /* Pantry toggle */
+    .pantry-toggle-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.6rem 0; margin:.6rem 0;
+      border-top:1px solid var(--sand); border-bottom:1px solid var(--sand);
+    }
+    .pantry-label { font-size:.85rem; color:var(--ink-light); }
+    .toggle-btn {
+      padding:.3rem 1rem; border-radius:50px; font-family:'Heebo',sans-serif;
+      font-size:.8rem; cursor:pointer; transition:all .2s;
+      border:1.5px solid var(--sand-dark); background:var(--sand); color:var(--ink-muted);
+    }
+    .toggle-btn.on { background:var(--olive); border-color:var(--olive); color:var(--white); }
+
+    /* Search button */
     .search-btn {
-      width:100%; margin-top:1.25rem; padding:.85rem;
+      width:100%; margin-top:1rem; padding:.85rem;
       background:var(--terracotta); color:var(--white); border:none;
       border-radius:var(--radius); font-family:'Heebo',sans-serif;
       font-size:1rem; font-weight:500; cursor:pointer; transition:background .2s;
@@ -164,31 +190,52 @@
     .search-btn:hover { background:var(--terracotta-light); }
     .search-btn:disabled { opacity:.5; cursor:not-allowed; }
 
-    .pantry-note {
-      font-size:.78rem; color:var(--ink-muted); margin-top:.75rem;
-      text-align:center; line-height:1.5;
+    /* ── Ingredient modal ── */
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:300; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .overlay.show { opacity:1; pointer-events:all; }
+    .ing-modal-dialog {
+      background:var(--white); border-radius:var(--radius-lg);
+      max-width:680px; width:95%; max-height:85vh;
+      display:flex; flex-direction:column; box-shadow:var(--shadow-lg);
+    }
+    .ing-modal-head {
+      padding:1.25rem 1.5rem; border-bottom:1px solid var(--sand);
+      display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+    }
+    .ing-modal-head h3 { font-family:'Noto Serif Hebrew',serif; font-size:1.15rem; font-weight:600; }
+    .ing-modal-close {
+      background:none; border:none; font-size:1.4rem; cursor:pointer;
+      color:var(--ink-muted); line-height:1; transition:color .2s; padding:.1rem .4rem;
+    }
+    .ing-modal-close:hover { color:var(--ink); }
+    .ing-modal-body { overflow-y:auto; padding:1.25rem 1.5rem; }
+    .ing-modal-cat { margin-bottom:1.25rem; }
+    .ing-modal-cat-title {
+      font-family:'Noto Serif Hebrew',serif; font-size:.95rem; font-weight:600;
+      color:var(--ink); margin-bottom:.6rem; padding-bottom:.4rem;
+      border-bottom:1.5px solid var(--sand);
     }
 
     /* ── Results ── */
     .results-area { min-height: 300px; }
-
     .results-header {
-      display:flex; align-items:baseline; gap:.75rem; margin-bottom:1.5rem;
+      display:flex; align-items:baseline; gap:.75rem; margin-bottom:1.5rem; flex-wrap:wrap;
     }
-    .results-title {
-      font-family:'Noto Serif Hebrew',serif; font-size:1.5rem; font-weight:600;
-    }
+    .results-title { font-family:'Noto Serif Hebrew',serif; font-size:1.4rem; font-weight:600; }
     .results-count { font-size:.9rem; color:var(--ink-muted); }
 
     .recipe-card {
       background:var(--white); border-radius:var(--radius-lg);
       box-shadow:var(--shadow-sm); overflow:hidden;
-      display:flex; gap:0; margin-bottom:1.25rem;
+      display:flex; margin-bottom:1.25rem;
       text-decoration:none; color:inherit;
       transition:transform .25s, box-shadow .25s;
     }
     .recipe-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
-
     .card-thumb {
       width:130px; flex-shrink:0;
       background:var(--terracotta-pale);
@@ -196,29 +243,25 @@
       font-size:3rem; overflow:hidden;
     }
     .card-thumb img { width:100%; height:100%; object-fit:cover; }
-
     .card-body { flex:1; padding:1.1rem 1.4rem; }
     .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; margin-bottom:.5rem; }
-    .card-title { font-family:'Noto Serif Hebrew',serif; font-size:1.1rem; font-weight:600; line-height:1.3; }
-    .card-desc { font-size:.88rem; color:var(--ink-muted); line-height:1.6; margin-bottom:.75rem;
+    .card-title { font-family:'Noto Serif Hebrew',serif; font-size:1.05rem; font-weight:600; line-height:1.3; }
+    .card-desc { font-size:.88rem; color:var(--ink-muted); line-height:1.6; margin-bottom:.65rem;
       display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    /* Match meter */
-    .match-wrap { display:flex; align-items:center; gap:.75rem; margin-bottom:.65rem; }
+    .match-wrap { display:flex; align-items:center; gap:.75rem; margin-bottom:.6rem; }
     .match-label { font-size:.8rem; color:var(--ink-muted); white-space:nowrap; }
     .match-bar { flex:1; height:6px; background:var(--sand); border-radius:3px; overflow:hidden; }
     .match-fill { height:100%; border-radius:3px; transition:width .5s; }
     .match-pct { font-size:.85rem; font-weight:700; white-space:nowrap; }
 
-    .missing-list {
-      display:flex; flex-wrap:wrap; gap:.35rem;
-    }
+    .missing-list { display:flex; flex-wrap:wrap; gap:.35rem; }
     .missing-chip {
       background:#fff0eb; color:var(--terracotta);
       border:1px solid var(--terracotta-pale);
       border-radius:50px; font-size:.75rem; padding:.2rem .65rem;
     }
-    .missing-chip::before { content:'−  '; }
+    .missing-chip::before { content:'− '; }
 
     /* Empty / loading */
     .state-box { text-align:center; padding:5rem 2rem; color:var(--ink-muted); }
@@ -256,8 +299,8 @@
 </header>
 
 <section class="hero">
-  <h1>מה יש לי במקרר? 🧊</h1>
-  <p>סמן את המרכיבים שיש לך — נמצא מה אפשר להכין</p>
+  <h1>מתכון לפי מצרכים 🥕</h1>
+  <p>הקלד מרכיבים שיש לך — נמצא מה אפשר להכין</p>
 </section>
 
 <div class="page-layout">
@@ -267,31 +310,34 @@
     <div class="picker-card">
       <div class="picker-header">
         <h2>המרכיבים שלי</h2>
-        <div class="picker-search">
-          <input type="text" id="ing-search" placeholder="חפש מרכיב..." autocomplete="off" />
-          <span class="picker-search-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </span>
+        <div class="free-search-wrap">
+          <input type="text" id="free-search" class="free-search-inp"
+            placeholder="הקלד מרכיב, הפרד בפסיק..." autocomplete="off" />
+          <div id="autocomplete-drop" class="autocomplete-drop" style="display:none"></div>
         </div>
       </div>
 
       <div class="picker-body">
         <div class="selected-chips" id="selected-chips">
-          <span class="empty-chips">עדיין לא בחרת מרכיבים</span>
+          <span class="empty-chips">עדיין לא הוספת מרכיבים</span>
         </div>
 
-        <div id="ing-groups-wrap">
-          <div class="state-box" style="padding:2rem">
-            <div class="spinner"></div>
-          </div>
+        <div class="section-row">
+          <span class="section-label">נפוצים</span>
+          <button class="show-all-btn" onclick="openIngModal()">הצג הכל</button>
+        </div>
+        <div id="quick-picks" class="ing-group">
+          <div class="spinner" style="width:24px;height:24px;border-width:2px;margin:.5rem auto"></div>
+        </div>
+
+        <div class="pantry-toggle-row">
+          <span class="pantry-label">כלול מוצרי יסוד בחיפוש</span>
+          <button id="pantry-toggle" class="toggle-btn" onclick="togglePantry()">כבוי</button>
         </div>
 
         <button class="search-btn" id="search-btn" disabled>
-          חפש מתכונים
+          חפש עם % התאמה
         </button>
-        <p class="pantry-note">תבלינים בסיסיים (מלח, שמן, ביצים וכו') נחשבים אוטומטית כזמינים</p>
       </div>
     </div>
   </aside>
@@ -299,11 +345,22 @@
   <!-- Results -->
   <div class="results-area" id="results-area">
     <div class="state-box">
-      <div class="icon">🛒</div>
-      <p>בחר מרכיבים וחפש מתכונים</p>
+      <div class="icon">🥕</div>
+      <p>הוסף מרכיבים כדי למצוא מתכונים</p>
     </div>
   </div>
 
+</div>
+
+<!-- Ingredient modal -->
+<div class="overlay" id="ing-modal" onclick="if(event.target===this)closeIngModal()">
+  <div class="ing-modal-dialog">
+    <div class="ing-modal-head">
+      <h3>כל המרכיבים</h3>
+      <button class="ing-modal-close" onclick="closeIngModal()">✕</button>
+    </div>
+    <div id="ing-modal-body" class="ing-modal-body"></div>
+  </div>
 </div>
 
 <footer>
@@ -322,163 +379,259 @@ const DIFF_LABEL = { easy:'קל', medium:'בינוני', hard:'מאתגר' };
 
 let allIngredients = [];
 let selected = new Set();
+let pantryEnabled = false;
+let autoSearchTimer = null;
+let acSelectedIdx = -1;
+
+// ── Ingredient categorization ─────────────────────────────────────────────────
+
+function categorizeIng(name) {
+  const n = name;
+  if (/(עגבני|מלפפון|גזר|בצל|שום|פלפל.*ירוק|חסה|תרד|כרוב|קישוא|חציל|פטריה|סלרי|ברוקולי|כרישה|קולרבי|סלק|אספרגוס|ארטישוק|בטטה|תפוחי אדמה|דלע|שמפיניון|תירס|אפונה.*טרי|ראדיש)/.test(n)) return 'ירקות';
+  if (/(תפוח|בננה|תות|לימון|תפוז|אבוקדו|מנגו|אוכמניות|פירות יער|צימוק|משמש|שזיף|אגס|ענבים|מלון|אבטיח|רימון|קיוי|אננס|פסיפלורה|ליים)/.test(n)) return 'פירות';
+  if (/(גבינה|יוגורט|שמנת|ריקוטה|פרמזן|מוצרלה|גאודה|בולגרי|קוטג|מסקרפון|לבנה|חמאה|ביצ|חלב|קרם פרש)/.test(n)) return 'גבינות ומוצרי חלב';
+  if (/(עוף|פרגית|בקר|כבש|טלה|טחון|נקניק|שוק|חזה|כנף|כבד|אנטריקוט|שניצל|סטייק|בשר|עגל|הודו)/.test(n)) return 'בשר ועוף';
+  if (/(שרימפס|סלמון|טונה|דיונון|קלמרי|אנשובי|בקלה|מוסר|לוקוס|ברמונדי|פלמידה|אמנון|קרפיון|דג )/.test(n)) return 'דגים ופירות ים';
+  if (/(עדשים|חומוס|שעועית|פול|קטניות|סויה|טופו|פולים)/.test(n)) return 'קטניות';
+  if (/(קמח|אורז|פסטה|שיפון|כוסמת|קינואה|שיבולת שועל|פולנטה|קורנפלור|סולת|שמרים|מחמצת|גריסים|בורגול)/.test(n)) return 'דגנים וקמחים';
+  if (/(פפריקה|כמון|כורכום|קינמון|אורגנו|בזיליקום|רוזמרין|טימין|עירית|פטרוזיליה|כוסברה|שמיר|נענע|זעתר|בהרת|קארי|צ.ילי|ג.ינג.ר|וניל|אגוז מוסקט|תבלין|כוכב אניס)/.test(n)) return 'תבלינים ועשבי תיבול';
+  if (/(שמן|חומץ|רוטב|מיונז|חרדל|קטשופ|ציר|יין|בירה|מיץ|חלב קוקוס|שמן שומשום|טחינה|פסטו|האריסה)/.test(n)) return 'נוזלים ורטבות';
+  return 'אחר';
+}
 
 // ── Load ingredients ──────────────────────────────────────────────────────────
 
 fetch(`${API}/api/ingredients`)
   .then(r => r.json())
   .then(data => {
-    allIngredients = data;
-    renderGroups(data);
+    allIngredients = data.sort((a, b) => (b.recipe_count || 0) - (a.recipe_count || 0));
+    renderQuickPicks();
   })
   .catch(() => {
-    document.getElementById('ing-groups-wrap').innerHTML =
-      '<p style="color:var(--ink-muted);font-size:.9rem;padding:.5rem 0">לא ניתן לטעון מרכיבים</p>';
+    document.getElementById('quick-picks').innerHTML =
+      '<p style="color:var(--ink-muted);font-size:.85rem">לא ניתן לטעון מרכיבים</p>';
   });
 
-// ── Render ingredient groups ──────────────────────────────────────────────────
+// ── Quick picks (top 25 non-pantry) ──────────────────────────────────────────
 
-function renderGroups(list) {
-  const nonPantry = list.filter(i => !i.is_pantry_staple);
-  const pantry    = list.filter(i =>  i.is_pantry_staple);
+function renderQuickPicks() {
+  const top = allIngredients.filter(i => !i.is_pantry_staple).slice(0, 25);
+  document.getElementById('quick-picks').innerHTML = top.map(i =>
+    `<button class="ing-pill${selected.has(i.id)?' selected':''}"
+      data-id="${i.id}" data-name="${i.name}"
+      onclick="toggleIngPill(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${i.name}</button>`
+  ).join('');
+}
 
-  let html = '';
-  if (nonPantry.length) {
-    html += `<div class="section-label">מרכיבים</div>
-    <div class="ing-group" id="group-main">
-      ${nonPantry.map(i => pillHtml(i)).join('')}
-    </div>`;
+// ── Free text search + autocomplete ──────────────────────────────────────────
+
+const freeEl = document.getElementById('free-search');
+const dropEl = document.getElementById('autocomplete-drop');
+
+freeEl.addEventListener('input', () => {
+  const parts = freeEl.value.split(',');
+  const cur   = parts[parts.length - 1].trim();
+  acSelectedIdx = -1;
+
+  if (!cur) { dropEl.style.display = 'none'; return; }
+
+  const matches = allIngredients
+    .filter(i => !i.is_pantry_staple && i.name.includes(cur) && !selected.has(i.id))
+    .slice(0, 7);
+
+  if (!matches.length) { dropEl.style.display = 'none'; return; }
+
+  dropEl.innerHTML = matches.map((i, idx) =>
+    `<div class="autocomplete-item" data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
+      onmousedown="pickAutocomplete(${i.id},'${i.name.replace(/'/g,"\\'")}',event)">${i.name}</div>`
+  ).join('');
+  dropEl.style.display = 'block';
+});
+
+freeEl.addEventListener('keydown', e => {
+  const items = dropEl.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') {
+    acSelectedIdx = Math.min(acSelectedIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === acSelectedIdx));
+    e.preventDefault();
+  } else if (e.key === 'ArrowUp') {
+    acSelectedIdx = Math.max(acSelectedIdx - 1, -1);
+    items.forEach((el, i) => el.classList.toggle('active', i === acSelectedIdx));
+    e.preventDefault();
+  } else if (e.key === 'Enter' || e.key === ',') {
+    if (acSelectedIdx >= 0 && items[acSelectedIdx]) {
+      const el = items[acSelectedIdx];
+      pickAutocomplete(parseInt(el.dataset.id), el.dataset.name, null);
+    } else {
+      const parts = freeEl.value.split(',');
+      const cur = parts[parts.length - 1].trim();
+      if (cur) {
+        const match = allIngredients.find(i =>
+          i.name.toLowerCase() === cur.toLowerCase() || i.name.includes(cur)
+        );
+        if (match) pickAutocomplete(match.id, match.name, null);
+      }
+    }
+    if (e.key === 'Enter') e.preventDefault();
+  } else if (e.key === 'Escape') {
+    dropEl.style.display = 'none';
   }
-  if (pantry.length) {
-    html += `<div class="section-label">תבלינים בסיסיים (כלולים אוטומטית)</div>
-    <div class="ing-group" id="group-pantry">
-      ${pantry.map(i => pantryPillHtml(i)).join('')}
-    </div>`;
-  }
-  document.getElementById('ing-groups-wrap').innerHTML = html;
+});
 
-  document.querySelectorAll('.ing-pill:not(.pantry)').forEach(btn => {
-    btn.addEventListener('click', () => toggleIng(parseInt(btn.dataset.id), btn.dataset.name, btn));
-  });
+freeEl.addEventListener('blur', () => setTimeout(() => { dropEl.style.display = 'none'; }, 150));
+
+function pickAutocomplete(id, name, e) {
+  if (e) e.preventDefault();
+  const parts = freeEl.value.split(',');
+  parts[parts.length - 1] = '';
+  freeEl.value = parts.join(',').replace(/,\s*$/, '');
+  dropEl.style.display = 'none';
+  acSelectedIdx = -1;
+  addIngredient(id, name);
 }
 
-function pillHtml(i) {
-  const sel = selected.has(i.id);
-  return `<button class="ing-pill${sel?' selected':''}" data-id="${i.id}" data-name="${i.name}">${i.name}</button>`;
-}
-function pantryPillHtml(i) {
-  return `<span class="ing-pill pantry" title="כלול אוטומטית">${i.name}</span>`;
+// ── Add / remove ingredients ──────────────────────────────────────────────────
+
+function addIngredient(id, name) {
+  if (selected.has(id)) return;
+  selected.add(id);
+  renderChips();
+  syncPillState(id, true);
+  document.getElementById('search-btn').disabled = false;
+  scheduleAutoSearch();
 }
 
-// ── Toggle ingredient ─────────────────────────────────────────────────────────
+function removeChip(id) {
+  selected.delete(id);
+  renderChips();
+  syncPillState(id, false);
+  document.getElementById('search-btn').disabled = selected.size === 0;
+  scheduleAutoSearch();
+}
 
-function toggleIng(id, name, btn) {
+function toggleIngPill(id, name, btn) {
   if (selected.has(id)) {
     selected.delete(id);
     btn.classList.remove('selected');
+    renderChips();
+    document.getElementById('search-btn').disabled = selected.size === 0;
+    scheduleAutoSearch();
   } else {
-    selected.add(id);
+    addIngredient(id, name);
     btn.classList.add('selected');
   }
-  renderChips();
-  document.getElementById('search-btn').disabled = selected.size === 0;
+}
+
+function syncPillState(id, sel) {
+  document.querySelectorAll(`.ing-pill[data-id="${id}"]`).forEach(p =>
+    p.classList.toggle('selected', sel)
+  );
 }
 
 function renderChips() {
   const wrap = document.getElementById('selected-chips');
   if (!selected.size) {
-    wrap.innerHTML = '<span class="empty-chips">עדיין לא בחרת מרכיבים</span>';
+    wrap.innerHTML = '<span class="empty-chips">עדיין לא הוספת מרכיבים</span>';
     return;
   }
   wrap.innerHTML = [...selected].map(id => {
     const ing = allIngredients.find(i => i.id === id);
-    if (!ing) return '';
-    return `<span class="chip" data-id="${id}" onclick="removeChip(${id})">${ing.name} <span class="chip-x">×</span></span>`;
+    return ing
+      ? `<span class="chip" onclick="removeChip(${id})">${ing.name} <span class="chip-x">×</span></span>`
+      : '';
   }).join('');
 }
 
-function removeChip(id) {
-  selected.delete(id);
-  const btn = document.querySelector(`.ing-pill[data-id="${id}"]`);
-  if (btn) btn.classList.remove('selected');
-  renderChips();
-  document.getElementById('search-btn').disabled = selected.size === 0;
+// ── Pantry toggle ─────────────────────────────────────────────────────────────
+
+function togglePantry() {
+  pantryEnabled = !pantryEnabled;
+  const btn = document.getElementById('pantry-toggle');
+  btn.textContent = pantryEnabled ? 'דלוק' : 'כבוי';
+  btn.classList.toggle('on', pantryEnabled);
 }
 
-// ── Ingredient search ─────────────────────────────────────────────────────────
+// ── Auto search (intersection) ────────────────────────────────────────────────
 
-document.getElementById('ing-search').addEventListener('input', e => {
-  const q = e.target.value.trim().toLowerCase();
-  document.querySelectorAll('.ing-pill:not(.pantry)').forEach(btn => {
-    const match = !q || btn.dataset.name.includes(q);
-    btn.classList.toggle('hidden', !match);
-  });
-});
+function scheduleAutoSearch() {
+  clearTimeout(autoSearchTimer);
+  if (!selected.size) { showInitialState(); return; }
+  autoSearchTimer = setTimeout(autoSearch, 350);
+}
 
-// ── Search recipes ────────────────────────────────────────────────────────────
-
-document.getElementById('search-btn').addEventListener('click', searchRecipes);
-
-async function searchRecipes() {
-  const btn = document.getElementById('search-btn');
-  btn.disabled = true;
-  btn.textContent = 'מחפש...';
-
-  document.getElementById('results-area').innerHTML = `
-    <div class="state-box"><div class="spinner"></div><p>מחפש מתכונים מתאימים...</p></div>`;
-
+async function autoSearch() {
+  if (!selected.size) { showInitialState(); return; }
+  document.getElementById('results-area').innerHTML =
+    '<div class="state-box"><div class="spinner"></div><p>מחפש...</p></div>';
   try {
     const res = await fetch(`${API}/api/recipes/by-ingredients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ingredient_ids: [...selected] }),
+      body: JSON.stringify({ ingredient_ids: [...selected], mode: 'intersect' }),
     });
-    const recipes = await res.json();
-    renderResults(recipes);
+    renderResults(await res.json(), true);
   } catch {
-    document.getElementById('results-area').innerHTML = `
-      <div class="state-box"><div class="icon">⚠️</div><p>שגיאה בחיפוש — נסה שוב</p></div>`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'חפש מתכונים';
+    showInitialState();
   }
 }
 
+// ── Full search with % match ──────────────────────────────────────────────────
+
+document.getElementById('search-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true; btn.textContent = 'מחפש...';
+  document.getElementById('results-area').innerHTML =
+    '<div class="state-box"><div class="spinner"></div><p>מחפש מתכונים...</p></div>';
+  try {
+    const res = await fetch(`${API}/api/recipes/by-ingredients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ingredient_ids: [...selected], include_pantry: pantryEnabled }),
+    });
+    renderResults(await res.json(), false);
+  } catch {
+    document.getElementById('results-area').innerHTML =
+      '<div class="state-box"><div class="icon">⚠️</div><p>שגיאה בחיפוש — נסה שוב</p></div>';
+  } finally {
+    btn.disabled = selected.size === 0; btn.textContent = 'חפש עם % התאמה';
+  }
+});
+
 // ── Render results ────────────────────────────────────────────────────────────
 
-function renderResults(recipes) {
+function renderResults(recipes, simpleMode) {
   const area = document.getElementById('results-area');
   if (!recipes.length) {
     area.innerHTML = `
       <div class="state-box">
         <div class="icon">🤷</div>
-        <p>לא נמצאו מתכונים עם המרכיבים שבחרת<br>
-        <small style="font-size:.85rem">נסה להוסיף עוד מרכיבים</small></p>
+        <p>${simpleMode
+          ? 'אין מתכונים שמכילים את כל המרכיבים<br><small>נסה את כפתור "חפש עם % התאמה" לתוצאות חלקיות</small>'
+          : 'לא נמצאו מתכונים עם המרכיבים שבחרת<br><small>נסה להוסיף עוד מרכיבים</small>'
+        }</p>
       </div>`;
     return;
   }
-
-  const countEl = `<span class="results-count">${recipes.length} מתכונים נמצאו</span>`;
-  const cards = recipes.map(r => recipeCardHtml(r)).join('');
+  const subtitle = simpleMode
+    ? 'מתכונים שמכילים את כל המרכיבים'
+    : 'תוצאות לפי % התאמה';
   area.innerHTML = `
     <div class="results-header">
-      <h2 class="results-title">תוצאות</h2>
-      ${countEl}
+      <h2 class="results-title">${subtitle}</h2>
+      <span class="results-count">${recipes.length} נמצאו</span>
     </div>
-    ${cards}`;
+    ${recipes.map(r => recipeCardHtml(r, simpleMode)).join('')}`;
 }
 
-function recipeCardHtml(r) {
-  const pct = r.match_percent;
-  const color = pct === 100 ? '#2E7D32' : pct >= 80 ? var_olive() : pct >= 60 ? '#E65100' : '#9A7B65';
+function recipeCardHtml(r, simpleMode) {
+  const pct   = r.match_percent;
+  const color = pct === 100 ? '#2E7D32' : pct >= 80 ? '#6B7A3A' : '#E65100';
   const emoji = CATEGORY_EMOJI[r.category] || '🍴';
   const totalMin = (r.prep_time || 0) + (r.cook_time || 0);
-  const missing = r.missing_ingredients || [];
-
-  const imgHtml = r.image_url
-    ? `<img src="${r.image_url}" alt="${r.title}">`
+  const missing  = r.missing_ingredients || [];
+  const imgHtml  = r.image_url
+    ? `<img src="${r.image_url.split('#')[0]}" alt="${r.title}">`
     : emoji;
-
   return `
     <a class="recipe-card" href="recipe.html?id=${r.id}">
       <div class="card-thumb">${imgHtml}</div>
@@ -488,17 +641,16 @@ function recipeCardHtml(r) {
           ${r.category ? `<span style="font-size:.78rem;color:var(--ink-muted);white-space:nowrap">${r.category}</span>` : ''}
         </div>
         ${r.description ? `<p class="card-desc">${r.description}</p>` : ''}
-        <div class="match-wrap">
-          <span class="match-label">התאמה</span>
-          <div class="match-bar">
-            <div class="match-fill" style="width:${pct}%;background:${color}"></div>
+        ${!simpleMode && pct !== undefined ? `
+          <div class="match-wrap">
+            <span class="match-label">התאמה</span>
+            <div class="match-bar"><div class="match-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span class="match-pct" style="color:${color}">${pct}%</span>
           </div>
-          <span class="match-pct" style="color:${color}">${pct}%</span>
-        </div>
-        ${missing.length ? `
-        <div class="missing-list">
-          ${missing.map(m => `<span class="missing-chip">${m.name}</span>`).join('')}
-        </div>` : `<div style="font-size:.82rem;color:#2E7D32;font-weight:500">✓ יש לך את כל המרכיבים!</div>`}
+          ${missing.length
+            ? `<div class="missing-list">${missing.map(m => `<span class="missing-chip">${m.name}</span>`).join('')}</div>`
+            : `<div style="font-size:.82rem;color:#2E7D32;font-weight:500">✓ יש לך את כל המרכיבים!</div>`}
+        ` : ''}
         <div style="display:flex;gap:1rem;margin-top:.6rem">
           ${totalMin ? `<span style="font-size:.8rem;color:var(--ink-muted)">⏱ ${totalMin} דק'</span>` : ''}
           ${r.difficulty ? `<span style="font-size:.8rem;color:var(--ink-muted)">${DIFF_LABEL[r.difficulty]||''}</span>` : ''}
@@ -507,7 +659,58 @@ function recipeCardHtml(r) {
     </a>`;
 }
 
-function var_olive() { return '#6B7A3A'; }
+function showInitialState() {
+  document.getElementById('results-area').innerHTML = `
+    <div class="state-box"><div class="icon">🥕</div><p>הוסף מרכיבים כדי למצוא מתכונים</p></div>`;
+}
+
+// ── "Show all" modal ──────────────────────────────────────────────────────────
+
+function openIngModal() {
+  const nonPantry = allIngredients.filter(i => !i.is_pantry_staple);
+  const buckets = {};
+  for (const ing of nonPantry) {
+    const cat = categorizeIng(ing.name);
+    (buckets[cat] = buckets[cat] || []).push(ing);
+  }
+  const cats = Object.keys(buckets).sort((a, b) => {
+    if (a === 'אחר') return 1;
+    if (b === 'אחר') return -1;
+    return a.localeCompare(b, 'he');
+  });
+  document.getElementById('ing-modal-body').innerHTML = cats.map(cat => {
+    const sorted = buckets[cat].sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    return `
+      <div class="ing-modal-cat">
+        <div class="ing-modal-cat-title">${cat}</div>
+        <div class="ing-group">
+          ${sorted.map(i => `
+            <button class="ing-pill${selected.has(i.id)?' selected':''}"
+              data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
+              onclick="toggleIngModal(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${i.name}</button>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('ing-modal').classList.add('show');
+}
+
+function closeIngModal() { document.getElementById('ing-modal').classList.remove('show'); }
+
+function toggleIngModal(id, name, btn) {
+  if (selected.has(id)) {
+    selected.delete(id);
+    btn.classList.remove('selected');
+    syncPillState(id, false);
+  } else {
+    selected.add(id);
+    btn.classList.add('selected');
+    syncPillState(id, true);
+  }
+  renderChips();
+  document.getElementById('search-btn').disabled = selected.size === 0;
+  scheduleAutoSearch();
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/recipes-blog/sw.js').catch(() => {});

@@ -111,6 +111,7 @@
     }
     .rli-del:hover { color: var(--danger); }
     .list-empty { padding: 2rem 1.5rem; text-align: center; color: var(--ink-muted); font-size: .9rem; }
+    .rli-hidden { opacity: .55; }
 
     /* ── Form ── */
     .form-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 2rem; }
@@ -440,7 +441,9 @@ function initAdmin() {
 
 async function loadRecipes() {
   try {
-    const res = await fetch(`${API}/api/recipes`);
+    const res = await fetch(`${API}/api/recipes?include_hidden=true`, {
+      headers: { 'x-admin-password': adminPw }
+    });
     recipes = await res.json();
     renderList();
   } catch {
@@ -457,8 +460,8 @@ function renderList() {
   }
   wrap.innerHTML = `<ul class="recipe-list">${
     recipes.map(r => `
-      <li class="recipe-list-item${editingId===r.id?' active':''}" data-id="${r.id}">
-        <span class="rli-title">${r.title}</span>
+      <li class="recipe-list-item${editingId===r.id?' active':''}${r.is_hidden?' rli-hidden':''}" data-id="${r.id}">
+        <span class="rli-title">${r.is_hidden?'<span title="מוסתר" style="opacity:.5">🙈</span> ':''}${r.title}</span>
         <span class="rli-cat">${r.category||''}</span>
         <button class="rli-del" title="מחק" onclick="event.stopPropagation();confirmDelete(${r.id},'${r.title.replace(/'/g,"\\'")}')">🗑</button>
       </li>`).join('')
@@ -508,7 +511,8 @@ function renderForm(data) {
       <div><label>שם המתכון *</label><input type="text" id="f-title" value="${esc(data.title||'')}" placeholder="שם המתכון" /></div>
       <div><label>קטגוריה</label><input type="text" id="f-category" value="${esc(data.category||'')}" placeholder="אפייה, עיקריות..." /></div>
     </div>
-    <div class="form-full"><label>תיאור</label><textarea id="f-desc" rows="3" placeholder="תיאור קצר של המתכון...">${esc(data.description||'')}</textarea></div>
+    <div class="form-full"><label>תיאור קצר</label><textarea id="f-desc" rows="3" placeholder="תיאור קצר של המתכון...">${esc(data.description||'')}</textarea></div>
+    <div class="form-full"><label>סיפור / תיאור מורחב</label><textarea id="f-story" rows="5" placeholder="ספר על המתכון — מאיפה בא, מה ייחודי בו, זכרונות...">${esc(data.story_text||'')}</textarea></div>
     <div class="form-grid three">
       <div><label>זמן הכנה (דק')</label><input type="number" id="f-prep" value="${data.prep_time||''}" min="0" /></div>
       <div><label>זמן בישול (דק')</label><input type="number" id="f-cook" value="${data.cook_time||''}" min="0" /></div>
@@ -523,6 +527,13 @@ function renderForm(data) {
         </select>
       </div>
       <div><label>תגיות (מופרדות בפסיק)</label><input type="text" id="f-tags" value="${esc(tags)}" placeholder="ביסקוויטים, אפייה..." /></div>
+    </div>
+    <div class="form-full" style="margin-bottom:.75rem">
+      <label style="display:flex;align-items:center;gap:.75rem;cursor:pointer;user-select:none">
+        <input type="checkbox" id="f-hidden" ${data.is_hidden?'checked':''} style="width:18px;height:18px;accent-color:var(--danger);cursor:pointer;flex-shrink:0" />
+        <span>הסתר מתכון מהעמוד הראשי</span>
+        <small style="color:var(--ink-muted);font-size:.78rem">(לא יופיע לגולשים)</small>
+      </label>
     </div>
     <div class="form-full">
       <label>תמונה</label>
@@ -660,11 +671,13 @@ function collectForm() {
   return {
     title:       document.getElementById('f-title').value.trim(),
     description: document.getElementById('f-desc').value.trim() || null,
+    story_text:  document.getElementById('f-story').value.trim() || null,
     category:    document.getElementById('f-category').value.trim() || null,
     difficulty:  document.getElementById('f-difficulty').value,
     prep_time:   parseInt(document.getElementById('f-prep').value) || null,
     cook_time:   parseInt(document.getElementById('f-cook').value) || null,
     servings:    parseInt(document.getElementById('f-servings').value) || null,
+    is_hidden:   document.getElementById('f-hidden').checked,
     tags, ingredients, steps,
     image_url:   document.getElementById('f-image').value.trim() || null,
   };

@@ -80,6 +80,12 @@ async function initDB() {
     ON CONFLICT (name) DO NOTHING;
   `);
 
+  // Add new columns idempotently
+  await pool.query(`
+    ALTER TABLE recipes ADD COLUMN IF NOT EXISTS is_hidden  BOOLEAN DEFAULT FALSE;
+    ALTER TABLE recipes ADD COLUMN IF NOT EXISTS story_text TEXT;
+  `);
+
   console.log('DB ready');
 }
 
@@ -146,7 +152,11 @@ app.post('/tts', async (req, res) => {
 app.get('/api/ingredients', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM ingredients ORDER BY is_pantry_staple DESC, name'
+      `SELECT i.*, COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
+       FROM ingredients i
+       LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
+       GROUP BY i.id
+       ORDER BY recipe_count DESC, i.name`
     );
     res.json(rows);
   } catch (err) {
@@ -158,13 +168,36 @@ app.get('/api/ingredients', async (req, res) => {
 // ─── Recipes: by-ingredients (must be before /:id) ───────────────────────────
 
 app.post('/api/recipes/by-ingredients', async (req, res) => {
-  const { ingredient_ids = [] } = req.body;
+  const { ingredient_ids = [], include_pantry = true, mode } = req.body;
 
   try {
-    const { rows: staples } = await pool.query(
-      'SELECT id FROM ingredients WHERE is_pantry_staple = TRUE'
-    );
-    const available = [...new Set([...ingredient_ids, ...staples.map((r) => r.id)])];
+    // Intersect mode: recipes that contain ALL specified ingredients
+    if (mode === 'intersect') {
+      if (!ingredient_ids.length) return res.json([]);
+      const { rows } = await pool.query(
+        `SELECT r.*
+         FROM recipes r
+         WHERE r.is_hidden = FALSE
+           AND (
+             SELECT COUNT(DISTINCT ri.ingredient_id)
+             FROM recipe_ingredients ri
+             WHERE ri.recipe_id = r.id AND ri.ingredient_id = ANY($1::int[])
+           ) = $2
+         ORDER BY r.created_at DESC`,
+        [ingredient_ids, ingredient_ids.length]
+      );
+      return res.json(rows);
+    }
+
+    let available;
+    if (include_pantry) {
+      const { rows: staples } = await pool.query(
+        'SELECT id FROM ingredients WHERE is_pantry_staple = TRUE'
+      );
+      available = [...new Set([...ingredient_ids, ...staples.map((r) => r.id)])];
+    } else {
+      available = [...new Set(ingredient_ids)];
+    }
 
     // Per-recipe: total ingredients vs how many are available
     const { rows: recipes } = await pool.query(
@@ -175,6 +208,7 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
            FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_ingredients
        FROM recipes r
        JOIN recipe_ingredients ri ON ri.recipe_id = r.id
+       WHERE r.is_hidden = FALSE
        GROUP BY r.id
        HAVING COUNT(DISTINCT ri.ingredient_id) > 0`,
       [available]
@@ -217,10 +251,15 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
 // ─── Recipes: list + create ───────────────────────────────────────────────────
 
 app.get('/api/recipes', async (req, res) => {
-  const { search, category, difficulty } = req.query;
+  const { search, category, difficulty, include_hidden } = req.query;
+  const isAdmin = req.headers['x-admin-password'] === process.env.ADMIN_PASSWORD;
   const conditions = [];
   const params = [];
   let i = 1;
+
+  if (!(isAdmin && include_hidden === 'true')) {
+    conditions.push('r.is_hidden = FALSE');
+  }
 
   if (search) {
     conditions.push(
@@ -265,6 +304,7 @@ app.post('/api/recipes', requireAdmin, async (req, res) => {
   const {
     title, description, difficulty, prep_time, cook_time,
     servings, category, tags, image_url, ingredients, steps,
+    is_hidden, story_text,
   } = req.body;
 
   const client = await pool.connect();
@@ -273,10 +313,10 @@ app.post('/api/recipes', requireAdmin, async (req, res) => {
 
     const { rows: [recipe] } = await client.query(
       `INSERT INTO recipes
-         (title, description, difficulty, prep_time, cook_time, servings, category, tags, image_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         (title, description, difficulty, prep_time, cook_time, servings, category, tags, image_url, is_hidden, story_text)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url]
+      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null]
     );
 
     await insertIngredientsAndSteps(client, recipe.id, ingredients, steps);
@@ -340,6 +380,7 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
   const {
     title, description, difficulty, prep_time, cook_time,
     servings, category, tags, image_url, ingredients, steps,
+    is_hidden, story_text,
   } = req.body;
 
   const client = await pool.connect();
@@ -349,9 +390,9 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     const { rows: [recipe] } = await client.query(
       `UPDATE recipes
        SET title=$1, description=$2, difficulty=$3, prep_time=$4, cook_time=$5,
-           servings=$6, category=$7, tags=$8, image_url=$9
-       WHERE id=$10 RETURNING *`,
-      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url, id]
+           servings=$6, category=$7, tags=$8, image_url=$9, is_hidden=$10, story_text=$11
+       WHERE id=$12 RETURNING *`,
+      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null, id]
     );
     if (!recipe) {
       await client.query('ROLLBACK');

@@ -458,6 +458,8 @@
 <div id="page-content" style="display:none">
   <!-- Hero injected by JS -->
   <div id="recipe-hero"></div>
+  <!-- Story block (injected if story_text exists) -->
+  <div id="recipe-story"></div>
 
   <div class="recipe-layout">
     <!-- Sidebar -->
@@ -579,6 +581,7 @@ if (!id) {
       baseServings = recipe.servings || 1;
       currentServings = baseServings;
       renderHero();
+      renderStory();
       renderIngredients();
       renderTags();
       renderSteps();
@@ -640,6 +643,18 @@ function renderHero() {
       <img src="${recipe.image_url.split('#')[0]}" alt="${recipe.title}"
         style="width:100%;height:100%;object-fit:cover;${imgTransformStyle(recipe.image_url)}" />
     </div>` : ''}`;
+}
+
+// ── Story ─────────────────────────────────────────────────────────────────────
+
+function renderStory() {
+  if (!recipe.story_text) return;
+  document.getElementById('recipe-story').innerHTML = `
+    <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0">
+      <div style="background:var(--white);border-radius:var(--radius-lg);padding:2rem 2.5rem;box-shadow:var(--shadow-sm);border-right:4px solid var(--terracotta)">
+        <p style="font-family:'Noto Serif Hebrew',serif;font-size:1.05rem;color:var(--ink-light);line-height:2.1;white-space:pre-wrap">${recipe.story_text}</p>
+      </div>
+    </div>`;
 }
 
 // ── Ingredients ──────────────────────────────────────────────────────────────
