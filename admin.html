@@ -211,6 +211,18 @@
     .spinner { width:32px; height:32px; border:3px solid var(--sand-dark); border-top-color:var(--terracotta); border-radius:50%; animation:spin .8s linear infinite; margin:2rem auto; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
+    /* ── Settings section ── */
+    .settings-section { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+    .settings-header { padding: .9rem 1.25rem; border-bottom: 1px solid var(--sand); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .settings-header h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1rem; font-weight: 600; }
+    .settings-toggle { font-size: .8rem; color: var(--ink-muted); }
+    .settings-body { padding: 1.25rem; display: none; }
+    .settings-body.open { display: block; }
+    .settings-save-row { margin-top: 1.25rem; display: flex; justify-content: flex-end; }
+    .settings-save-btn { padding: .7rem 1.5rem; background: var(--olive); color: var(--white); border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: .9rem; font-weight: 500; cursor: pointer; transition: background .2s; }
+    .settings-save-btn:hover { background: var(--olive-light); }
+    .settings-save-btn:disabled { opacity: .5; cursor: not-allowed; }
+
     /* ── Image crop/position editor ── */
     .crop-dialog { background: var(--white); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 600px; width: 95%; box-shadow: var(--shadow-md); }
     .crop-viewport { width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative; border-radius: var(--radius); background: #111; cursor: grab; user-select: none; touch-action: none; }
@@ -247,6 +259,48 @@
 <!-- Admin UI -->
 <div id="admin-ui" style="display:none">
   <div class="admin-wrap">
+
+    <!-- Site settings -->
+    <section class="settings-section" id="settings-section">
+      <div class="settings-header" onclick="toggleSettings()">
+        <h2>⚙️ הגדרות אתר</h2>
+        <span class="settings-toggle" id="settings-toggle-label">▼ פתח</span>
+      </div>
+      <div class="settings-body" id="settings-body">
+        <div class="form-row-2">
+          <div>
+            <label>שם האתר</label>
+            <input type="text" id="s-site-name" placeholder="המטבח שלי" />
+          </div>
+          <div>
+            <label>כותרת דף הבית</label>
+            <input type="text" id="s-hero-title" placeholder="מתכונים עם אהבה" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>תיאור האתר (מוצג מתחת לכותרת)</label>
+          <textarea id="s-site-description" rows="2" placeholder="מטבח ביתי חם — מתכונים אמיתיים..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>תמונת רקע לדף הבית</label>
+          <div class="img-upload-wrap">
+            <div class="img-preview" id="s-hero-img-preview" onclick="document.getElementById('s-hero-img-file').click()" style="height:120px">
+              <img id="s-hero-img-el" src="" alt="" style="display:none" />
+              <div class="img-preview-placeholder" id="s-hero-img-ph">📷<br>לחץ לבחירת תמונת רקע</div>
+            </div>
+            <input type="file" id="s-hero-img-file" accept="image/*" style="display:none" onchange="handleHeroImageSelect(this)" />
+            <div class="upload-progress" id="s-hero-progress"><div class="upload-progress-bar" id="s-hero-bar"></div></div>
+            <div class="img-row">
+              <input type="url" id="s-hero-image" placeholder="https://res.cloudinary.com/..." style="direction:ltr" onchange="updateHeroPreview()" />
+              <button type="button" class="upload-btn" onclick="document.getElementById('s-hero-img-file').click()">📤 העלה</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-save-row">
+          <button class="settings-save-btn" id="settings-save-btn" onclick="saveSettings()">💾 שמור הגדרות</button>
+        </div>
+      </div>
+    </section>
 
     <!-- Recipe list -->
     <section class="list-section">
@@ -344,7 +398,90 @@ document.getElementById('pw-btn').addEventListener('click', async () => {
 function initAdmin() {
   document.getElementById('login-gate').style.display = 'none';
   document.getElementById('admin-ui').style.display   = 'block';
+  loadSiteSettings();
   loadRecipes();
+}
+
+// ── Site settings ─────────────────────────────────────────────────────────────
+
+function toggleSettings() {
+  const body = document.getElementById('settings-body');
+  const label = document.getElementById('settings-toggle-label');
+  const open = body.classList.toggle('open');
+  label.textContent = open ? '▲ סגור' : '▼ פתח';
+}
+
+async function loadSiteSettings() {
+  try {
+    const res = await fetch(`${API}/api/settings`);
+    if (!res.ok) return;
+    const s = await res.json();
+    if (s.site_name)        document.getElementById('s-site-name').value        = s.site_name;
+    if (s.hero_title)       document.getElementById('s-hero-title').value       = s.hero_title;
+    if (s.site_description) document.getElementById('s-site-description').value = s.site_description;
+    if (s.hero_image) {
+      document.getElementById('s-hero-image').value = s.hero_image;
+      updateHeroPreview();
+    }
+  } catch {}
+}
+
+async function saveSettings() {
+  const data = {
+    site_name:        document.getElementById('s-site-name').value.trim(),
+    hero_title:       document.getElementById('s-hero-title').value.trim(),
+    site_description: document.getElementById('s-site-description').value.trim(),
+    hero_image:       document.getElementById('s-hero-image').value.trim(),
+  };
+  const btn = document.getElementById('settings-save-btn');
+  btn.disabled = true; btn.textContent = 'שומר...';
+  try {
+    const res = await fetch(`${API}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(res.status);
+    showToast('ההגדרות נשמרו ✓', 'success');
+  } catch {
+    showToast('שגיאה בשמירת ההגדרות', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 שמור הגדרות';
+  }
+}
+
+function updateHeroPreview() {
+  const url = document.getElementById('s-hero-image').value.trim();
+  const img = document.getElementById('s-hero-img-el');
+  const ph  = document.getElementById('s-hero-img-ph');
+  if (url) {
+    img.src = url.split('#')[0]; img.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    if (ph) ph.style.display = '';
+  }
+}
+
+function handleHeroImageSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('s-hero-img-el');
+    const ph  = document.getElementById('s-hero-img-ph');
+    if (img) { img.src = e.target.result; img.style.display = 'block'; }
+    if (ph)  ph.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  uploadToCloudinary(file, url => {
+    document.getElementById('s-hero-image').value = url;
+    updateHeroPreview();
+  }, {
+    progressEl: document.getElementById('s-hero-progress'),
+    barEl:      document.getElementById('s-hero-bar'),
+  });
 }
 
 // ── Recipe list ───────────────────────────────────────────────────────────────

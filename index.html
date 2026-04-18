@@ -90,12 +90,21 @@
       text-align: center;
       position: relative;
       overflow: hidden;
+      background-size: cover;
+      background-position: center;
     }
     .hero::before {
       content: '';
       position: absolute;
       inset: 0;
       background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    .hero.has-bg-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(44,31,20,.45);
       pointer-events: none;
     }
     .hero h1 {
@@ -106,6 +115,7 @@
       line-height: 1.2;
       margin-bottom: 1rem;
       position: relative;
+      z-index: 1;
     }
     .hero p {
       font-size: 1.15rem;
@@ -114,6 +124,7 @@
       margin: 0 auto 2.5rem;
       font-weight: 300;
       position: relative;
+      z-index: 1;
     }
 
     /* ── Search bar ── */
@@ -121,6 +132,7 @@
       position: relative;
       max-width: 560px;
       margin: 0 auto;
+      z-index: 1;
     }
     .search-wrap input {
       width: 100%;
@@ -154,30 +166,43 @@
       padding: 3rem 2rem 5rem;
     }
 
-    /* ── Filters ── */
-    .filters {
-      display: flex;
-      gap: .75rem;
-      flex-wrap: wrap;
+    /* ── Filters wrap ── */
+    .filters-wrap {
       margin-bottom: 2.5rem;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
     }
-    .filter-label {
-      font-size: .85rem;
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      min-height: 38px;
+    }
+    .filter-row-label {
+      font-size: .82rem;
       color: var(--ink-muted);
-      font-weight: 500;
-      margin-left: .25rem;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 52px;
+    }
+    .chips-row {
+      display: flex;
+      gap: .45rem;
+      flex-wrap: wrap;
     }
     .filter-btn {
-      padding: .45rem 1.1rem;
+      padding: .4rem 1rem;
       border-radius: 50px;
       border: 1.5px solid var(--sand-dark);
       background: var(--white);
       color: var(--ink-light);
       font-family: 'Heebo', sans-serif;
-      font-size: .9rem;
+      font-size: .875rem;
       cursor: pointer;
       transition: all .2s;
+      white-space: nowrap;
     }
     .filter-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
     .filter-btn.active {
@@ -185,6 +210,52 @@
       border-color: var(--terracotta);
       color: var(--white);
     }
+    .filter-btn.active.cat-chip {
+      background: var(--olive);
+      border-color: var(--olive);
+    }
+    .filter-btn.cat-chip:hover { border-color: var(--olive); color: var(--olive); }
+
+    .sort-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      padding-top: .35rem;
+    }
+    .sort-label {
+      font-size: .82rem;
+      color: var(--ink-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .sort-select {
+      padding: .4rem .85rem;
+      border-radius: 50px;
+      border: 1.5px solid var(--sand-dark);
+      background: var(--white);
+      color: var(--ink-light);
+      font-family: 'Heebo', sans-serif;
+      font-size: .875rem;
+      cursor: pointer;
+      outline: none;
+      direction: rtl;
+      transition: border-color .2s;
+    }
+    .sort-select:focus { border-color: var(--terracotta); }
+    .clear-btn {
+      padding: .4rem 1rem;
+      border-radius: 50px;
+      border: 1.5px solid var(--sand-dark);
+      background: var(--white);
+      color: var(--ink-muted);
+      font-family: 'Heebo', sans-serif;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .2s;
+      margin-right: auto;
+    }
+    .clear-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
 
     /* ── Section title ── */
     .section-header {
@@ -210,6 +281,19 @@
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.75rem;
     }
+
+    /* ── Group header ── */
+    .group-header {
+      grid-column: 1 / -1;
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--ink-light);
+      padding: .6rem 0 .4rem;
+      border-bottom: 2px solid var(--sand-dark);
+      margin-top: .75rem;
+    }
+    .group-header:first-child { margin-top: 0; }
 
     /* ── Card ── */
     .recipe-card {
@@ -360,6 +444,8 @@
       .hero { padding: 3.5rem 1.25rem 3rem; }
       main { padding: 2rem 1.25rem 4rem; }
       .recipes-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+      .chips-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+      .chips-row::-webkit-scrollbar { display: none; }
     }
   </style>
 </head>
@@ -367,7 +453,7 @@
 
 <header>
   <div class="header-inner">
-    <a href="index.html" class="logo">המטבח <span>שלי</span></a>
+    <a href="index.html" class="logo" id="site-logo">המטבח <span>שלי</span></a>
     <div style="display:flex;gap:.75rem;align-items:center">
       <a href="fridge.html" class="nav-link">🧊 מה יש לי במקרר?</a>
       <a href="admin.html" class="nav-link" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.82rem">⚙️</a>
@@ -375,9 +461,9 @@
   </div>
 </header>
 
-<section class="hero">
-  <h1>מתכונים עם אהבה</h1>
-  <p>מטבח ביתי חם — מתכונים אמיתיים, חומרים פשוטים, תוצאות מדהימות</p>
+<section class="hero" id="hero-section">
+  <h1 id="hero-title">מתכונים עם אהבה</h1>
+  <p id="hero-subtitle">מטבח ביתי חם — מתכונים אמיתיים, חומרים פשוטים, תוצאות מדהימות</p>
   <div class="search-wrap">
     <input type="text" id="search-input" placeholder="חפש מתכון..." autocomplete="off" />
     <span class="search-icon">
@@ -389,12 +475,48 @@
 </section>
 
 <main>
-  <div class="filters">
-    <span class="filter-label">קושי:</span>
-    <button class="filter-btn active" data-difficulty="">הכל</button>
-    <button class="filter-btn" data-difficulty="easy">קל</button>
-    <button class="filter-btn" data-difficulty="medium">בינוני</button>
-    <button class="filter-btn" data-difficulty="hard">מאתגר</button>
+  <div class="filters-wrap">
+    <!-- Category chips (built from data) -->
+    <div class="filter-row" id="cat-filter-row" style="display:none">
+      <span class="filter-row-label">קטגוריה:</span>
+      <div class="chips-row" id="cat-chips"></div>
+    </div>
+
+    <!-- Difficulty chips -->
+    <div class="filter-row">
+      <span class="filter-row-label">קושי:</span>
+      <div class="chips-row">
+        <button class="filter-btn active" data-difficulty="">הכל</button>
+        <button class="filter-btn" data-difficulty="easy">קל</button>
+        <button class="filter-btn" data-difficulty="medium">בינוני</button>
+        <button class="filter-btn" data-difficulty="hard">מאתגר</button>
+      </div>
+    </div>
+
+    <!-- Time chips -->
+    <div class="filter-row">
+      <span class="filter-row-label">זמן:</span>
+      <div class="chips-row">
+        <button class="filter-btn active" data-time="">כל הזמנים</button>
+        <button class="filter-btn" data-time="short">עד 30 דק'</button>
+        <button class="filter-btn" data-time="medium">30–60 דק'</button>
+        <button class="filter-btn" data-time="long">שעה+</button>
+      </div>
+    </div>
+
+    <!-- Sort + clear -->
+    <div class="sort-row">
+      <span class="sort-label">מיון:</span>
+      <select id="sort-select" class="sort-select">
+        <option value="date-desc">חדש לישן</option>
+        <option value="date-asc">ישן לחדש</option>
+        <option value="diff-easy">קושי: קל → מאתגר</option>
+        <option value="diff-hard">קושי: מאתגר → קל</option>
+        <option value="time-asc">זמן: קצר → ארוך</option>
+        <option value="time-desc">זמן: ארוך → קצר</option>
+      </select>
+      <button id="clear-btn" class="clear-btn" style="display:none" onclick="clearFilters()">✕ נקה הכל</button>
+    </div>
   </div>
 
   <div class="section-header">
@@ -411,7 +533,7 @@
 </main>
 
 <footer>
-  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span>המטבח שלי</span> &nbsp;© 2026</p>
+  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span id="footer-name">המטבח שלי</span> &nbsp;© 2026</p>
 </footer>
 
 <script src="config.js"></script>
@@ -422,19 +544,56 @@
     'מרקים': '🍲', 'סלטים': '🥗', 'עיקריות': '🍽️', 'קינוחים': '🍮',
     'חטיפים': '🥨', 'שתייה': '🥤', 'ארוחת בוקר': '🍳',
   };
-
   const DIFFICULTY_LABEL = { easy: 'קל', medium: 'בינוני', hard: 'מאתגר' };
+  const DIFF_ORDER = { easy: 0, medium: 1, hard: 2 };
 
   let allRecipes = [];
-  let activeFilters = { difficulty: '', search: '' };
+  let activeFilters = { search: '', category: '', difficulty: '', timeRange: '' };
+  let sortBy = 'date-desc';
+
+  // ── Settings ──────────────────────────────────────────────────────────────────
+
+  async function loadSettings() {
+    try {
+      const res = await fetch(`${API}/api/settings`);
+      if (!res.ok) return;
+      const s = await res.json();
+
+      if (s.site_name) {
+        document.title = `${s.site_name} — מתכונים ביתיים`;
+        const logoEl = document.getElementById('site-logo');
+        if (logoEl) logoEl.innerHTML = s.site_name.replace(/\s+/, ' <span>') + '</span>';
+        const footerEl = document.getElementById('footer-name');
+        if (footerEl) footerEl.textContent = s.site_name;
+      }
+      if (s.hero_title) {
+        const el = document.getElementById('hero-title');
+        if (el) el.textContent = s.hero_title;
+      }
+      if (s.site_description) {
+        const el = document.getElementById('hero-subtitle');
+        if (el) el.textContent = s.site_description;
+      }
+      if (s.hero_image) {
+        const heroEl = document.getElementById('hero-section');
+        if (heroEl) {
+          heroEl.style.backgroundImage = `url('${s.hero_image.split('#')[0]}')`;
+          heroEl.classList.add('has-bg-image');
+        }
+      }
+    } catch {}
+  }
+
+  // ── Recipes ───────────────────────────────────────────────────────────────────
 
   async function loadRecipes() {
     try {
       const res = await fetch(`${API}/api/recipes`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       allRecipes = await res.json();
+      buildCategoryChips();
       render();
-    } catch (err) {
+    } catch {
       document.getElementById('recipes-grid').innerHTML = `
         <div class="state-box">
           <div class="icon">⚠️</div>
@@ -443,9 +602,43 @@
     }
   }
 
+  function buildCategoryChips() {
+    const cats = [...new Set(allRecipes.map(r => r.category).filter(Boolean))].sort();
+    if (!cats.length) return;
+    const row = document.getElementById('cat-filter-row');
+    const wrap = document.getElementById('cat-chips');
+    wrap.innerHTML =
+      `<button class="filter-btn cat-chip active" data-category="">הכל</button>` +
+      cats.map(c =>
+        `<button class="filter-btn cat-chip" data-category="${esc(c)}">${esc(c)}</button>`
+      ).join('');
+    row.style.display = 'flex';
+
+    wrap.querySelectorAll('.cat-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilters.category = btn.dataset.category;
+        updateClearBtn();
+        render();
+      });
+    });
+  }
+
+  // ── Filtering ─────────────────────────────────────────────────────────────────
+
   function filtered() {
     return allRecipes.filter(r => {
       if (activeFilters.difficulty && r.difficulty !== activeFilters.difficulty) return false;
+      if (activeFilters.category  && r.category  !== activeFilters.category)  return false;
+
+      if (activeFilters.timeRange) {
+        const total = (r.prep_time || 0) + (r.cook_time || 0);
+        if (activeFilters.timeRange === 'short'  && total > 30)             return false;
+        if (activeFilters.timeRange === 'medium' && (total <= 30 || total > 60)) return false;
+        if (activeFilters.timeRange === 'long'   && total <= 60)            return false;
+      }
+
       if (activeFilters.search) {
         const q = activeFilters.search.toLowerCase();
         const inTitle = r.title.toLowerCase().includes(q);
@@ -457,9 +650,24 @@
     });
   }
 
+  function getSorted(list) {
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'date-asc':  return new Date(a.created_at) - new Date(b.created_at);
+        case 'diff-easy': return (DIFF_ORDER[a.difficulty] ?? 1) - (DIFF_ORDER[b.difficulty] ?? 1);
+        case 'diff-hard': return (DIFF_ORDER[b.difficulty] ?? 1) - (DIFF_ORDER[a.difficulty] ?? 1);
+        case 'time-asc':  return ((a.prep_time||0)+(a.cook_time||0)) - ((b.prep_time||0)+(b.cook_time||0));
+        case 'time-desc': return ((b.prep_time||0)+(b.cook_time||0)) - ((a.prep_time||0)+(a.cook_time||0));
+        default:          return new Date(b.created_at) - new Date(a.created_at);
+      }
+    });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   function render() {
-    const list = filtered();
-    const grid = document.getElementById('recipes-grid');
+    const list    = getSorted(filtered());
+    const grid    = document.getElementById('recipes-grid');
     const countEl = document.getElementById('recipe-count');
 
     countEl.textContent = list.length ? `${list.length} מתכונים` : '';
@@ -473,49 +681,125 @@
       return;
     }
 
-    grid.innerHTML = list.map(r => {
-      const totalMin = (r.prep_time || 0) + (r.cook_time || 0);
-      const timeStr  = totalMin ? `${totalMin} דק'` : '';
-      const emoji    = CATEGORY_EMOJI[r.category] || '🍴';
-      const diffLabel = DIFFICULTY_LABEL[r.difficulty] || '';
-      const tags = (r.tags || []).slice(0, 3);
+    const groupByDiff = sortBy === 'diff-easy' || sortBy === 'diff-hard';
+    let currentDiff = null;
+    let html = '';
 
-      const imageHtml = r.image_url
-        ? `<img src="${r.image_url}" alt="${r.title}" loading="lazy" />`
-        : `<div class="card-placeholder">${emoji}</div>`;
+    for (const r of list) {
+      if (groupByDiff && r.difficulty !== currentDiff) {
+        currentDiff = r.difficulty;
+        html += `<div class="group-header">${DIFFICULTY_LABEL[currentDiff] || currentDiff || 'ללא רמה'}</div>`;
+      }
+      html += cardHtml(r);
+    }
 
-      return `
-        <a class="recipe-card" href="recipe.html?id=${r.id}">
-          <div class="card-image">
-            ${imageHtml}
-            ${r.category ? `<span class="card-category">${r.category}</span>` : ''}
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">${r.title}</h3>
-            ${r.description ? `<p class="card-desc">${r.description}</p>` : ''}
-            ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
-            <div class="card-meta">
-              ${timeStr ? `
-              <span class="meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                ${timeStr}
-              </span>` : ''}
-              ${r.servings ? `
-              <span class="meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                ${r.servings}
-              </span>` : ''}
-              ${diffLabel ? `<span class="difficulty-badge ${r.difficulty}">${diffLabel}</span>` : ''}
-            </div>
-          </div>
-        </a>`;
-    }).join('');
+    grid.innerHTML = html;
   }
+
+  function cardHtml(r) {
+    const totalMin  = (r.prep_time || 0) + (r.cook_time || 0);
+    const timeStr   = totalMin ? `${totalMin} דק'` : '';
+    const emoji     = CATEGORY_EMOJI[r.category] || '🍴';
+    const diffLabel = DIFFICULTY_LABEL[r.difficulty] || '';
+    const tags      = (r.tags || []).slice(0, 3);
+
+    const imageHtml = r.image_url
+      ? (() => {
+          const base = r.image_url.split('#')[0];
+          const m    = r.image_url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+          const style = m
+            ? `style="object-position:${m[1]}% ${m[2]}%;transform:scale(${m[3]});transform-origin:${m[1]}% ${m[2]}%"`
+            : '';
+          return `<img src="${base}" alt="${esc(r.title)}" loading="lazy" ${style} />`;
+        })()
+      : `<div class="card-placeholder">${emoji}</div>`;
+
+    return `
+      <a class="recipe-card" href="recipe.html?id=${r.id}">
+        <div class="card-image">
+          ${imageHtml}
+          ${r.category ? `<span class="card-category">${esc(r.category)}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">${esc(r.title)}</h3>
+          ${r.description ? `<p class="card-desc">${esc(r.description)}</p>` : ''}
+          ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+          <div class="card-meta">
+            ${timeStr ? `
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              ${timeStr}
+            </span>` : ''}
+            ${r.servings ? `
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              ${r.servings}
+            </span>` : ''}
+            ${diffLabel ? `<span class="difficulty-badge ${r.difficulty}">${diffLabel}</span>` : ''}
+          </div>
+        </div>
+      </a>`;
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  // ── Filter controls ───────────────────────────────────────────────────────────
+
+  function updateClearBtn() {
+    const active = activeFilters.search || activeFilters.category ||
+                   activeFilters.difficulty || activeFilters.timeRange;
+    document.getElementById('clear-btn').style.display = active ? '' : 'none';
+  }
+
+  function clearFilters() {
+    activeFilters = { search: '', category: '', difficulty: '', timeRange: '' };
+    document.getElementById('search-input').value = '';
+
+    document.querySelectorAll('[data-difficulty]').forEach(b => {
+      b.classList.toggle('active', b.dataset.difficulty === '');
+    });
+    document.querySelectorAll('[data-time]').forEach(b => {
+      b.classList.toggle('active', b.dataset.time === '');
+    });
+    document.querySelectorAll('.cat-chip').forEach(b => {
+      b.classList.toggle('active', b.dataset.category === '');
+    });
+    updateClearBtn();
+    render();
+  }
+
+  // Difficulty chips
+  document.querySelectorAll('[data-difficulty]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-difficulty]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilters.difficulty = btn.dataset.difficulty;
+      updateClearBtn();
+      render();
+    });
+  });
+
+  // Time chips
+  document.querySelectorAll('[data-time]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-time]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilters.timeRange = btn.dataset.time;
+      updateClearBtn();
+      render();
+    });
+  });
+
+  // Sort
+  document.getElementById('sort-select').addEventListener('change', e => {
+    sortBy = e.target.value;
+    render();
+  });
 
   // Search
   let searchTimer;
@@ -523,20 +807,14 @@
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       activeFilters.search = e.target.value.trim();
+      updateClearBtn();
       render();
     }, 200);
   });
 
-  // Difficulty filters
-  document.querySelectorAll('.filter-btn[data-difficulty]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn[data-difficulty]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilters.difficulty = btn.dataset.difficulty;
-      render();
-    });
-  });
+  // ── Init ──────────────────────────────────────────────────────────────────────
 
+  loadSettings();
   loadRecipes();
 
   if ('serviceWorker' in navigator) {

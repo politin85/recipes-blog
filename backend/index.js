@@ -67,6 +67,11 @@ async function initDB() {
       note_text   TEXT NOT NULL,
       created_at  TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT
+    );
   `);
 
   // Seed pantry staples (idempotent)
@@ -489,6 +494,40 @@ app.delete('/api/recipes/:recipeId/notes/:noteId', async (req, res) => {
       [req.params.noteId, req.params.recipeId]
     );
     res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ─── Site settings ────────────────────────────────────────────────────────────
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT key, value FROM site_settings');
+    const settings = Object.fromEntries(rows.map(r => [r.key, r.value]));
+    res.json(settings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.put('/api/settings', requireAdmin, async (req, res) => {
+  const allowed = ['site_name', 'hero_title', 'site_description', 'hero_image'];
+  const entries = Object.entries(req.body).filter(([k]) => allowed.includes(k));
+  if (!entries.length) return res.status(400).json({ error: 'No valid keys' });
+
+  try {
+    for (const [key, value] of entries) {
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [key, value]
+      );
+    }
+    const { rows } = await pool.query('SELECT key, value FROM site_settings');
+    res.json(Object.fromEntries(rows.map(r => [r.key, r.value])));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });
