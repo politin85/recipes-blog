@@ -165,20 +165,31 @@
       font-style: italic; display: block; margin-top: .15rem;
     }
     .servings-ctrl {
-      display: flex; align-items: center; gap: .75rem;
-      margin-bottom: 1.1rem;
+      display: flex; align-items: center; gap: .6rem;
+      margin-bottom: 1.1rem; flex-wrap: wrap;
     }
-    .servings-ctrl button {
-      width: 30px; height: 30px; border-radius: 50%;
-      border: 1.5px solid var(--sand-dark);
+    .servings-input {
+      width: 58px; height: 34px;
+      border: 1.5px solid var(--sand-dark); border-radius: var(--radius);
       background: var(--white); color: var(--ink);
-      font-size: 1.1rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
+      font-family: 'Heebo', sans-serif; font-size: 1rem; font-weight: 600;
+      text-align: center; outline: none;
+      -moz-appearance: textfield;
+      transition: border-color .2s;
     }
-    .servings-ctrl button:hover { border-color: var(--terracotta); color: var(--terracotta); }
-    .servings-val { font-weight: 600; font-size: 1rem; min-width: 24px; text-align: center; }
+    .servings-input::-webkit-inner-spin-button,
+    .servings-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .servings-input:focus { border-color: var(--terracotta); }
     .servings-label { font-size: .85rem; color: var(--ink-muted); }
+    .servings-multipliers { display: flex; gap: .3rem; }
+    .mult-btn {
+      padding: .2rem .65rem; border-radius: 50px;
+      border: 1.5px solid var(--sand-dark); background: var(--white);
+      color: var(--ink-muted); font-family: 'Heebo', sans-serif;
+      font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s;
+    }
+    .mult-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
+    .mult-btn.active { background: var(--terracotta); border-color: var(--terracotta); color: var(--white); }
 
     /* Tags */
     .tags-wrap { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -435,7 +446,7 @@
 <header>
   <div class="header-inner">
     <a href="/" class="logo">מתכונים <span>מחושבים</span></a>
-    <a href="fridge.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:.85rem;margin-left:.5rem">🧊 מה יש לי?</a>
+    <a href="fridge.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:.85rem;margin-left:.5rem">🧊 מתכון לפי מצרכים</a>
     <a href="index.html" class="back-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"/>
@@ -467,10 +478,13 @@
       <!-- Ingredients -->
       <div class="card">
         <div class="servings-ctrl">
-          <button id="serv-dec">−</button>
-          <span class="servings-val" id="serv-val">4</span>
+          <input type="number" id="serv-val" class="servings-input" min="1" value="1" />
           <span class="servings-label">מנות</span>
-          <button id="serv-inc">+</button>
+          <div class="servings-multipliers">
+            <button class="mult-btn" id="mult-half" onclick="setServingsMult('half')">½x</button>
+            <button class="mult-btn" id="mult-one"  onclick="setServingsMult('one')">1x</button>
+            <button class="mult-btn" id="mult-two"  onclick="setServingsMult('two')">2x</button>
+          </div>
         </div>
         <h2 class="card-heading">מרכיבים</h2>
         <ul class="ingredient-list" id="ingredient-list"></ul>
@@ -564,6 +578,7 @@ let recipe = null;
 let baseServings = 1;
 let currentServings = 1;
 const timers = {};
+const stepOriginals = {};
 
 // ── Fetch & init ──────────────────────────────────────────────────────────────
 
@@ -589,7 +604,7 @@ if (!id) {
       renderRelated();
       document.getElementById('page-loading').style.display = 'none';
       document.getElementById('page-content').style.display = 'block';
-      document.getElementById('serv-val').textContent = currentServings;
+      document.getElementById('serv-val').value = currentServings;
     })
     .catch(() => {
       document.getElementById('page-loading').style.display = 'none';
@@ -687,15 +702,33 @@ function formatAmount(n) {
 }
 
 // Servings controls
-document.getElementById('serv-dec').addEventListener('click', () => {
-  if (currentServings > 1) { currentServings--; updateServings(); }
+document.getElementById('serv-val').addEventListener('change', () => {
+  const v = parseInt(document.getElementById('serv-val').value, 10);
+  if (v >= 1) { currentServings = v; updateServings(); }
+  else document.getElementById('serv-val').value = currentServings;
 });
-document.getElementById('serv-inc').addEventListener('click', () => {
-  currentServings++; updateServings();
-});
+
+function setServingsMult(type) {
+  if      (type === 'half') currentServings = Math.max(1, Math.floor(currentServings / 2));
+  else if (type === 'one')  currentServings = baseServings;
+  else if (type === 'two')  currentServings = currentServings * 2;
+  document.getElementById('serv-val').value = currentServings;
+  updateServings();
+}
+
 function updateServings() {
-  document.getElementById('serv-val').textContent = currentServings;
+  document.getElementById('serv-val').value = currentServings;
   renderIngredients();
+  updateStepTexts();
+}
+
+function updateStepTexts() {
+  document.querySelectorAll('.step-text[data-sid]').forEach(el => {
+    const sid = parseInt(el.dataset.sid, 10);
+    if (stepOriginals[sid] !== undefined) {
+      el.innerHTML = highlightIngredients(stepOriginals[sid]);
+    }
+  });
 }
 
 // ── Tags ─────────────────────────────────────────────────────────────────────
@@ -716,6 +749,7 @@ function renderSteps() {
   const container = document.getElementById('steps-list');
   const total = (recipe.steps || []).length;
   container.innerHTML = (recipe.steps || []).map((s, i) => {
+    stepOriginals[s.id] = s.text;
     const hasTimer = s.timer_seconds > 0;
     const isFirst  = i === 0;
     const highlighted = highlightIngredients(s.text);
@@ -733,7 +767,7 @@ function renderSteps() {
         <div class="step-body" id="step-body-${s.id}">
           <div class="step-content-inner">
             ${s.image_url ? `<div style="width:100%;height:200px;overflow:hidden;border-radius:var(--radius);margin-bottom:.85rem"><img src="${s.image_url.split('#')[0]}" alt="שלב ${s.step_order}" style="width:100%;height:100%;object-fit:cover;${imgTransformStyle(s.image_url)}" /></div>` : ''}
-            <div class="step-text">${highlighted}</div>
+            <div class="step-text" data-sid="${s.id}">${highlighted}</div>
             ${hasTimer ? `
             <div class="timer-wrap">
               <div class="timer-display">
@@ -871,12 +905,13 @@ function toggleTimer(id, total) {
 }
 
 function startTimer(id, total) {
-  if (!timers[id]) timers[id] = { remaining: total, total };
+  if (!timers[id]) timers[id] = { total, pausedMs: 0, running: false };
   timers[id].running = true;
+  timers[id].startEpoch = Date.now();
 
-  const btn = document.getElementById(`timer-btn-${id}`);
-  const display = document.getElementById(`timer-display-${id}`);
-  const bar = document.getElementById(`timer-bar-${id}`);
+  const btn      = document.getElementById(`timer-btn-${id}`);
+  const display  = document.getElementById(`timer-display-${id}`);
+  const bar      = document.getElementById(`timer-bar-${id}`);
   const resetBtn = document.getElementById(`timer-reset-${id}`);
 
   btn.textContent = '⏸ עצור';
@@ -885,11 +920,14 @@ function startTimer(id, total) {
   resetBtn.style.display = 'inline-flex';
 
   timers[id].interval = setInterval(() => {
-    timers[id].remaining--;
-    display.textContent = formatTime(timers[id].remaining);
-    bar.style.width = (timers[id].remaining / timers[id].total * 100) + '%';
+    const elapsed   = timers[id].pausedMs + (Date.now() - timers[id].startEpoch);
+    const remainMs  = Math.max(0, timers[id].total * 1000 - elapsed);
+    const remainSec = Math.ceil(remainMs / 1000);
 
-    if (timers[id].remaining <= 0) {
+    display.textContent = formatTime(remainSec);
+    bar.style.width = (remainMs / (timers[id].total * 1000) * 100) + '%';
+
+    if (remainMs <= 0) {
       clearInterval(timers[id].interval);
       timers[id].running = false;
       btn.textContent = '✓ הסתיים';
@@ -899,11 +937,12 @@ function startTimer(id, total) {
       bar.style.width = '0%';
       playBeep();
     }
-  }, 1000);
+  }, 250);
 }
 
 function pauseTimer(id) {
   clearInterval(timers[id].interval);
+  timers[id].pausedMs += Date.now() - timers[id].startEpoch;
   timers[id].running = false;
   const btn = document.getElementById(`timer-btn-${id}`);
   btn.textContent = '▶ המשך';
@@ -912,7 +951,7 @@ function pauseTimer(id) {
 
 function resetTimer(id, total) {
   if (timers[id]?.interval) clearInterval(timers[id].interval);
-  timers[id] = { remaining: total, total, running: false };
+  timers[id] = { total, pausedMs: 0, running: false };
   document.getElementById(`timer-display-${id}`).textContent = formatTime(total);
   document.getElementById(`timer-display-${id}`).className = 'timer-time';
   document.getElementById(`timer-bar-${id}`).style.width = '100%';
@@ -931,15 +970,15 @@ function formatTime(sec) {
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.3, 0.6].forEach(offset => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.25);
-      osc.start(ctx.currentTime + offset);
-      osc.stop(ctx.currentTime + offset + 0.25);
+    [0, 0.5, 1.0].forEach(offset => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.3, ctx.currentTime + offset);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.3);
+      o.start(ctx.currentTime + offset);
+      o.stop(ctx.currentTime + offset + 0.3);
     });
   } catch {}
 }
