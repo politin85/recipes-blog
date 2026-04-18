@@ -331,12 +331,12 @@
         </div>
 
         <div class="pantry-toggle-row">
-          <span class="pantry-label">כלול מוצרי יסוד בחיפוש</span>
+          <span class="pantry-label">כלול מוצרי יסוד בחיפוש % התאמה</span>
           <button id="pantry-toggle" class="toggle-btn" onclick="togglePantry()">כבוי</button>
         </div>
 
         <button class="search-btn" id="search-btn" disabled>
-          חפש עם % התאמה
+          🔍 חפש עם % התאמה
         </button>
       </div>
     </div>
@@ -549,6 +549,8 @@ function togglePantry() {
   const btn = document.getElementById('pantry-toggle');
   btn.textContent = pantryEnabled ? 'דלוק' : 'כבוי';
   btn.classList.toggle('on', pantryEnabled);
+  // re-run auto-search so results reflect pantry change immediately
+  scheduleAutoSearch();
 }
 
 // ── Auto search (intersection) ────────────────────────────────────────────────
@@ -567,11 +569,18 @@ async function autoSearch() {
     const res = await fetch(`${API}/api/recipes/by-ingredients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ingredient_ids: [...selected], mode: 'simple' }),
+      body: JSON.stringify({
+        ingredient_ids: [...selected],
+        mode: 'simple',
+        include_pantry: pantryEnabled,
+      }),
     });
-    renderResults(await res.json(), true);
+    const data = await res.json();
+    if (!res.ok) throw new Error(res.status);
+    renderResults(data, true);
   } catch {
-    showInitialState();
+    document.getElementById('results-area').innerHTML =
+      '<div class="state-box"><div class="icon">⚠️</div><p>שגיאה בחיפוש — נסה שוב</p></div>';
   }
 }
 
@@ -624,14 +633,24 @@ function renderResults(recipes, simpleMode) {
 }
 
 function recipeCardHtml(r, simpleMode) {
-  const pct   = r.match_percent;
-  const color = pct === 100 ? '#2E7D32' : pct >= 80 ? '#6B7A3A' : '#E65100';
-  const emoji = CATEGORY_EMOJI[r.category] || '🍴';
+  const pct      = r.match_percent;
+  const color    = pct === 100 ? '#2E7D32' : pct >= 80 ? '#6B7A3A' : '#E65100';
+  const emoji    = CATEGORY_EMOJI[r.category] || '🍴';
   const totalMin = (r.prep_time || 0) + (r.cook_time || 0);
   const missing  = r.missing_ingredients || [];
   const imgHtml  = r.image_url
     ? `<img src="${r.image_url.split('#')[0]}" alt="${r.title}">`
     : emoji;
+
+  // Simple mode: show how many selected ingredients matched
+  const matchedCount = r.matched_count;
+  const selectedCount = selected.size;
+  const simpleMatchHtml = simpleMode && matchedCount != null
+    ? `<div style="font-size:.82rem;font-weight:600;color:var(--olive);margin-bottom:.4rem">
+         ✓ ${matchedCount} מתוך ${selectedCount} מרכיב${selectedCount !== 1 ? 'ים' : ''} שלך נמצאו
+       </div>`
+    : '';
+
   return `
     <a class="recipe-card" href="recipe.html?id=${r.id}">
       <div class="card-thumb">${imgHtml}</div>
@@ -641,9 +660,10 @@ function recipeCardHtml(r, simpleMode) {
           ${r.category ? `<span style="font-size:.78rem;color:var(--ink-muted);white-space:nowrap">${r.category}</span>` : ''}
         </div>
         ${r.description ? `<p class="card-desc">${r.description}</p>` : ''}
+        ${simpleMatchHtml}
         ${!simpleMode && pct !== undefined ? `
           <div class="match-wrap">
-            <span class="match-label">התאמה</span>
+            <span class="match-label">כיסוי</span>
             <div class="match-bar"><div class="match-fill" style="width:${pct}%;background:${color}"></div></div>
             <span class="match-pct" style="color:${color}">${pct}%</span>
           </div>
