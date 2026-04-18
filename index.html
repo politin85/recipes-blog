@@ -230,7 +230,7 @@
     /* ── Section title ── */
     .section-header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 1rem;
       margin-bottom: 2rem;
     }
@@ -379,6 +379,113 @@
       border-radius: 50px;
     }
 
+    /* ── View toggle ── */
+    .view-toggle {
+      display: flex;
+      gap: .25rem;
+      margin-inline-start: auto;
+    }
+    .view-btn {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: 1.5px solid var(--sand-dark);
+      background: var(--white);
+      color: var(--ink-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .view-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
+    .view-btn.active { background: var(--terracotta); border-color: var(--terracotta); color: var(--white); }
+
+    /* ── List view ── */
+    .recipes-list {
+      display: flex;
+      flex-direction: column;
+      gap: .85rem;
+    }
+    .list-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+      min-height: 96px;
+    }
+    .list-card:hover { transform: translateX(-2px); box-shadow: var(--shadow-md); }
+    .list-image {
+      width: 130px;
+      flex-shrink: 0;
+      background: var(--sand);
+      overflow: hidden;
+      position: relative;
+    }
+    .list-image img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .3s;
+    }
+    .list-card:hover .list-image img { transform: scale(1.05); }
+    .list-placeholder {
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--sand) 0%, var(--terracotta-pale) 100%);
+      font-size: 2.2rem;
+    }
+    .list-body {
+      flex: 1;
+      padding: .85rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+      overflow: hidden;
+    }
+    .list-title {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .list-desc {
+      font-size: .83rem;
+      color: var(--ink-muted);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .list-meta {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+    .list-category-badge {
+      background: var(--terracotta);
+      color: var(--white);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .18rem .6rem;
+      border-radius: 50px;
+    }
+    .list-group-header {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink-light);
+      padding: .5rem 0 .35rem;
+      border-bottom: 2px solid var(--sand-dark);
+      margin-top: .5rem;
+    }
+    .list-group-header:first-child { margin-top: 0; }
+
     /* ── Empty / Loading ── */
     .state-box {
       grid-column: 1 / -1;
@@ -416,6 +523,7 @@
       .recipes-grid { grid-template-columns: 1fr; gap: 1.25rem; }
       .chips-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
       .chips-row::-webkit-scrollbar { display: none; }
+      .list-image { width: 100px; }
     }
   </style>
 </head>
@@ -425,7 +533,7 @@
   <div class="header-inner">
     <a href="index.html" class="logo" id="site-logo">מתכונים <span>מחושבים</span></a>
     <div style="display:flex;gap:.75rem;align-items:center">
-      <a href="fridge.html" class="nav-link">🧊 מה יש לי במקרר?</a>
+      <a href="fridge.html" class="nav-link">🧊 מתכון לפי מצרכים</a>
       <a href="admin.html" class="nav-link" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.82rem">⚙️</a>
     </div>
   </div>
@@ -491,6 +599,22 @@
   <div class="section-header">
     <h2 class="section-title">כל המתכונים</h2>
     <span class="recipe-count" id="recipe-count"></span>
+    <div class="view-toggle">
+      <button class="view-btn" id="view-grid-btn" title="תצוגת כרטיסים" onclick="setView('grid')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+          <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+        </svg>
+      </button>
+      <button class="view-btn" id="view-list-btn" title="תצוגת רשימה" onclick="setView('list')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div class="recipes-grid" id="recipes-grid">
@@ -519,6 +643,7 @@
   let allRecipes = [];
   let activeFilters = { search: '', category: '', difficulty: '', timeRange: '' };
   let sortBy = 'date-desc';
+  let viewMode = localStorage.getItem('recipeViewMode') || 'grid';
 
   // ── Settings ──────────────────────────────────────────────────────────────────
 
@@ -639,6 +764,7 @@
     countEl.textContent = list.length ? `${list.length} מתכונים` : '';
 
     if (!list.length) {
+      grid.className = 'recipes-grid';
       grid.innerHTML = `
         <div class="state-box">
           <div class="icon">🔍</div>
@@ -651,15 +777,70 @@
     let currentDiff = null;
     let html = '';
 
-    for (const r of list) {
-      if (groupByDiff && r.difficulty !== currentDiff) {
-        currentDiff = r.difficulty;
-        html += `<div class="group-header">${DIFFICULTY_LABEL[currentDiff] || currentDiff || 'ללא רמה'}</div>`;
+    if (viewMode === 'list') {
+      grid.className = 'recipes-list';
+      for (const r of list) {
+        if (groupByDiff && r.difficulty !== currentDiff) {
+          currentDiff = r.difficulty;
+          html += `<div class="list-group-header">${DIFFICULTY_LABEL[currentDiff] || currentDiff || 'ללא רמה'}</div>`;
+        }
+        html += listCardHtml(r);
       }
-      html += cardHtml(r);
+    } else {
+      grid.className = 'recipes-grid';
+      for (const r of list) {
+        if (groupByDiff && r.difficulty !== currentDiff) {
+          currentDiff = r.difficulty;
+          html += `<div class="group-header">${DIFFICULTY_LABEL[currentDiff] || currentDiff || 'ללא רמה'}</div>`;
+        }
+        html += cardHtml(r);
+      }
     }
 
     grid.innerHTML = html;
+  }
+
+  function setView(mode) {
+    viewMode = mode;
+    localStorage.setItem('recipeViewMode', mode);
+    document.getElementById('view-grid-btn').classList.toggle('active', mode === 'grid');
+    document.getElementById('view-list-btn').classList.toggle('active', mode === 'list');
+    render();
+  }
+
+  function listCardHtml(r) {
+    const totalMin  = (r.prep_time || 0) + (r.cook_time || 0);
+    const timeStr   = totalMin ? `${totalMin} דק'` : '';
+    const emoji     = CATEGORY_EMOJI[r.category] || '🍴';
+    const diffLabel = DIFFICULTY_LABEL[r.difficulty] || '';
+
+    const imageHtml = r.image_url
+      ? (() => {
+          const base = r.image_url.split('#')[0];
+          const m    = r.image_url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+          const style = m
+            ? `style="object-position:${m[1]}% ${m[2]}%;transform:scale(${m[3]});transform-origin:${m[1]}% ${m[2]}%"`
+            : '';
+          return `<img src="${base}" alt="${esc(r.title)}" loading="lazy" ${style} />`;
+        })()
+      : `<div class="list-placeholder">${emoji}</div>`;
+
+    return `
+      <a class="list-card" href="recipe.html?id=${r.id}">
+        <div class="list-image">${imageHtml}</div>
+        <div class="list-body">
+          <div class="list-title">${esc(r.title)}</div>
+          ${r.description ? `<div class="list-desc">${esc(r.description)}</div>` : ''}
+          <div class="list-meta">
+            ${r.category ? `<span class="list-category-badge">${esc(r.category)}</span>` : ''}
+            ${timeStr ? `<span class="meta-item" style="font-size:.8rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>${timeStr}</span>` : ''}
+            ${diffLabel ? `<span class="difficulty-badge ${r.difficulty}" style="margin-right:0">${diffLabel}</span>` : ''}
+          </div>
+        </div>
+      </a>`;
   }
 
   function cardHtml(r) {
@@ -779,6 +960,9 @@
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────────
+
+  document.getElementById('view-grid-btn').classList.toggle('active', viewMode === 'grid');
+  document.getElementById('view-list-btn').classList.toggle('active', viewMode === 'list');
 
   loadSettings();
   loadRecipes();
