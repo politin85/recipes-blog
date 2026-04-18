@@ -89,6 +89,9 @@ async function initDB() {
   await pool.query(`
     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS is_hidden  BOOLEAN DEFAULT FALSE;
     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS story_text TEXT;
+    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS prep_minutes INTEGER DEFAULT 0;
+    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS cook_minutes INTEGER DEFAULT 0;
+    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS show_timer   BOOLEAN DEFAULT true;
   `);
 
   console.log('DB ready');
@@ -575,20 +578,35 @@ function processSteps(steps) {
   return steps.map(s => ({
     ...s,
     timer_seconds: s.timer_seconds ?? parseTimerFromText(s.text || '') ?? null,
+    prep_minutes:  s.prep_minutes  ?? 0,
+    cook_minutes:  s.cook_minutes  ?? 0,
+    show_timer:    s.show_timer    !== false,
   }));
 }
 
 function calcAutoTimes(steps) {
-  let prepSec = 0, cookSec = 0;
+  let prepMin = 0, cookMin = 0;
   for (const s of steps || []) {
-    if (!s.timer_seconds) continue;
-    const ctx = (s.title || '') + ' ' + (s.text || '');
-    if (isCookingStep(ctx)) cookSec += s.timer_seconds;
-    else prepSec += s.timer_seconds;
+    prepMin += s.prep_minutes || 0;
+    cookMin += s.cook_minutes || 0;
+  }
+  // Fallback to timer-based heuristic for recipes without explicit per-step times
+  if (prepMin === 0 && cookMin === 0) {
+    let prepSec = 0, cookSec = 0;
+    for (const s of steps || []) {
+      if (!s.timer_seconds) continue;
+      const ctx = (s.title || '') + ' ' + (s.text || '');
+      if (isCookingStep(ctx)) cookSec += s.timer_seconds;
+      else prepSec += s.timer_seconds;
+    }
+    return {
+      prep_time: prepSec > 0 ? Math.round(prepSec / 60) : null,
+      cook_time: cookSec > 0 ? Math.round(cookSec / 60) : null,
+    };
   }
   return {
-    prep_time: prepSec > 0 ? Math.round(prepSec / 60) : null,
-    cook_time: cookSec > 0 ? Math.round(cookSec / 60) : null,
+    prep_time: prepMin > 0 ? prepMin : null,
+    cook_time: cookMin > 0 ? cookMin : null,
   };
 }
 
@@ -616,9 +634,10 @@ async function insertIngredientsAndSteps(client, recipeId, ingredients, steps) {
     for (let i = 0; i < steps.length; i++) {
       const s = steps[i];
       await client.query(
-        `INSERT INTO steps (recipe_id, step_order, title, text, image_url, timer_seconds)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [recipeId, i + 1, s.title ?? null, s.text, s.image_url ?? null, s.timer_seconds ?? null]
+        `INSERT INTO steps (recipe_id, step_order, title, text, image_url, timer_seconds, prep_minutes, cook_minutes, show_timer)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [recipeId, i + 1, s.title ?? null, s.text, s.image_url ?? null, s.timer_seconds ?? null,
+         s.prep_minutes ?? 0, s.cook_minutes ?? 0, s.show_timer !== false]
       );
     }
   }

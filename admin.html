@@ -145,9 +145,10 @@
     .step-num-badge { width: 30px; height: 30px; border-radius: 50%; background: var(--terracotta); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: .82rem; font-weight: 700; flex-shrink: 0; }
     .step-title-inp { flex: 1; }
     .step-text-inp { min-height: 100px; }
-    .step-timer-wrap { margin-top: .65rem; }
-    .step-timer-wrap label { font-size: .78rem; }
-    .step-timer-inp { margin-top: .3rem; }
+    .step-timer-wrap { margin-top: .65rem; display:flex; gap:.75rem; flex-wrap:wrap; align-items:flex-end; }
+    .step-timer-wrap label { font-size: .78rem; display:block; margin-bottom:.25rem; }
+    .step-timer-inp, .step-prep-inp, .step-cook-inp { width:80px; }
+    .step-show-timer-wrap { display:flex; align-items:center; gap:.35rem; font-size:.78rem; padding-bottom:.2rem; }
 
     /* Delete / action buttons */
     .del-btn { background: none; border: none; color: var(--ink-muted); cursor: pointer; font-size: 1.1rem; padding: .35rem; line-height: 1; transition: color .2s; flex-shrink: 0; min-width: 38px; min-height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
@@ -647,7 +648,7 @@ function renderForm(data) {
           <input type="number" id="f-prep" value="${data.prep_time||''}" min="0" placeholder="0" />
         </div>
         <div>
-          <label>בישול (דק')</label>
+          <label>בישול/אפייה (דק')</label>
           <input type="number" id="f-cook" value="${data.cook_time||''}" min="0" placeholder="0" />
         </div>
         <div>
@@ -655,7 +656,6 @@ function renderForm(data) {
           <input type="number" id="f-servings" value="${data.servings||''}" min="1" placeholder="4" />
         </div>
       </div>
-      <button type="button" class="calc-btn" onclick="recalcTimes()" title="חשב זמנים מהשלבים אוטומטית">⏱ חשב</button>
     </div>
 
     <!-- תגיות -->
@@ -775,8 +775,22 @@ function stepRowHtml(idx, s={}) {
       <textarea class="step-text-inp" placeholder="הוראות השלב *" rows="4"
         onblur="autoDetectStepTimer(this)">${esc(s.text||'')}</textarea>
       <div class="step-timer-wrap">
-        <label>⏱ טיימר (דקות, אופציונלי)</label>
-        <input type="number" class="step-timer-inp" placeholder="דקות" value="${timerMin}" min="0" />
+        <div>
+          <label>⏱ טיימר (דק', אופציונלי)</label>
+          <input type="number" class="step-timer-inp" placeholder="דקות" value="${timerMin}" min="0" />
+        </div>
+        <div>
+          <label>🥄 זמן הכנה (דק')</label>
+          <input type="number" class="step-prep-inp" placeholder="0" value="${s.prep_minutes||''}" min="0" oninput="recalcTimes()" />
+        </div>
+        <div>
+          <label>🔥 זמן בישול/אפייה (דק')</label>
+          <input type="number" class="step-cook-inp" placeholder="0" value="${s.cook_minutes||''}" min="0" oninput="recalcTimes()" />
+        </div>
+        <label class="step-show-timer-wrap">
+          <input type="checkbox" class="step-show-timer" ${s.show_timer === false ? '' : 'checked'} />
+          הצג טיימר
+        </label>
       </div>
       <div class="step-img-section">
         <div class="step-img-preview" id="step-${id}-prev"
@@ -841,18 +855,11 @@ function autoDetectStepTimer(textarea) {
 function recalcTimes() {
   let prepMin = 0, cookMin = 0;
   document.querySelectorAll('.step-row').forEach(row => {
-    const text = row.querySelector('.step-text-inp')?.value || '';
-    const timerEl = row.querySelector('.step-timer-inp');
-    const mins = timerEl?.value ? parseInt(timerEl.value) : parseTimerFromText(text);
-    if (!mins) return;
-    const ctx = (row.querySelector('.step-title-inp')?.value || '') + ' ' + text;
-    if (isCookingStep(ctx)) cookMin += mins;
-    else prepMin += mins;
+    prepMin += parseInt(row.querySelector('.step-prep-inp')?.value) || 0;
+    cookMin += parseInt(row.querySelector('.step-cook-inp')?.value) || 0;
   });
-  if (prepMin > 0) document.getElementById('f-prep').value = prepMin;
-  if (cookMin > 0) document.getElementById('f-cook').value = cookMin;
-  if (prepMin > 0 || cookMin > 0) showToast('זמנים חושבו מהשלבים ✓', 'success');
-  else showToast('לא נמצאו זמנים בשלבים', '');
+  document.getElementById('f-prep').value = prepMin || '';
+  document.getElementById('f-cook').value = cookMin || '';
 }
 
 // ── Collect form data ─────────────────────────────────────────────────────────
@@ -874,6 +881,9 @@ function collectForm() {
       title:         row.querySelector('.step-title-inp').value.trim() || null,
       text:          row.querySelector('.step-text-inp').value.trim(),
       timer_seconds: mins ? mins * 60 : null,
+      prep_minutes:  parseInt(row.querySelector('.step-prep-inp')?.value) || 0,
+      cook_minutes:  parseInt(row.querySelector('.step-cook-inp')?.value) || 0,
+      show_timer:    row.querySelector('.step-show-timer')?.checked !== false,
       image_url:     row.querySelector('.step-img-url')?.value.trim() || null,
     };
   }).filter(s => s.text);

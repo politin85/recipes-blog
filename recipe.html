@@ -225,6 +225,13 @@
       cursor:pointer; transition:all .2s;
     }
     .open-all-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
+    .voice-select {
+      padding:.38rem .85rem; border:1.5px solid var(--sand-dark);
+      background:var(--white); color:var(--ink-light);
+      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.83rem;
+      cursor:pointer; outline:none; direction:rtl; transition:border-color .2s;
+    }
+    .voice-select:focus { border-color:var(--terracotta); }
     .cooking-toggle {
       padding:.4rem 1.1rem; background:var(--white); color:var(--ink-light);
       border:1.5px solid var(--sand-dark); border-radius:50px; font-family:'Heebo',sans-serif;
@@ -438,7 +445,7 @@
     /* ── Sticky recipe title ── */
     .sticky-title-bar {
       position: sticky;
-      top: 64px;
+      top: 64px; /* fallback; overridden by JS */
       z-index: 99;
       background: rgba(162,71,30,.97);
       padding: .45rem 2rem;
@@ -543,6 +550,12 @@
         <div class="steps-bar">
           <h2>הוראות הכנה</h2>
           <div class="steps-bar-right">
+            <select class="voice-select" id="voice-select">
+              <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
+              <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
+              <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
+              <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
+            </select>
             <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
             <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">
               👨‍🍳 מצב בישול
@@ -604,6 +617,7 @@ let baseServings = 1;
 let currentServings = 1;
 const timers = {};
 const stepOriginals = {};
+let selectedVoice = localStorage.getItem('ttsVoice') || 'he-IL-Wavenet-A';
 
 // ── Fetch & init ──────────────────────────────────────────────────────────────
 
@@ -631,6 +645,8 @@ if (!id) {
       document.getElementById('page-content').style.display = 'block';
       document.getElementById('serv-val').value = currentServings;
       initStickyTitle();
+      const vs = document.getElementById('voice-select');
+      if (vs) { vs.value = selectedVoice; vs.addEventListener('change', e => { selectedVoice = e.target.value; localStorage.setItem('ttsVoice', selectedVoice); }); }
     })
     .catch(() => {
       document.getElementById('page-loading').style.display = 'none';
@@ -656,7 +672,7 @@ function renderHero() {
           </div><div class="stat-sep"></div>` : ''}
           ${recipe.cook_time ? `
           <div class="stat">
-            <span class="stat-label">בישול</span>
+            <span class="stat-label">בישול/אפייה</span>
             <span class="stat-value">${recipe.cook_time} דק'</span>
           </div><div class="stat-sep"></div>` : ''}
           ${totalMin ? `
@@ -781,7 +797,7 @@ function renderSteps() {
   const total = (recipe.steps || []).length;
   container.innerHTML = (recipe.steps || []).map((s, i) => {
     stepOriginals[s.id] = cleanStepText(s.text);
-    const hasTimer = s.timer_seconds > 0;
+    const hasTimer = s.timer_seconds > 0 && s.show_timer !== false;
     const isFirst  = i === 0;
     const highlighted = highlightIngredients(s.text);
     const isLast = i === total - 1;
@@ -1045,7 +1061,7 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
   label.textContent = 'מכין קריינות...';
 
   const text = buildTTSText();
-  const body = { text, voice: 'he-IL-Wavenet-A', gender: 'FEMALE' };
+  const body = { text, voice: selectedVoice };
   console.log('[TTS] sending body:', JSON.stringify(body).slice(0, 200));
   try {
     const res = await fetch(`${API}/tts`, {
@@ -1083,7 +1099,7 @@ async function speakStep(sid) {
     const res = await fetch(`${API}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: step.text, voice: 'he-IL-Wavenet-A', gender: 'FEMALE' }),
+      body: JSON.stringify({ text: step.text, voice: selectedVoice }),
     });
     if (!res.ok) {
       const errBody = await res.text();
@@ -1204,12 +1220,16 @@ function setOGTags(r) {
 // ── Sticky title ─────────────────────────────────────────────────────────────
 
 function initStickyTitle() {
-  const bar = document.getElementById('sticky-title-bar');
+  const bar    = document.getElementById('sticky-title-bar');
   const textEl = document.getElementById('sticky-title-text');
+  if (!bar || !textEl) return;
   textEl.textContent = recipe.title;
 
+  const header = document.querySelector('header');
+  if (header) bar.style.top = header.offsetHeight + 'px';
+
   const hero = document.getElementById('recipe-hero');
-  if (!hero || !bar) return;
+  if (!hero) return;
 
   const observer = new IntersectionObserver(([entry]) => {
     bar.classList.toggle('visible', !entry.isIntersecting);
