@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>מתכון | המטבח שלי</title>
-  <meta name="description"        content="מתכון מהמטבח שלי" />
+  <title>מתכון | מתכונים מחושבים</title>
+  <meta name="description"        content="מתכון ממתכונים מחושבים" />
   <meta property="og:type"        content="article" />
-  <meta property="og:title"       content="מתכון | המטבח שלי" />
-  <meta property="og:description" content="מתכון מהמטבח שלי" />
+  <meta property="og:title"       content="מתכון | מתכונים מחושבים" />
+  <meta property="og:description" content="מתכון ממתכונים מחושבים" />
   <meta property="og:url"         content="" />
   <meta property="og:image"       content="" />
   <meta property="og:locale"      content="he_IL" />
   <meta name="twitter:card"       content="summary_large_image" />
-  <meta name="twitter:title"      content="מתכון | המטבח שלי" />
+  <meta name="twitter:title"      content="מתכון | מתכונים מחושבים" />
   <meta name="twitter:description" content="" />
   <meta name="twitter:image"      content="" />
   <link rel="icon" href="favicon.ico" />
@@ -434,7 +434,7 @@
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo">המטבח <span>שלי</span></a>
+    <a href="/" class="logo">מתכונים <span>מחושבים</span></a>
     <a href="fridge.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:.85rem;margin-left:.5rem">🧊 מה יש לי?</a>
     <a href="index.html" class="back-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -539,7 +539,7 @@
 </div>
 
 <footer>
-  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span>המטבח שלי</span> &nbsp;© 2026</p>
+  <p>נבנה באהבה ❤️ &nbsp;|&nbsp; <span>מתכונים מחושבים</span> &nbsp;© 2026</p>
 </footer>
 
 <script src="config.js"></script>
@@ -576,7 +576,7 @@ if (!id) {
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
       recipe = data;
-      document.title = `${recipe.title} | המטבח שלי`;
+      document.title = `${recipe.title} | מתכונים מחושבים`;
       setOGTags(recipe);
       baseServings = recipe.servings || 1;
       currentServings = baseServings;
@@ -1092,8 +1092,8 @@ function renderRelated() {
 function setOGTags(r) {
   const url   = `${CONFIG.SITE_URL}/recipe.html?id=${r.id}`;
   const img   = r.image_url || '';
-  const desc  = r.description || `${r.title} — מתכון מהמטבח שלי`;
-  const title = `${r.title} | המטבח שלי`;
+  const desc  = r.description || `${r.title} — מתכון ממתכונים מחושבים`;
+  const title = `${r.title} | מתכונים מחושבים`;
 
   const set = (sel, val) => {
     const el = document.querySelector(sel);
