@@ -226,13 +226,13 @@
     }
     .open-all-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
     .cooking-toggle {
-      padding:.4rem 1.1rem; background:var(--olive); color:var(--white);
-      border:none; border-radius:50px; font-family:'Heebo',sans-serif;
-      font-size:.83rem; cursor:pointer; transition:background .2s;
+      padding:.4rem 1.1rem; background:var(--white); color:var(--ink-light);
+      border:1.5px solid var(--sand-dark); border-radius:50px; font-family:'Heebo',sans-serif;
+      font-size:.83rem; cursor:pointer; transition:all .2s;
       display:flex; align-items:center; gap:.35rem;
     }
-    .cooking-toggle:hover { background:var(--olive-light); }
-    .cooking-toggle.active { background:var(--terracotta); }
+    .cooking-toggle:hover { border-color:var(--olive); color:var(--olive); }
+    .cooking-toggle.active { background:var(--olive); color:var(--white); border-color:var(--olive); }
 
     /* Cooking mode progress bar */
     .cooking-bar {
@@ -435,9 +435,30 @@
     }
     footer span { color: var(--terracotta-light); }
 
+    /* ── Sticky recipe title ── */
+    .sticky-title-bar {
+      position: sticky;
+      top: 64px;
+      z-index: 99;
+      background: rgba(162,71,30,.97);
+      padding: .45rem 2rem;
+      box-shadow: 0 2px 8px rgba(44,31,20,.18);
+      border-top: 1px solid rgba(255,255,255,.12);
+      display: none;
+      backdrop-filter: blur(4px);
+    }
+    .sticky-title-bar.visible { display: block; }
+    .sticky-title-inner {
+      max-width: 1100px; margin: 0 auto;
+      font-size: 1rem; font-weight: 600;
+      color: var(--white);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
     @media (max-width: 640px) {
       .recipe-hero { padding: 2.5rem 1.25rem 2rem; }
       .recipe-layout { padding: 1.5rem 1.25rem 4rem; }
+      .sticky-title-bar { top: 64px; padding: .4rem 1.25rem; }
     }
   </style>
 </head>
@@ -455,6 +476,10 @@
     </a>
   </div>
 </header>
+
+<div class="sticky-title-bar" id="sticky-title-bar">
+  <div class="sticky-title-inner" id="sticky-title-text"></div>
+</div>
 
 <div id="page-loading" class="state-box">
   <div class="spinner"></div>
@@ -518,7 +543,7 @@
         <div class="steps-bar">
           <h2>הוראות הכנה</h2>
           <div class="steps-bar-right">
-            <button class="open-all-btn" id="open-all-btn" onclick="openAllSteps()">פתח את כל הצעדים</button>
+            <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
             <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">
               👨‍🍳 מצב בישול
             </button>
@@ -605,6 +630,7 @@ if (!id) {
       document.getElementById('page-loading').style.display = 'none';
       document.getElementById('page-content').style.display = 'block';
       document.getElementById('serv-val').value = currentServings;
+      initStickyTitle();
     })
     .catch(() => {
       document.getElementById('page-loading').style.display = 'none';
@@ -744,12 +770,17 @@ function renderTags() {
 
 let cookingMode = false;
 let cookingIdx  = 0;
+let allOpen     = false;
+
+function cleanStepText(text) {
+  return text.replace(/\s*\([^)]*(?:גרם|מ״ל|מ"ל|כף|כפית|ק״ג|ק"ג|ליטר|יחידות?|ס"מ|ס״מ|יח'|יח׳)[^)]*\)/g, '');
+}
 
 function renderSteps() {
   const container = document.getElementById('steps-list');
   const total = (recipe.steps || []).length;
   container.innerHTML = (recipe.steps || []).map((s, i) => {
-    stepOriginals[s.id] = s.text;
+    stepOriginals[s.id] = cleanStepText(s.text);
     const hasTimer = s.timer_seconds > 0;
     const isFirst  = i === 0;
     const highlighted = highlightIngredients(s.text);
@@ -826,6 +857,21 @@ function openAllSteps() {
   document.querySelectorAll('.step').forEach(el => el.classList.add('open'));
 }
 
+function toggleAllSteps() {
+  const btn = document.getElementById('open-all-btn');
+  if (!allOpen) {
+    document.querySelectorAll('.step').forEach(el => el.classList.add('open'));
+    btn.textContent = 'סגור את כל הצעדים';
+    allOpen = true;
+  } else {
+    document.querySelectorAll('.step').forEach((el, i) => {
+      el.classList.toggle('open', i === 0);
+    });
+    btn.textContent = 'פתח את כל הצעדים';
+    allOpen = false;
+  }
+}
+
 function toggleDone(sid) {
   const el = document.getElementById(`step-${sid}`);
   el.classList.toggle('done');
@@ -857,6 +903,8 @@ function toggleCookingMode() {
       el.classList.remove('cooking-dim');
     });
     openAllSteps();
+    allOpen = true;
+    document.getElementById('open-all-btn').textContent = 'סגור את כל הצעדים';
   }
 }
 
@@ -1151,6 +1199,22 @@ function setOGTags(r) {
   set('meta[name="twitter:title"]',      title);
   set('meta[name="twitter:description"]', desc);
   set('meta[name="twitter:image"]',      img);
+}
+
+// ── Sticky title ─────────────────────────────────────────────────────────────
+
+function initStickyTitle() {
+  const bar = document.getElementById('sticky-title-bar');
+  const textEl = document.getElementById('sticky-title-text');
+  textEl.textContent = recipe.title;
+
+  const hero = document.getElementById('recipe-hero');
+  if (!hero || !bar) return;
+
+  const observer = new IntersectionObserver(([entry]) => {
+    bar.classList.toggle('visible', !entry.isIntersecting);
+  }, { threshold: 0 });
+  observer.observe(hero);
 }
 
 // ── Service Worker ────────────────────────────────────────────────────────────
