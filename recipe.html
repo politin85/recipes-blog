@@ -772,7 +772,11 @@ function highlightIngredients(text) {
     const ratio = currentServings / baseServings;
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
-    result = result.split(ing.name).join(
+    // Match ingredient name + optionally consume any existing parenthetical amount already
+    // present in the step text (e.g. "קמח לבן (60 ג׳)") to avoid showing the amount twice.
+    const escName = ing.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(escName + '\\s*(?:\\([^)]*\\))?', 'g');
+    result = result.replace(re,
       `<strong>${ing.name}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`
     );
   }
