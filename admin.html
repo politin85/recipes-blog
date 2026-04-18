@@ -29,6 +29,7 @@
       --danger-light:     #FDECEA;
       --shadow-sm: 0 2px 8px rgba(44,31,20,.08);
       --shadow-md: 0 6px 24px rgba(44,31,20,.12);
+      --shadow-lg: 0 16px 48px rgba(44,31,20,.16);
       --radius:    12px;
       --radius-lg: 20px;
     }
@@ -36,213 +37,168 @@
     body { font-family: 'Heebo', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
 
     /* ── Header ── */
-    header { background: var(--ink); padding: 0 2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
-    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
-    .logo { font-family:'Noto Serif Hebrew',serif; font-size:1.4rem; font-weight:700; color:var(--white); text-decoration:none; }
+    header { background: var(--ink); padding: 0 1.25rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
+    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .logo { font-family:'Noto Serif Hebrew',serif; font-size:1.3rem; font-weight:700; color:var(--white); text-decoration:none; }
     .logo span { color: var(--terracotta-light); }
-    .admin-badge { background: var(--terracotta); color: var(--white); font-size: .75rem; font-weight: 600; padding: .25rem .75rem; border-radius: 50px; }
-    .header-right { display: flex; align-items: center; gap: 1rem; }
-    .back-btn { color: rgba(255,255,255,.7); text-decoration: none; font-size: .88rem; transition: color .2s; }
+    .admin-badge { background: var(--terracotta); color: var(--white); font-size: .72rem; font-weight: 600; padding: .2rem .65rem; border-radius: 50px; }
+    .header-right { display: flex; align-items: center; gap: .75rem; }
+    .back-btn { color: rgba(255,255,255,.7); text-decoration: none; font-size: .85rem; transition: color .2s; }
     .back-btn:hover { color: var(--white); }
 
     /* ── Login gate ── */
-    .login-wrap {
-      min-height: calc(100vh - 64px);
-      display: flex; align-items: center; justify-content: center; padding: 2rem;
-    }
-    .login-card {
-      background: var(--white); border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md); padding: 2.5rem 2rem;
-      width: 100%; max-width: 380px; text-align: center;
-    }
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .login-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2.5rem 2rem; width: 100%; max-width: 380px; text-align: center; }
     .login-icon { font-size: 2.5rem; margin-bottom: 1rem; }
     .login-card h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1.4rem; margin-bottom: .4rem; }
     .login-card p { color: var(--ink-muted); font-size: .9rem; margin-bottom: 1.5rem; }
-    .login-input {
-      width: 100%; padding: .8rem 1rem; border: 1.5px solid var(--sand-dark);
-      border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem;
-      outline: none; direction: ltr; text-align: center; letter-spacing: .1em;
-      margin-bottom: .75rem; transition: border-color .2s;
-    }
+    .login-input { width: 100%; padding: .8rem 1rem; border: 1.5px solid var(--sand-dark); border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem; outline: none; direction: ltr; text-align: center; letter-spacing: .1em; margin-bottom: .75rem; transition: border-color .2s; }
     .login-input:focus { border-color: var(--terracotta); }
-    .login-btn {
-      width: 100%; padding: .85rem; background: var(--terracotta); color: var(--white);
-      border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif;
-      font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s;
-    }
+    .login-btn { width: 100%; padding: .85rem; background: var(--terracotta); color: var(--white); border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s; }
     .login-btn:hover { background: var(--terracotta-light); }
     .login-error { color: var(--danger); font-size: .85rem; margin-top: .6rem; min-height: 1.2rem; }
 
-    /* ── Main layout ── */
-    .main-layout {
-      max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 5rem;
-      display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;
-    }
-    @media (max-width: 860px) { .main-layout { grid-template-columns: 1fr; } }
+    /* ── Main wrap ── */
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 5rem; }
 
-    /* ── Recipe list ── */
-    .sidebar-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
-    .sidebar-head {
-      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--sand);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .sidebar-head h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1.05rem; font-weight: 600; }
-    .new-btn {
-      padding: .4rem 1rem; background: var(--terracotta); color: var(--white);
-      border: none; border-radius: 50px; font-family: 'Heebo', sans-serif;
-      font-size: .85rem; cursor: pointer; transition: background .2s;
-    }
+    /* ── Recipe list section ── */
+    .list-section { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+    .list-header { padding: .9rem 1.25rem; border-bottom: 1px solid var(--sand); display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+    .list-header h2 { font-family:'Noto Serif Hebrew',serif; font-size: 1rem; font-weight: 600; }
+    .new-btn { padding: .4rem 1rem; background: var(--terracotta); color: var(--white); border: none; border-radius: 50px; font-family: 'Heebo', sans-serif; font-size: .85rem; cursor: pointer; transition: background .2s; white-space: nowrap; }
     .new-btn:hover { background: var(--terracotta-light); }
 
-    .recipe-list { list-style: none; }
-    .recipe-list-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: .85rem 1.5rem; border-bottom: 1px solid var(--sand);
-      cursor: pointer; transition: background .15s; gap: .5rem;
-    }
-    .recipe-list-item:last-child { border-bottom: none; }
-    .recipe-list-item:hover { background: var(--cream); }
-    .recipe-list-item.active { background: var(--terracotta-pale); }
-    .rli-title { font-size: .92rem; font-weight: 500; color: var(--ink); flex: 1; }
-    .rli-cat { font-size: .75rem; color: var(--ink-muted); }
-    .rli-del {
-      background: none; border: none; color: var(--ink-muted);
-      cursor: pointer; font-size: 1rem; padding: .2rem; transition: color .2s; flex-shrink: 0;
-    }
-    .rli-del:hover { color: var(--danger); }
+    /* Recipe grid */
+    .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .45rem; padding: .75rem; }
+    @media (max-width: 540px) { .recipe-grid { grid-template-columns: 1fr; } }
+
+    .rg-card { display: flex; align-items: stretch; background: var(--cream); border-radius: var(--radius); border: 1.5px solid transparent; overflow: hidden; transition: border-color .15s; }
+    .rg-card.active { border-color: var(--terracotta); background: var(--terracotta-pale); }
+    .rg-card.rg-hidden { opacity: .6; }
+
+    .rg-info { flex: 1; padding: .6rem .85rem; cursor: pointer; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: .15rem; }
+    .rg-title { font-size: .88rem; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rg-cat { font-size: .72rem; color: var(--ink-muted); }
+
+    .rg-actions { display: flex; align-items: stretch; flex-shrink: 0; border-right: 1px solid var(--sand); }
+    .rg-btn { background: none; border: none; padding: 0 .6rem; cursor: pointer; font-size: .95rem; color: var(--ink-muted); transition: color .2s, background .15s; min-width: 38px; display: flex; align-items: center; justify-content: center; }
+    .rg-btn:hover { background: rgba(0,0,0,.04); color: var(--ink); }
+    .rg-btn.rg-del:hover { color: var(--danger); }
+    .rg-vis.vis-on { color: var(--olive); }
+    .rg-vis.vis-off { color: var(--ink-muted); }
+
     .list-empty { padding: 2rem 1.5rem; text-align: center; color: var(--ink-muted); font-size: .9rem; }
-    .rli-hidden { opacity: .55; }
 
-    /* ── Form ── */
-    .form-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 2rem; }
-    .form-title { font-family:'Noto Serif Hebrew',serif; font-size: 1.4rem; font-weight: 600; margin-bottom: 1.75rem; padding-bottom: .75rem; border-bottom: 2px solid var(--sand); }
+    /* ── Form card ── */
+    .form-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 1.5rem 1.25rem 2rem; }
+    .form-title { font-family:'Noto Serif Hebrew',serif; font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; padding-bottom: .65rem; border-bottom: 2px solid var(--sand); }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
-    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
-    @media (max-width: 600px) { .form-grid, .form-grid.three { grid-template-columns: 1fr; } }
-    .form-full { margin-bottom: 1.25rem; }
+    /* Form fields */
+    .form-group { margin-bottom: 1rem; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-bottom: 1rem; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .85rem; margin-bottom: 1rem; }
+    @media (max-width: 560px) { .form-row-2 { grid-template-columns: 1fr; } .form-row-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 380px) { .form-row-3 { grid-template-columns: 1fr; } }
 
-    label { display: block; font-size: .85rem; font-weight: 500; color: var(--ink-light); margin-bottom: .4rem; }
+    label { display: block; font-size: .83rem; font-weight: 600; color: var(--ink-light); margin-bottom: .35rem; }
     input[type=text], input[type=number], input[type=url], select, textarea {
-      width: 100%; padding: .7rem 1rem; border: 1.5px solid var(--sand-dark);
+      width: 100%; padding: .7rem .9rem; border: 1.5px solid var(--sand-dark);
       border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: .95rem;
-      color: var(--ink); background: var(--white); outline: none; direction: rtl;
-      transition: border-color .2s;
+      color: var(--ink); background: var(--white); outline: none; direction: rtl; transition: border-color .2s;
     }
-    input[type=text]:focus, input[type=number]:focus, input[type=url]:focus, select:focus, textarea:focus {
-      border-color: var(--terracotta);
-    }
-    textarea { resize: vertical; min-height: 80px; }
+    input[type=text]:focus, input[type=number]:focus, input[type=url]:focus, select:focus, textarea:focus { border-color: var(--terracotta); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+    textarea.tall { min-height: 120px; }
 
-    .section-divider {
-      font-family:'Noto Serif Hebrew',serif; font-size: 1.1rem; font-weight: 600;
-      color: var(--ink); margin: 1.75rem 0 1.1rem; padding-bottom: .6rem;
-      border-bottom: 1.5px solid var(--sand);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .add-row-btn {
-      font-family:'Heebo',sans-serif; font-size: .82rem; font-weight: 500;
-      color: var(--olive); background: none; border: 1.5px solid var(--olive);
-      border-radius: 50px; padding: .3rem .9rem; cursor: pointer; transition: all .2s;
-    }
+    /* Time row with calc button */
+    .times-row { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
+    .times-row .form-row-3 { flex: 1; margin-bottom: 0; min-width: 220px; }
+    .calc-btn { padding: .7rem 1rem; background: none; border: 1.5px solid var(--olive); color: var(--olive); border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: .82rem; cursor: pointer; white-space: nowrap; transition: all .2s; }
+    .calc-btn:hover { background: var(--olive); color: var(--white); }
+
+    /* Visibility toggle */
+    .vis-row { display: flex; align-items: center; gap: .85rem; padding: .85rem 1.1rem; border-radius: var(--radius); border: 2px solid var(--olive); background: #F1F6E8; margin-bottom: 1.25rem; transition: all .25s; }
+    .vis-row.is-hidden { border-color: var(--danger); background: var(--danger-light); }
+    .vis-icon { font-size: 1.35rem; flex-shrink: 0; }
+    .vis-text { flex: 1; }
+    .vis-status { font-weight: 600; font-size: .9rem; }
+    .vis-note { font-size: .76rem; color: var(--ink-muted); margin-top: .1rem; }
+    .vis-btn { padding: .45rem 1.1rem; border: none; border-radius: 50px; font-family: 'Heebo', sans-serif; font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .vis-btn.btn-show { background: var(--olive); color: var(--white); }
+    .vis-btn.btn-hide { background: var(--danger); color: var(--white); }
+
+    /* Section dividers */
+    .section-divider { font-family:'Noto Serif Hebrew',serif; font-size: 1.05rem; font-weight: 600; color: var(--ink); margin: 1.5rem 0 .9rem; padding-bottom: .5rem; border-bottom: 1.5px solid var(--sand); display: flex; align-items: center; justify-content: space-between; }
+    .add-row-btn { font-family:'Heebo',sans-serif; font-size: .82rem; font-weight: 500; color: var(--olive); background: none; border: 1.5px solid var(--olive); border-radius: 50px; padding: .3rem .9rem; cursor: pointer; transition: all .2s; }
     .add-row-btn:hover { background: var(--olive); color: var(--white); }
 
-    /* Ingredient rows */
-    .ing-row {
-      display: grid; grid-template-columns: 1fr 80px 80px 1fr auto;
-      gap: .6rem; margin-bottom: .6rem; align-items: center;
-    }
-    @media (max-width: 600px) { .ing-row { grid-template-columns: 1fr 70px 70px; } .ing-row .ing-note-col, .ing-row .del-col { grid-column: span 3; } }
+    /* Ingredient rows — mobile-first */
+    .ing-row { background: var(--cream); border-radius: var(--radius); padding: .65rem .75rem; margin-bottom: .5rem; border: 1px solid var(--sand); }
+    .ing-name-wrap { margin-bottom: .45rem; display: flex; gap: .5rem; align-items: center; }
+    .ing-name-wrap input { flex: 1; }
+    .ing-sub { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: .45rem; }
+    @media (max-width: 480px) { .ing-sub { grid-template-columns: 1fr 1fr; } .ing-note-col { grid-column: span 2; } }
 
-    /* Step rows */
-    .step-row { background: var(--cream); border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem; }
-    .step-row-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
-    .step-num-badge {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--terracotta); color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-size: .82rem; font-weight: 700; flex-shrink: 0;
-    }
-    .step-row-grid { display: grid; grid-template-columns: 1fr 120px; gap: .6rem; }
-    @media (max-width: 600px) { .step-row-grid { grid-template-columns: 1fr; } }
+    /* Step rows — mobile-first */
+    .step-row { background: var(--cream); border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem; border: 1px solid var(--sand); }
+    .step-row-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; }
+    .step-num-badge { width: 30px; height: 30px; border-radius: 50%; background: var(--terracotta); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: .82rem; font-weight: 700; flex-shrink: 0; }
+    .step-title-inp { flex: 1; }
+    .step-text-inp { min-height: 100px; }
+    .step-timer-wrap { margin-top: .65rem; }
+    .step-timer-wrap label { font-size: .78rem; }
+    .step-timer-inp { margin-top: .3rem; }
 
-    .del-btn {
-      background: none; border: none; color: var(--ink-muted);
-      cursor: pointer; font-size: 1.1rem; padding: .2rem; line-height: 1;
-      transition: color .2s; flex-shrink: 0;
-    }
-    .del-btn:hover { color: var(--danger); }
+    /* Delete / action buttons */
+    .del-btn { background: none; border: none; color: var(--ink-muted); cursor: pointer; font-size: 1.1rem; padding: .35rem; line-height: 1; transition: color .2s; flex-shrink: 0; min-width: 38px; min-height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .del-btn:hover { color: var(--danger); background: var(--danger-light); }
 
     /* Cloudinary upload */
     .img-upload-wrap { display: flex; flex-direction: column; gap: .6rem; }
-    .img-preview {
-      width: 100%; height: 160px; border-radius: var(--radius);
-      background: var(--sand); border: 2px dashed var(--sand-dark);
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden; position: relative; cursor: pointer; transition: border-color .2s;
-    }
+    .img-preview { width: 100%; height: 160px; border-radius: var(--radius); background: var(--sand); border: 2px dashed var(--sand-dark); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; transition: border-color .2s; }
     .img-preview:hover { border-color: var(--terracotta); }
     .img-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
     .img-preview-placeholder { color: var(--ink-muted); text-align: center; font-size: .88rem; line-height: 1.6; pointer-events: none; }
     .img-row { display: flex; gap: .6rem; align-items: center; }
     .img-row input[type=url] { flex: 1; }
-    .upload-btn {
-      white-space: nowrap; padding: .7rem 1rem;
-      background: var(--olive); color: var(--white);
-      border: none; border-radius: var(--radius);
-      font-family: 'Heebo', sans-serif; font-size: .85rem;
-      cursor: pointer; transition: background .2s;
-    }
+    .upload-btn { white-space: nowrap; padding: .7rem 1rem; background: var(--olive); color: var(--white); border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: .85rem; cursor: pointer; transition: background .2s; }
     .upload-btn:hover { background: var(--olive-light); }
     .upload-btn:disabled { opacity: .6; cursor: not-allowed; }
-    .upload-progress {
-      height: 4px; background: var(--sand); border-radius: 2px; overflow: hidden; display: none;
-    }
-    .upload-progress-bar {
-      height: 100%; background: var(--olive); border-radius: 2px;
-      transition: width .3s; width: 0%;
-    }
+    .upload-progress { height: 4px; background: var(--sand); border-radius: 2px; overflow: hidden; display: none; }
+    .upload-progress-bar { height: 100%; background: var(--olive); border-radius: 2px; transition: width .3s; width: 0%; }
+    .img-adjust-row { margin-top: .5rem; }
+
+    /* Step image */
+    .step-img-section { margin-top: .75rem; }
+    .step-img-preview { width: 100%; height: 80px; border-radius: var(--radius); border: 2px dashed var(--sand-dark); overflow: hidden; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; background: var(--sand); transition: border-color .2s; }
+    .step-img-preview:hover { border-color: var(--terracotta); }
+    .step-img-preview img { width:100%; height:100%; object-fit:cover; }
+    .step-img-ph { font-size:.8rem; color:var(--ink-muted); pointer-events:none; }
+    .step-img-actions { display:flex; gap:.5rem; margin-top:.4rem; align-items:center; }
+    .step-img-adjust-btn, .step-img-clear-btn { font-size:.75rem; padding:.3rem .75rem; border-radius:50px; cursor:pointer; transition:all .2s; font-family:'Heebo',sans-serif; white-space:nowrap; min-height: 36px; }
+    .step-img-adjust-btn { background:none; border:1.5px solid var(--olive); color:var(--olive); }
+    .step-img-adjust-btn:hover { background:var(--olive); color:var(--white); }
+    .step-img-clear-btn { background:none; border:1.5px solid var(--sand-dark); color:var(--ink-muted); }
+    .step-img-clear-btn:hover { border-color:var(--danger); color:var(--danger); }
 
     /* Submit */
-    .form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
-    .submit-btn {
-      flex: 1; padding: .9rem; background: var(--terracotta); color: var(--white);
-      border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif;
-      font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s;
-    }
+    .form-actions { display: flex; gap: .75rem; margin-top: 1.75rem; flex-wrap: wrap; }
+    .submit-btn { flex: 1; min-width: 140px; padding: .9rem; background: var(--terracotta); color: var(--white); border: none; border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background .2s; }
     .submit-btn:hover { background: var(--terracotta-light); }
     .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .cancel-btn {
-      padding: .9rem 1.75rem; background: none; border: 1.5px solid var(--sand-dark);
-      color: var(--ink-light); border-radius: var(--radius); font-family: 'Heebo', sans-serif;
-      font-size: 1rem; cursor: pointer; transition: all .2s;
-    }
+    .cancel-btn { padding: .9rem 1.5rem; background: none; border: 1.5px solid var(--sand-dark); color: var(--ink-light); border-radius: var(--radius); font-family: 'Heebo', sans-serif; font-size: 1rem; cursor: pointer; transition: all .2s; }
     .cancel-btn:hover { border-color: var(--ink-muted); color: var(--ink); }
 
     /* Toast */
-    .toast {
-      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-      background: var(--ink); color: var(--white);
-      padding: .8rem 1.75rem; border-radius: 50px; font-size: .92rem;
-      box-shadow: var(--shadow-md); z-index: 999;
-      opacity: 0; transition: opacity .3s; pointer-events: none;
-    }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--white); padding: .75rem 1.5rem; border-radius: 50px; font-size: .9rem; box-shadow: var(--shadow-md); z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
     .toast.show { opacity: 1; }
     .toast.success { background: var(--olive); }
     .toast.error   { background: var(--danger); }
 
-    /* Confirm dialog */
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,.4);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s;
-    }
+    /* Overlay / dialog */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s; }
     .overlay.show { opacity: 1; pointer-events: all; }
-    .dialog {
-      background: var(--white); border-radius: var(--radius-lg);
-      padding: 2rem; max-width: 360px; width: 90%; text-align: center;
-      box-shadow: var(--shadow-lg);
-    }
+    .dialog { background: var(--white); border-radius: var(--radius-lg); padding: 2rem; max-width: 360px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); }
     .dialog h3 { font-family:'Noto Serif Hebrew',serif; font-size: 1.2rem; margin-bottom: .6rem; }
     .dialog p { color: var(--ink-muted); font-size: .9rem; margin-bottom: 1.5rem; }
     .dialog-actions { display: flex; gap: .75rem; }
@@ -252,45 +208,16 @@
     .btn-confirm-dlg { background: var(--danger); color: var(--white); }
     .btn-confirm-dlg:hover { background: #a93226; }
 
-    .spinner { width:32px;height:32px;border:3px solid var(--sand-dark);border-top-color:var(--terracotta);border-radius:50%;animation:spin .8s linear infinite;margin:2rem auto; }
+    .spinner { width:32px; height:32px; border:3px solid var(--sand-dark); border-top-color:var(--terracotta); border-radius:50%; animation:spin .8s linear infinite; margin:2rem auto; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
     /* ── Image crop/position editor ── */
-    .crop-dialog {
-      background: var(--white); border-radius: var(--radius-lg);
-      padding: 1.5rem; max-width: 600px; width: 95%; box-shadow: var(--shadow-md);
-    }
-    .crop-viewport {
-      width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative;
-      border-radius: var(--radius); background: #111;
-      cursor: grab; user-select: none; touch-action: none;
-    }
+    .crop-dialog { background: var(--white); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 600px; width: 95%; box-shadow: var(--shadow-md); }
+    .crop-viewport { width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative; border-radius: var(--radius); background: #111; cursor: grab; user-select: none; touch-action: none; }
     .crop-viewport.grabbing { cursor: grabbing; }
     #crop-img-el { position: absolute; pointer-events: none; display: block; }
     .crop-controls { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; }
     .crop-zoom-slider { flex: 1; accent-color: var(--terracotta); cursor: pointer; }
-
-    /* ── Step image ── */
-    .step-img-section { margin-top: .75rem; }
-    .step-img-preview {
-      width: 100%; height: 80px; border-radius: var(--radius);
-      border: 2px dashed var(--sand-dark); overflow: hidden; position: relative;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      background: var(--sand); transition: border-color .2s;
-    }
-    .step-img-preview:hover { border-color: var(--terracotta); }
-    .step-img-preview img { width:100%; height:100%; object-fit:cover; }
-    .step-img-ph { font-size:.8rem; color:var(--ink-muted); pointer-events:none; }
-    .step-img-actions { display:flex; gap:.5rem; margin-top:.4rem; align-items:center; }
-    .step-img-adjust-btn, .step-img-clear-btn {
-      font-size:.75rem; padding:.25rem .65rem; border-radius:50px;
-      cursor:pointer; transition:all .2s; font-family:'Heebo',sans-serif; white-space:nowrap;
-    }
-    .step-img-adjust-btn { background:none; border:1.5px solid var(--olive); color:var(--olive); }
-    .step-img-adjust-btn:hover { background:var(--olive); color:var(--white); }
-    .step-img-clear-btn { background:none; border:1.5px solid var(--sand-dark); color:var(--ink-muted); }
-    .step-img-clear-btn:hover { border-color:var(--danger); color:var(--danger); }
-    .img-adjust-row { margin-top:.5rem; }
   </style>
 </head>
 <body>
@@ -317,28 +244,23 @@
   </div>
 </div>
 
-<!-- Admin UI (hidden until auth) -->
+<!-- Admin UI -->
 <div id="admin-ui" style="display:none">
-  <div class="main-layout">
+  <div class="admin-wrap">
 
-    <!-- Recipe list sidebar -->
-    <aside>
-      <div class="sidebar-card">
-        <div class="sidebar-head">
-          <h2>מתכונים</h2>
-          <button class="new-btn" id="new-btn">+ חדש</button>
-        </div>
-        <div id="recipe-list-wrap"><div class="spinner"></div></div>
+    <!-- Recipe list -->
+    <section class="list-section">
+      <div class="list-header">
+        <h2 id="list-title">מתכונים</h2>
+        <button class="new-btn" id="new-btn">+ חדש</button>
       </div>
-    </aside>
+      <div id="recipe-grid-wrap"><div class="spinner"></div></div>
+    </section>
 
-    <!-- Form -->
-    <div class="form-card" id="form-card">
-      <div style="text-align:center;padding:3rem;color:var(--ink-muted)">
-        <div style="font-size:2rem;margin-bottom:.75rem">✏️</div>
-        <p>בחר מתכון לעריכה או לחץ "+ חדש"</p>
-      </div>
-    </div>
+    <!-- Edit form -->
+    <section id="form-section" style="display:none">
+      <div class="form-card" id="form-card"></div>
+    </section>
 
   </div>
 </div>
@@ -355,7 +277,7 @@
   </div>
 </div>
 
-<!-- Image position/crop editor -->
+<!-- Image crop editor -->
 <div class="overlay" id="crop-overlay">
   <div class="crop-dialog">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
@@ -369,10 +291,7 @@
       <span style="font-size:.82rem;color:var(--ink-light);white-space:nowrap">זום</span>
       <input type="range" id="crop-zoom-slider" class="crop-zoom-slider" min="100" max="300" step="1" value="100" />
       <span id="crop-zoom-label" style="font-size:.82rem;white-space:nowrap;min-width:3rem;text-align:center">100%</span>
-      <button type="button" onclick="resetCrop()"
-        style="font-size:.78rem;padding:.3rem .75rem;background:none;border:1.5px solid var(--sand-dark);border-radius:50px;cursor:pointer;font-family:'Heebo',sans-serif">
-        איפוס
-      </button>
+      <button type="button" onclick="resetCrop()" style="font-size:.78rem;padding:.3rem .75rem;background:none;border:1.5px solid var(--sand-dark);border-radius:50px;cursor:pointer;font-family:'Heebo',sans-serif">איפוס</button>
     </div>
     <div class="dialog-actions" style="margin-top:1rem">
       <button type="button" class="btn-cancel-dlg" onclick="cancelCrop()">ביטול</button>
@@ -386,18 +305,11 @@
 <script src="config.js"></script>
 <script>
 const API = CONFIG.API;
-let adminPw = sessionStorage.getItem('admin_pw') || '';
+let adminPw  = sessionStorage.getItem('admin_pw') || '';
 let recipes  = [];
 let editingId = null;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-
-async function tryLogin(pw) {
-  const res = await fetch(`${API}/api/recipes`, {
-    headers: { 'x-admin-password': pw }
-  });
-  return res.ok;
-}
 
 if (adminPw) initAdmin();
 
@@ -410,13 +322,11 @@ document.getElementById('pw-btn').addEventListener('click', async () => {
   if (!pw) return;
   document.getElementById('pw-btn').textContent = '...';
   try {
-    // Validate by attempting a write-gated request
     const res = await fetch(`${API}/api/recipes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': pw },
       body: JSON.stringify({}),
     });
-    // 401 = wrong pw; anything else = pw accepted (even 400 for missing fields)
     if (res.status === 401) {
       document.getElementById('pw-error').textContent = 'סיסמה שגויה';
       document.getElementById('pw-btn').textContent = 'כניסה';
@@ -432,8 +342,8 @@ document.getElementById('pw-btn').addEventListener('click', async () => {
 });
 
 function initAdmin() {
-  document.getElementById('login-gate').style.display  = 'none';
-  document.getElementById('admin-ui').style.display    = 'block';
+  document.getElementById('login-gate').style.display = 'none';
+  document.getElementById('admin-ui').style.display   = 'block';
   loadRecipes();
 }
 
@@ -445,44 +355,79 @@ async function loadRecipes() {
       headers: { 'x-admin-password': adminPw }
     });
     recipes = await res.json();
-    renderList();
+    renderGrid();
   } catch {
-    document.getElementById('recipe-list-wrap').innerHTML =
+    document.getElementById('recipe-grid-wrap').innerHTML =
       '<div class="list-empty">שגיאה בטעינה</div>';
   }
 }
 
-function renderList() {
-  const wrap = document.getElementById('recipe-list-wrap');
+function renderGrid() {
+  document.getElementById('list-title').textContent = `מתכונים (${recipes.length})`;
+  const wrap = document.getElementById('recipe-grid-wrap');
   if (!recipes.length) {
     wrap.innerHTML = '<div class="list-empty">אין מתכונים עדיין</div>';
     return;
   }
-  wrap.innerHTML = `<ul class="recipe-list">${
-    recipes.map(r => `
-      <li class="recipe-list-item${editingId===r.id?' active':''}${r.is_hidden?' rli-hidden':''}" data-id="${r.id}">
-        <span class="rli-title">${r.is_hidden?'<span title="מוסתר" style="opacity:.5">🙈</span> ':''}${r.title}</span>
-        <span class="rli-cat">${r.category||''}</span>
-        <button class="rli-del" title="מחק" onclick="event.stopPropagation();confirmDelete(${r.id},'${r.title.replace(/'/g,"\\'")}')">🗑</button>
-      </li>`).join('')
-  }</ul>`;
-  wrap.querySelectorAll('.recipe-list-item').forEach(li => {
-    li.addEventListener('click', () => openEdit(parseInt(li.dataset.id)));
-  });
+  wrap.innerHTML = `<div class="recipe-grid">${
+    recipes.map(r => {
+      const hidden = r.is_hidden;
+      return `
+        <div class="rg-card${editingId===r.id?' active':''}${hidden?' rg-hidden':''}" data-id="${r.id}">
+          <div class="rg-info" onclick="openEdit(${r.id})">
+            <span class="rg-title">${esc(r.title)}</span>
+            <span class="rg-cat">${esc(r.category||'')}</span>
+          </div>
+          <div class="rg-actions">
+            <button class="rg-btn rg-vis ${hidden?'vis-off':'vis-on'}"
+              title="${hidden?'מוסתר — לחץ להצגה':'מוצג — לחץ להסתרה'}"
+              onclick="event.stopPropagation();toggleHidden(${r.id},this)">${hidden?'🙈':'👁'}</button>
+            <button class="rg-btn rg-del" title="מחק"
+              onclick="event.stopPropagation();confirmDelete(${r.id},'${r.title.replace(/'/g,"\\'")}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('')
+  }</div>`;
 }
 
 document.getElementById('new-btn').addEventListener('click', () => openForm(null));
+
+// ── Toggle hidden (inline) ────────────────────────────────────────────────────
+
+async function toggleHidden(id, btn) {
+  const isHidden = btn.classList.contains('vis-off');
+  const newHidden = !isHidden;
+  try {
+    await fetch(`${API}/api/recipes/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+      body: JSON.stringify({ is_hidden: newHidden }),
+    });
+    btn.classList.toggle('vis-off', newHidden);
+    btn.classList.toggle('vis-on', !newHidden);
+    btn.title = newHidden ? 'מוסתר — לחץ להצגה' : 'מוצג — לחץ להסתרה';
+    btn.textContent = newHidden ? '🙈' : '👁';
+    const card = btn.closest('.rg-card');
+    if (card) card.classList.toggle('rg-hidden', newHidden);
+    const r = recipes.find(r => r.id === id);
+    if (r) r.is_hidden = newHidden;
+    showToast(newHidden ? 'המתכון הוסתר' : 'המתכון מוצג', 'success');
+  } catch {
+    showToast('שגיאה בעדכון', 'error');
+  }
+}
 
 // ── Open edit / new form ──────────────────────────────────────────────────────
 
 async function openEdit(id) {
   editingId = id;
-  renderList();
+  renderGrid();
+  document.getElementById('form-section').style.display = 'block';
   document.getElementById('form-card').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   try {
     const res = await fetch(`${API}/api/recipes/${id}`);
-    const data = await res.json();
-    renderForm(data);
+    renderForm(await res.json());
   } catch {
     showToast('שגיאה בטעינת המתכון', 'error');
   }
@@ -490,53 +435,119 @@ async function openEdit(id) {
 
 function openForm(data) {
   editingId = data?.id || null;
-  renderList();
+  renderGrid();
+  document.getElementById('form-section').style.display = 'block';
   renderForm(data || {
-    title:'', description:'', category:'', difficulty:'easy',
+    title:'', description:'', story_text:'', category:'', difficulty:'easy',
     prep_time:'', cook_time:'', servings:'', tags:[], image_url:'',
-    ingredients:[], steps:[],
+    is_hidden: false, ingredients:[], steps:[],
   });
+  document.getElementById('form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Form render ───────────────────────────────────────────────────────────────
 
 function renderForm(data) {
   const isNew = !data.id;
-  const tags = (data.tags || []).join(', ');
+  const tags  = (data.tags || []).join(', ');
+  const isHid = !!data.is_hidden;
 
   document.getElementById('form-card').innerHTML = `
-    <h2 class="form-title">${isNew ? 'מתכון חדש' : 'עריכת מתכון'}</h2>
+    <h2 class="form-title">${isNew ? 'מתכון חדש ✨' : 'עריכת מתכון'}</h2>
 
-    <div class="form-grid">
-      <div><label>שם המתכון *</label><input type="text" id="f-title" value="${esc(data.title||'')}" placeholder="שם המתכון" /></div>
-      <div><label>קטגוריה</label><input type="text" id="f-category" value="${esc(data.category||'')}" placeholder="אפייה, עיקריות..." /></div>
+    <!-- Visibility toggle -->
+    <div class="vis-row${isHid?' is-hidden':''}" id="vis-row">
+      <div class="vis-icon">${isHid?'🙈':'👁️'}</div>
+      <div class="vis-text">
+        <div class="vis-status" id="vis-status">${isHid?'מוסתר מהבלוג':'מוצג בבלוג'}</div>
+        <div class="vis-note">${isHid?'המתכון לא מופיע לגולשים':'המתכון גלוי לכל הגולשים'}</div>
+      </div>
+      <button type="button" id="vis-btn" class="vis-btn ${isHid?'btn-show':'btn-hide'}" onclick="toggleFormVis()">
+        ${isHid?'הצג בבלוג':'הסתר'}
+      </button>
+      <input type="hidden" id="f-hidden" value="${isHid?'1':'0'}" />
     </div>
-    <div class="form-full"><label>תיאור קצר</label><textarea id="f-desc" rows="3" placeholder="תיאור קצר של המתכון...">${esc(data.description||'')}</textarea></div>
-    <div class="form-full"><label>סיפור / תיאור מורחב</label><textarea id="f-story" rows="5" placeholder="ספר על המתכון — מאיפה בא, מה ייחודי בו, זכרונות...">${esc(data.story_text||'')}</textarea></div>
-    <div class="form-grid three">
-      <div><label>זמן הכנה (דק')</label><input type="number" id="f-prep" value="${data.prep_time||''}" min="0" /></div>
-      <div><label>זמן בישול (דק')</label><input type="number" id="f-cook" value="${data.cook_time||''}" min="0" /></div>
-      <div><label>מנות</label><input type="number" id="f-servings" value="${data.servings||''}" min="1" /></div>
+
+    <!-- שם המתכון -->
+    <div class="form-group">
+      <label>שם המתכון *</label>
+      <input type="text" id="f-title" value="${esc(data.title||'')}" placeholder="שם המתכון" />
     </div>
-    <div class="form-grid">
-      <div><label>רמת קושי</label>
+
+    <!-- תיאור קצר -->
+    <div class="form-group">
+      <label>תיאור קצר</label>
+      <textarea id="f-desc" rows="3" placeholder="תיאור קצר של המתכון...">${esc(data.description||'')}</textarea>
+    </div>
+
+    <!-- סיפור -->
+    <div class="form-group">
+      <label>סיפור / תיאור מורחב</label>
+      <textarea id="f-story" class="tall" rows="5" placeholder="ספר על המתכון — מאיפה בא, מה ייחודי בו, זכרונות...">${esc(data.story_text||'')}</textarea>
+    </div>
+
+    <!-- קטגוריה + קושי -->
+    <div class="form-row-2">
+      <div>
+        <label>קטגוריה</label>
+        <input type="text" id="f-category" value="${esc(data.category||'')}" placeholder="אפייה, עיקריות..." />
+      </div>
+      <div>
+        <label>רמת קושי</label>
         <select id="f-difficulty">
           <option value="easy"   ${data.difficulty==='easy'  ?'selected':''}>קל</option>
           <option value="medium" ${data.difficulty==='medium'?'selected':''}>בינוני</option>
           <option value="hard"   ${data.difficulty==='hard'  ?'selected':''}>מאתגר</option>
         </select>
       </div>
-      <div><label>תגיות (מופרדות בפסיק)</label><input type="text" id="f-tags" value="${esc(tags)}" placeholder="ביסקוויטים, אפייה..." /></div>
     </div>
-    <div class="form-full" style="margin-bottom:.75rem">
-      <label style="display:flex;align-items:center;gap:.75rem;cursor:pointer;user-select:none">
-        <input type="checkbox" id="f-hidden" ${data.is_hidden?'checked':''} style="width:18px;height:18px;accent-color:var(--danger);cursor:pointer;flex-shrink:0" />
-        <span>הסתר מתכון מהעמוד הראשי</span>
-        <small style="color:var(--ink-muted);font-size:.78rem">(לא יופיע לגולשים)</small>
-      </label>
+
+    <!-- זמנים -->
+    <div class="times-row">
+      <div class="form-row-3" style="flex:1;min-width:200px;margin-bottom:0">
+        <div>
+          <label>הכנה (דק')</label>
+          <input type="number" id="f-prep" value="${data.prep_time||''}" min="0" placeholder="0" />
+        </div>
+        <div>
+          <label>בישול (דק')</label>
+          <input type="number" id="f-cook" value="${data.cook_time||''}" min="0" placeholder="0" />
+        </div>
+        <div>
+          <label>מנות</label>
+          <input type="number" id="f-servings" value="${data.servings||''}" min="1" placeholder="4" />
+        </div>
+      </div>
+      <button type="button" class="calc-btn" onclick="recalcTimes()" title="חשב זמנים מהשלבים אוטומטית">⏱ חשב</button>
     </div>
-    <div class="form-full">
-      <label>תמונה</label>
+
+    <!-- תגיות -->
+    <div class="form-group">
+      <label>תגיות (מופרדות בפסיק)</label>
+      <input type="text" id="f-tags" value="${esc(tags)}" placeholder="שוקולד, אפייה, קל..." />
+    </div>
+
+    <!-- מרכיבים -->
+    <div class="section-divider">
+      מרכיבים
+      <button class="add-row-btn" type="button" onclick="addIngRow()">+ הוסף</button>
+    </div>
+    <div id="ing-rows">
+      ${(data.ingredients||[]).map((i,idx) => ingRowHtml(idx, i)).join('')}
+    </div>
+
+    <!-- שלבי הכנה -->
+    <div class="section-divider">
+      שלבי הכנה
+      <button class="add-row-btn" type="button" onclick="addStepRow()">+ הוסף</button>
+    </div>
+    <div id="step-rows">
+      ${(data.steps||[]).map((s,idx) => stepRowHtml(idx, s)).join('')}
+    </div>
+
+    <!-- תמונה -->
+    <div class="section-divider">תמונה ראשית</div>
+    <div class="form-group">
       <div class="img-upload-wrap">
         <div class="img-preview" id="img-preview-box" onclick="document.getElementById('f-image-file').click()">
           <img id="img-preview-img" src="${esc(data.image_url||'')}" alt="" ${data.image_url ? 'style="display:block"' : ''} />
@@ -548,9 +559,7 @@ function renderForm(data) {
         <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
         <div class="img-row">
           <input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://res.cloudinary.com/..." style="direction:ltr" onchange="toggleMainAdjustBtn()" />
-          <button type="button" class="upload-btn" id="upload-btn" onclick="document.getElementById('f-image-file').click()">
-            📤 העלה
-          </button>
+          <button type="button" class="upload-btn" id="upload-btn" onclick="document.getElementById('f-image-file').click()">📤 העלה</button>
         </div>
         <div class="img-adjust-row" id="img-adjust-row" ${data.image_url ? '' : 'style="display:none"'}>
           <button type="button" class="step-img-adjust-btn" onclick="openCropEditor(document.getElementById('f-image').value,{type:'main'})">⊕ כוון מיקום תמונה</button>
@@ -558,27 +567,37 @@ function renderForm(data) {
       </div>
     </div>
 
-    <div class="section-divider">
-      מרכיבים
-      <button class="add-row-btn" onclick="addIngRow()">+ הוסף</button>
-    </div>
-    <div id="ing-rows">
-      ${(data.ingredients||[]).map((i,idx) => ingRowHtml(idx, i)).join('')}
-    </div>
-
-    <div class="section-divider">
-      שלבי הכנה
-      <button class="add-row-btn" onclick="addStepRow()">+ הוסף</button>
-    </div>
-    <div id="step-rows">
-      ${(data.steps||[]).map((s,idx) => stepRowHtml(idx, s)).join('')}
-    </div>
-
+    <!-- Actions -->
     <div class="form-actions">
-      ${!isNew ? `<button class="cancel-btn" onclick="openForm(null)">ביטול</button>` : ''}
-      <button class="submit-btn" id="submit-btn" onclick="submitForm()">${isNew ? 'צור מתכון' : 'שמור שינויים'}</button>
+      <button class="cancel-btn" type="button" onclick="closeForm()">ביטול</button>
+      <button class="submit-btn" id="submit-btn" type="button" onclick="submitForm()">${isNew ? 'צור מתכון ✓' : 'שמור שינויים ✓'}</button>
     </div>`;
+
   initFormTransforms();
+}
+
+// ── Visibility toggle (in form) ───────────────────────────────────────────────
+
+function toggleFormVis() {
+  const hiddenEl = document.getElementById('f-hidden');
+  const newHid   = hiddenEl.value !== '1';
+  hiddenEl.value = newHid ? '1' : '0';
+
+  const row = document.getElementById('vis-row');
+  const btn = document.getElementById('vis-btn');
+  row.className = `vis-row${newHid ? ' is-hidden' : ''}`;
+  row.querySelector('.vis-icon').textContent = newHid ? '🙈' : '👁️';
+  document.getElementById('vis-status').textContent = newHid ? 'מוסתר מהבלוג' : 'מוצג בבלוג';
+  row.querySelector('.vis-note').textContent = newHid ? 'המתכון לא מופיע לגולשים' : 'המתכון גלוי לכל הגולשים';
+  btn.className = `vis-btn ${newHid ? 'btn-show' : 'btn-hide'}`;
+  btn.textContent = newHid ? 'הצג בבלוג' : 'הסתר';
+}
+
+function closeForm() {
+  editingId = null;
+  renderGrid();
+  document.getElementById('form-section').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── Ingredient rows ───────────────────────────────────────────────────────────
@@ -588,11 +607,15 @@ function ingRowHtml(idx, i={}) {
   const id = ingCount++;
   return `
     <div class="ing-row" id="ing-${id}">
-      <input type="text"   placeholder="שם מרכיב *" value="${esc(i.name||'')}"   class="ing-name" />
-      <input type="number" placeholder="כמות"        value="${i.amount||''}"     class="ing-amount" min="0" step="0.01" />
-      <input type="text"   placeholder="יחידה"       value="${esc(i.unit||'')}"   class="ing-unit" />
-      <input type="text"   placeholder="הערה"        value="${esc(i.note||'')}"   class="ing-note-col" />
-      <button class="del-btn" onclick="delRow('ing-${id}')">✕</button>
+      <div class="ing-name-wrap">
+        <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${esc(i.name||'')}" />
+        <button type="button" class="del-btn" onclick="delRow('ing-${id}')">✕</button>
+      </div>
+      <div class="ing-sub">
+        <input type="number" class="ing-amount" placeholder="כמות" value="${i.amount||''}" min="0" step="0.01" />
+        <input type="text"   class="ing-unit"   placeholder="יחידה" value="${esc(i.unit||'')}" />
+        <input type="text"   class="ing-note-col" placeholder="הערה" value="${esc(i.note||'')}" />
+      </div>
     </div>`;
 }
 function addIngRow() {
@@ -604,17 +627,19 @@ function addIngRow() {
 let stepCount = 0;
 function stepRowHtml(idx, s={}) {
   const id = stepCount++;
+  const timerMin = s.timer_seconds ? Math.round(s.timer_seconds / 60) : '';
   return `
     <div class="step-row" id="step-${id}">
       <div class="step-row-head">
         <div class="step-num-badge">${idx+1}</div>
-        <input type="text" placeholder="כותרת השלב (אופציונלי)" value="${esc(s.title||'')}" class="step-title-inp" style="flex:1" />
-        <button class="del-btn" onclick="delRow('step-${id}');reNumberSteps()">✕</button>
+        <input type="text" class="step-title-inp" placeholder="כותרת השלב (אופציונלי)" value="${esc(s.title||'')}" />
+        <button type="button" class="del-btn" onclick="delRow('step-${id}');reNumberSteps()">✕</button>
       </div>
-      <textarea class="step-text-inp" placeholder="הוראות השלב *" rows="3">${esc(s.text||'')}</textarea>
-      <div style="margin-top:.6rem">
-        <label style="font-size:.8rem">טיימר (שניות, אופציונלי)</label>
-        <input type="number" placeholder="למשל 1800 = חצי שעה" value="${s.timer_seconds||''}" class="step-timer-inp" min="0" style="margin-top:.3rem" />
+      <textarea class="step-text-inp" placeholder="הוראות השלב *" rows="4"
+        onblur="autoDetectStepTimer(this)">${esc(s.text||'')}</textarea>
+      <div class="step-timer-wrap">
+        <label>⏱ טיימר (דקות, אופציונלי)</label>
+        <input type="number" class="step-timer-inp" placeholder="דקות" value="${timerMin}" min="0" />
       </div>
       <div class="step-img-section">
         <div class="step-img-preview" id="step-${id}-prev"
@@ -645,8 +670,53 @@ function reNumberSteps() {
     row.querySelector('.step-num-badge').textContent = i + 1;
   });
 }
-
 function delRow(id) { document.getElementById(id)?.remove(); }
+
+// ── Timer auto-detect (client-side) ──────────────────────────────────────────
+
+function parseTimerFromText(text) {
+  if (!text) return null;
+  if (/חצי\s*שעה/.test(text)) return 30;
+  if (/רבע\s*שעה/.test(text)) return 15;
+  let m = text.match(/(\d+)\s*[-–]\s*(\d+)\s*דק/);
+  if (m) return Math.round((+m[1] + +m[2]) / 2);
+  m = text.match(/(\d+)\s*[-–]\s*(\d+)\s*שע/);
+  if (m) return Math.round((+m[1] + +m[2]) / 2) * 60;
+  m = text.match(/(?:כ[-\s]?)?(\d+(?:\.\d+)?)\s*(?:דקות|דקה|דק[׳'"ׇ]?)\b/);
+  if (m) return Math.round(parseFloat(m[1]));
+  m = text.match(/(?:כ[-\s]?)?(\d+(?:\.\d+)?)\s*(?:שעות|שעה)\b/);
+  if (m) return Math.round(parseFloat(m[1]) * 60);
+  return null;
+}
+
+function isCookingStep(text) {
+  return /אפ[יה]|תנור|טג[ונ]|מטגן|טיגון|בש[לו]|בישול|מבשל|צל[יה]|קל[הוי]|הרתח|בסיר|איד[וא]|מאד[הי]|גריל|מחב[תי]|פרייר/.test(text);
+}
+
+function autoDetectStepTimer(textarea) {
+  const row = textarea.closest('.step-row');
+  const timerEl = row?.querySelector('.step-timer-inp');
+  if (!timerEl || timerEl.value) return;
+  const mins = parseTimerFromText(textarea.value);
+  if (mins) timerEl.value = mins;
+}
+
+function recalcTimes() {
+  let prepMin = 0, cookMin = 0;
+  document.querySelectorAll('.step-row').forEach(row => {
+    const text = row.querySelector('.step-text-inp')?.value || '';
+    const timerEl = row.querySelector('.step-timer-inp');
+    const mins = timerEl?.value ? parseInt(timerEl.value) : parseTimerFromText(text);
+    if (!mins) return;
+    const ctx = (row.querySelector('.step-title-inp')?.value || '') + ' ' + text;
+    if (isCookingStep(ctx)) cookMin += mins;
+    else prepMin += mins;
+  });
+  if (prepMin > 0) document.getElementById('f-prep').value = prepMin;
+  if (cookMin > 0) document.getElementById('f-cook').value = cookMin;
+  if (prepMin > 0 || cookMin > 0) showToast('זמנים חושבו מהשלבים ✓', 'success');
+  else showToast('לא נמצאו זמנים בשלבים', '');
+}
 
 // ── Collect form data ─────────────────────────────────────────────────────────
 
@@ -661,12 +731,15 @@ function collectForm() {
     note:   row.querySelector('.ing-note-col').value.trim() || null,
   })).filter(i => i.name);
 
-  const steps = [...document.querySelectorAll('.step-row')].map(row => ({
-    title:         row.querySelector('.step-title-inp').value.trim() || null,
-    text:          row.querySelector('.step-text-inp').value.trim(),
-    timer_seconds: parseInt(row.querySelector('.step-timer-inp').value) || null,
-    image_url:     row.querySelector('.step-img-url')?.value.trim() || null,
-  })).filter(s => s.text);
+  const steps = [...document.querySelectorAll('.step-row')].map(row => {
+    const mins = parseInt(row.querySelector('.step-timer-inp').value) || null;
+    return {
+      title:         row.querySelector('.step-title-inp').value.trim() || null,
+      text:          row.querySelector('.step-text-inp').value.trim(),
+      timer_seconds: mins ? mins * 60 : null,
+      image_url:     row.querySelector('.step-img-url')?.value.trim() || null,
+    };
+  }).filter(s => s.text);
 
   return {
     title:       document.getElementById('f-title').value.trim(),
@@ -677,7 +750,7 @@ function collectForm() {
     prep_time:   parseInt(document.getElementById('f-prep').value) || null,
     cook_time:   parseInt(document.getElementById('f-cook').value) || null,
     servings:    parseInt(document.getElementById('f-servings').value) || null,
-    is_hidden:   document.getElementById('f-hidden').checked,
+    is_hidden:   document.getElementById('f-hidden').value === '1',
     tags, ingredients, steps,
     image_url:   document.getElementById('f-image').value.trim() || null,
   };
@@ -690,8 +763,7 @@ async function submitForm() {
   if (!data.title) { showToast('שם המתכון הוא שדה חובה', 'error'); return; }
 
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'שומר...';
+  btn.disabled = true; btn.textContent = 'שומר...';
 
   const isNew = !editingId;
   const url    = isNew ? `${API}/api/recipes` : `${API}/api/recipes/${editingId}`;
@@ -706,14 +778,16 @@ async function submitForm() {
     if (!res.ok) throw new Error(res.status);
     const saved = await res.json();
     showToast(isNew ? 'המתכון נוצר בהצלחה ✓' : 'השינויים נשמרו ✓', 'success');
-    await loadRecipes();
     editingId = saved.id;
-    renderList();
+    await loadRecipes();
+    // Reload form with saved data (includes auto-calculated times/timers)
+    const fresh = await fetch(`${API}/api/recipes/${saved.id}`);
+    renderForm(await fresh.json());
   } catch {
     showToast('שגיאה בשמירה — נסה שוב', 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = editingId && !isNew ? 'שמור שינויים' : 'צור מתכון';
+    btn.textContent = editingId ? 'שמור שינויים ✓' : 'צור מתכון ✓';
   }
 }
 
@@ -734,15 +808,10 @@ document.getElementById('confirm-ok-btn').addEventListener('click', async () => 
   closeConfirm();
   try {
     await fetch(`${API}/api/recipes/${id}`, {
-      method: 'DELETE',
-      headers: { 'x-admin-password': adminPw },
+      method: 'DELETE', headers: { 'x-admin-password': adminPw },
     });
     showToast('המתכון נמחק', 'success');
-    if (editingId === id) {
-      editingId = null;
-      document.getElementById('form-card').innerHTML =
-        '<div style="text-align:center;padding:3rem;color:var(--ink-muted)"><div style="font-size:2rem;margin-bottom:.75rem">✏️</div><p>בחר מתכון לעריכה או לחץ "+ חדש"</p></div>';
-    }
+    if (editingId === id) closeForm();
     await loadRecipes();
   } catch {
     showToast('שגיאה במחיקה', 'error');
@@ -822,7 +891,7 @@ async function uploadToCloudinary(file, onSuccess, opts = {}) {
   }
 }
 
-// ── Image crop/position editor ─────────────────────────────────────────────
+// ── Image crop/position editor ────────────────────────────────────────────────
 
 let cropTarget = null, cropBaseUrl = '', cropOffsetX = 0, cropOffsetY = 0;
 let cropZoom = 1, cropDrag = null, pendingCropPos = null;
@@ -909,7 +978,7 @@ function applyImgTransform(el, x, y, z) {
   el.style.transformOrigin = `${x}% ${y}%`;
 }
 
-// Drag
+// Drag handlers
 const _cvp = document.getElementById('crop-viewport');
 _cvp.addEventListener('mousedown', e => {
   cropDrag = { sx: e.clientX, sy: e.clientY, ox: cropOffsetX, oy: cropOffsetY };
@@ -947,7 +1016,7 @@ document.getElementById('crop-zoom-slider').addEventListener('input', e => {
   updateCropView();
 });
 
-// ── Step image handlers ────────────────────────────────────────────────────
+// ── Step image handlers ───────────────────────────────────────────────────────
 
 function handleStepFileSelect(input, stepId) {
   const file = input.files[0];

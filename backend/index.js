@@ -309,6 +309,11 @@ app.post('/api/recipes', requireAdmin, async (req, res) => {
     is_hidden, story_text,
   } = req.body;
 
+  const pSteps = processSteps(steps);
+  const auto   = calcAutoTimes(pSteps);
+  const fPrep  = prep_time  != null ? prep_time  : auto.prep_time;
+  const fCook  = cook_time  != null ? cook_time  : auto.cook_time;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -318,10 +323,10 @@ app.post('/api/recipes', requireAdmin, async (req, res) => {
          (title, description, difficulty, prep_time, cook_time, servings, category, tags, image_url, is_hidden, story_text)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null]
+      [title, description, difficulty, fPrep, fCook, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null]
     );
 
-    await insertIngredientsAndSteps(client, recipe.id, ingredients, steps);
+    await insertIngredientsAndSteps(client, recipe.id, ingredients, pSteps);
 
     await client.query('COMMIT');
     res.status(201).json(recipe);
@@ -385,6 +390,11 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     is_hidden, story_text,
   } = req.body;
 
+  const pSteps = processSteps(steps);
+  const auto   = calcAutoTimes(pSteps);
+  const fPrep  = prep_time  != null ? prep_time  : auto.prep_time;
+  const fCook  = cook_time  != null ? cook_time  : auto.cook_time;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -394,7 +404,7 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
        SET title=$1, description=$2, difficulty=$3, prep_time=$4, cook_time=$5,
            servings=$6, category=$7, tags=$8, image_url=$9, is_hidden=$10, story_text=$11
        WHERE id=$12 RETURNING *`,
-      [title, description, difficulty, prep_time, cook_time, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null, id]
+      [title, description, difficulty, fPrep, fCook, servings, category, tags ?? [], image_url, is_hidden ?? false, story_text ?? null, id]
     );
     if (!recipe) {
       await client.query('ROLLBACK');
@@ -407,7 +417,7 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     if (steps !== undefined) {
       await client.query('DELETE FROM steps WHERE recipe_id = $1', [id]);
     }
-    await insertIngredientsAndSteps(client, id, ingredients, steps);
+    await insertIngredientsAndSteps(client, id, ingredients, pSteps);
 
     await client.query('COMMIT');
     res.json(recipe);
@@ -417,6 +427,27 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     res.status(500).json({ error: 'DB error' });
   } finally {
     client.release();
+  }
+});
+
+app.patch('/api/recipes/:id', requireAdmin, async (req, res) => {
+  const allowed = ['is_hidden'];
+  const sets = [], vals = [];
+  let p = 1;
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) { sets.push(`${key} = $${p++}`); vals.push(req.body[key]); }
+  }
+  if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+  vals.push(req.params.id);
+  try {
+    const { rows: [recipe] } = await pool.query(
+      `UPDATE recipes SET ${sets.join(', ')} WHERE id = $${p} RETURNING *`, vals
+    );
+    if (!recipe) return res.status(404).json({ error: 'Not found' });
+    res.json(recipe);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
   }
 });
 
@@ -463,6 +494,49 @@ app.delete('/api/recipes/:recipeId/notes/:noteId', async (req, res) => {
     res.status(500).json({ error: 'DB error' });
   }
 });
+
+// ─── Timer helpers ────────────────────────────────────────────────────────────
+
+function parseTimerFromText(text) {
+  if (!text) return null;
+  if (/חצי\s*שעה/.test(text)) return 1800;
+  if (/רבע\s*שעה/.test(text)) return 900;
+  let m = text.match(/(\d+)\s*[-–]\s*(\d+)\s*דק/);
+  if (m) return Math.round((+m[1] + +m[2]) / 2) * 60;
+  m = text.match(/(\d+)\s*[-–]\s*(\d+)\s*שע/);
+  if (m) return Math.round((+m[1] + +m[2]) / 2) * 3600;
+  m = text.match(/(?:כ[-\s]?)?(\d+(?:\.\d+)?)\s*(?:דקות|דקה|דק[׳'"ׇ]?)\b/);
+  if (m) return Math.round(parseFloat(m[1]) * 60);
+  m = text.match(/(?:כ[-\s]?)?(\d+(?:\.\d+)?)\s*(?:שעות|שעה)\b/);
+  if (m) return Math.round(parseFloat(m[1]) * 3600);
+  return null;
+}
+
+function isCookingStep(text) {
+  return /אפ[יה]|תנור|טג[ונ]|מטגן|טיגון|בש[לו]|בישול|מבשל|צל[יה]|קל[הוי]|הרתח|בסיר|איד[וא]|מאד[הי]|גריל|מחב[תי]|פרייר/.test(text);
+}
+
+function processSteps(steps) {
+  if (!steps?.length) return steps || [];
+  return steps.map(s => ({
+    ...s,
+    timer_seconds: s.timer_seconds ?? parseTimerFromText(s.text || '') ?? null,
+  }));
+}
+
+function calcAutoTimes(steps) {
+  let prepSec = 0, cookSec = 0;
+  for (const s of steps || []) {
+    if (!s.timer_seconds) continue;
+    const ctx = (s.title || '') + ' ' + (s.text || '');
+    if (isCookingStep(ctx)) cookSec += s.timer_seconds;
+    else prepSec += s.timer_seconds;
+  }
+  return {
+    prep_time: prepSec > 0 ? Math.round(prepSec / 60) : null,
+    cook_time: cookSec > 0 ? Math.round(cookSec / 60) : null,
+  };
+}
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
 
