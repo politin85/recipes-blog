@@ -436,8 +436,8 @@ freeEl.addEventListener('input', () => {
   if (!cur) { dropEl.style.display = 'none'; return; }
 
   const matches = allIngredients
-    .filter(i => !i.is_pantry_staple && i.name.includes(cur) && !selected.has(i.id))
-    .slice(0, 7);
+    .filter(i => !i.is_pantry_staple && i.name.startsWith(cur) && !selected.has(i.id))
+    .slice(0, 8);
 
   if (!matches.length) { dropEl.style.display = 'none'; return; }
 
@@ -467,7 +467,7 @@ freeEl.addEventListener('keydown', e => {
       const cur = parts[parts.length - 1].trim();
       if (cur) {
         const match = allIngredients.find(i =>
-          i.name.toLowerCase() === cur.toLowerCase() || i.name.includes(cur)
+          i.name.toLowerCase() === cur.toLowerCase() || i.name.startsWith(cur)
         );
         if (match) pickAutocomplete(match.id, match.name, null);
       }

@@ -178,32 +178,47 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
 
   try {
     if (mode === 'simple') {
-      // Simple mode: rank by how many selected ingredients appear in the recipe (at least 1)
+      // Expand each selected ingredient to all DB ingredients whose name starts with it.
+      // matched_count = how many of the ORIGINAL selections had at least one expanded match.
       const { rows } = await pool.query(
-        `SELECT r.*,
-           COUNT(DISTINCT ri.ingredient_id)
-             FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_count
-         FROM recipes r
-         JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-         WHERE r.is_hidden IS NOT TRUE
-         GROUP BY r.id
-         HAVING COUNT(DISTINCT ri.ingredient_id)
-           FILTER (WHERE ri.ingredient_id = ANY($1::int[])) > 0
-         ORDER BY matched_count DESC, r.created_at DESC`,
+        `WITH sel_exp AS (
+           SELECT sel.id AS sel_id, exp.id AS exp_id
+           FROM   ingredients sel
+           JOIN   ingredients exp ON exp.name ILIKE sel.name || '%'
+           WHERE  sel.id = ANY($1::int[])
+         )
+         SELECT r.*,
+           COUNT(DISTINCT se.sel_id)::int AS matched_count
+         FROM   recipes r
+         JOIN   recipe_ingredients ri ON ri.recipe_id = r.id
+         JOIN   sel_exp se            ON se.exp_id    = ri.ingredient_id
+         WHERE  r.is_hidden IS NOT TRUE
+         GROUP  BY r.id
+         ORDER  BY matched_count DESC, r.created_at DESC`,
         [ingredient_ids]
       );
       return res.json(rows);
     }
 
-    // % match mode: rank by selected matches first, then by coverage with pantry
+    // % match mode — expand ingredient_ids via prefix first, then existing coverage logic
+    const { rows: expRows } = await pool.query(
+      `SELECT DISTINCT exp.id
+       FROM   ingredients sel
+       JOIN   ingredients exp ON exp.name ILIKE sel.name || '%'
+       WHERE  sel.id = ANY($1::int[])`,
+      [ingredient_ids]
+    );
+    const expandedIds = expRows.map(r => r.id);
+    if (!expandedIds.length) return res.json([]);
+
     let available;
     if (include_pantry) {
       const { rows: staples } = await pool.query(
         'SELECT id FROM ingredients WHERE is_pantry_staple = TRUE'
       );
-      available = [...new Set([...ingredient_ids, ...staples.map((r) => r.id)])];
+      available = [...new Set([...expandedIds, ...staples.map(r => r.id)])];
     } else {
-      available = [...new Set(ingredient_ids)];
+      available = [...new Set(expandedIds)];
     }
 
     const { rows: recipes } = await pool.query(
@@ -214,13 +229,13 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
            FILTER (WHERE ri.ingredient_id = ANY($1::int[]))::int AS matched_selected,
          COUNT(DISTINCT ri.ingredient_id)
            FILTER (WHERE ri.ingredient_id = ANY($2::int[]))::int AS matched_available
-       FROM recipes r
-       JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-       WHERE r.is_hidden IS NOT TRUE
-       GROUP BY r.id
+       FROM   recipes r
+       JOIN   recipe_ingredients ri ON ri.recipe_id = r.id
+       WHERE  r.is_hidden IS NOT TRUE
+       GROUP  BY r.id
        HAVING COUNT(DISTINCT ri.ingredient_id)
-         FILTER (WHERE ri.ingredient_id = ANY($1::int[])) > 0`,
-      [ingredient_ids, available]
+                FILTER (WHERE ri.ingredient_id = ANY($1::int[])) > 0`,
+      [expandedIds, available]
     );
 
     const result = await Promise.all(
@@ -232,10 +247,10 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
         if (pct < 100) {
           const { rows } = await pool.query(
             `SELECT i.id, i.name
-             FROM recipe_ingredients ri
-             JOIN ingredients i ON i.id = ri.ingredient_id
-             WHERE ri.recipe_id = $1
-               AND ri.ingredient_id != ALL($2::int[])`,
+             FROM   recipe_ingredients ri
+             JOIN   ingredients i ON i.id = ri.ingredient_id
+             WHERE  ri.recipe_id = $1
+               AND  ri.ingredient_id != ALL($2::int[])`,
             [recipe.id, available]
           );
           missing = rows;
