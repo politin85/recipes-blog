@@ -224,6 +224,37 @@
     .settings-save-btn:hover { background: var(--olive-light); }
     .settings-save-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+    /* ── Section save button ── */
+    .section-save-row { display:flex; justify-content:flex-end; margin:.4rem 0 1rem; }
+    .section-save-btn { padding:.4rem 1.1rem; background:var(--olive); color:var(--white); border:none; border-radius:50px; font-family:'Rubik',sans-serif; font-size:.82rem; font-weight:500; cursor:pointer; transition:all .2s; }
+    .section-save-btn:hover { background:var(--olive-light); }
+    .section-save-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* ── Drag handles ── */
+    .drag-handle { cursor:grab; color:var(--ink-muted); font-size:1.05rem; padding:.2rem .45rem; user-select:none; flex-shrink:0; line-height:1; }
+    .drag-handle:active { cursor:grabbing; }
+    .dragging { opacity:.35; box-shadow: 0 0 0 2px var(--olive); }
+
+    /* ── Preview section ── */
+    .preview-wrap { background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-top:1.75rem; overflow:hidden; }
+    .preview-bar { padding:.85rem 1.25rem; border-bottom:1px solid var(--sand); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+    .preview-bar h3 { font-family:'Secular One',sans-serif; font-size:.95rem; }
+    .prev-refresh-btn { padding:.4rem 1rem; background:none; border:1.5px solid var(--terracotta); color:var(--terracotta); border-radius:50px; font-family:'Rubik',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .prev-refresh-btn:hover { background:var(--terracotta); color:var(--white); }
+    .preview-body { padding:1.5rem 1.25rem; }
+    .prev-title { font-family:'Secular One',sans-serif; font-size:1.5rem; margin-bottom:.5rem; }
+    .prev-meta { display:flex; gap:1.2rem; flex-wrap:wrap; font-size:.82rem; color:var(--ink-muted); margin-bottom:1rem; }
+    .prev-desc { font-size:.9rem; line-height:1.7; color:var(--ink-light); margin-bottom:1.25rem; }
+    .prev-section-title { font-family:'Secular One',sans-serif; font-size:.95rem; margin:.75rem 0 .5rem; padding-bottom:.35rem; border-bottom:1px solid var(--sand); }
+    .prev-ing-list { list-style:none; margin-bottom:1.25rem; }
+    .prev-ing-list li { padding:.3rem 0; font-size:.88rem; border-bottom:1px solid var(--sand); }
+    .prev-step { border:1px solid var(--sand); border-radius:var(--radius); margin-bottom:.5rem; overflow:hidden; }
+    .prev-step-head { padding:.65rem 1rem; background:var(--cream); display:flex; align-items:center; gap:.65rem; cursor:pointer; user-select:none; }
+    .prev-step-badge { width:24px;height:24px;border-radius:50%;background:var(--terracotta);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0; }
+    .prev-step-title-text { font-size:.88rem; color:var(--ink); flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .prev-step-body { padding:.75rem 1rem; font-size:.9rem; line-height:1.7; border-top:1px solid var(--sand); display:none; }
+    .prev-step.open .prev-step-body { display:block; }
+
     /* ── Image crop/position editor ── */
     .crop-dialog { background: var(--white); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 600px; width: 95%; box-shadow: var(--shadow-md); }
     .crop-viewport { width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative; border-radius: var(--radius); background: #111; cursor: grab; user-select: none; touch-action: none; }
@@ -612,6 +643,28 @@ function renderForm(data) {
       <input type="text" id="f-title" value="${esc(data.title||'')}" placeholder="שם המתכון" />
     </div>
 
+    <!-- תמונה ראשית — מיד אחרי השם -->
+    <div class="section-divider" style="margin-top:.5rem">תמונה ראשית</div>
+    <div class="form-group">
+      <div class="img-upload-wrap">
+        <div class="img-preview" id="img-preview-box" style="height:200px" onclick="document.getElementById('f-image-file').click()">
+          <img id="img-preview-img" src="${esc(data.image_url||'')}" alt="" ${data.image_url ? 'style="display:block"' : ''} />
+          <div class="img-preview-placeholder" id="img-preview-ph" ${data.image_url ? 'style="display:none"' : ''}>
+            📷<br>לחץ לבחירת תמונה<br><small>JPG / PNG / WEBP</small>
+          </div>
+        </div>
+        <input type="file" id="f-image-file" accept="image/*" style="display:none" onchange="handleImageSelect(this)" />
+        <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
+        <div class="img-row">
+          <input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://res.cloudinary.com/..." style="direction:ltr" onchange="toggleMainAdjustBtn()" />
+          <button type="button" class="upload-btn" id="upload-btn" onclick="document.getElementById('f-image-file').click()">📤 העלה</button>
+        </div>
+        <div class="img-adjust-row" id="img-adjust-row" ${data.image_url ? '' : 'style="display:none"'}>
+          <button type="button" class="step-img-adjust-btn" onclick="openCropEditor(document.getElementById('f-image').value,{type:'main'})">⊕ כוון מיקום תמונה</button>
+        </div>
+      </div>
+    </div>
+
     <!-- תיאור קצר -->
     <div class="form-group">
       <label>תיאור קצר</label>
@@ -664,6 +717,8 @@ function renderForm(data) {
       <input type="text" id="f-tags" value="${esc(tags)}" placeholder="שוקולד, אפייה, קל..." />
     </div>
 
+    ${editingId ? `<div class="section-save-row"><button class="section-save-btn" onclick="saveSectionDetails(this)">💾 שמור פרטים</button></div>` : ''}
+
     <!-- מרכיבים -->
     <div class="section-divider">
       מרכיבים
@@ -672,6 +727,7 @@ function renderForm(data) {
     <div id="ing-rows">
       ${(data.ingredients||[]).map((i,idx) => ingRowHtml(idx, i)).join('')}
     </div>
+    ${editingId ? `<div class="section-save-row"><button class="section-save-btn" onclick="saveSectionIngredients(this)">💾 שמור מרכיבים</button></div>` : ''}
 
     <!-- שלבי הכנה -->
     <div class="section-divider">
@@ -681,28 +737,20 @@ function renderForm(data) {
     <div id="step-rows">
       ${(data.steps||[]).map((s,idx) => stepRowHtml(idx, s)).join('')}
     </div>
+    ${editingId ? `<div class="section-save-row"><button class="section-save-btn" onclick="saveSectionSteps(this)">💾 שמור שלבים</button></div>` : ''}
 
-    <!-- תמונה -->
-    <div class="section-divider">תמונה ראשית</div>
-    <div class="form-group">
-      <div class="img-upload-wrap">
-        <div class="img-preview" id="img-preview-box" onclick="document.getElementById('f-image-file').click()">
-          <img id="img-preview-img" src="${esc(data.image_url||'')}" alt="" ${data.image_url ? 'style="display:block"' : ''} />
-          <div class="img-preview-placeholder" id="img-preview-ph" ${data.image_url ? 'style="display:none"' : ''}>
-            📷<br>לחץ לבחירת תמונה<br><small>JPG / PNG / WEBP</small>
-          </div>
-        </div>
-        <input type="file" id="f-image-file" accept="image/*" style="display:none" onchange="handleImageSelect(this)" />
-        <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
-        <div class="img-row">
-          <input type="url" id="f-image" value="${esc(data.image_url||'')}" placeholder="https://res.cloudinary.com/..." style="direction:ltr" onchange="toggleMainAdjustBtn()" />
-          <button type="button" class="upload-btn" id="upload-btn" onclick="document.getElementById('f-image-file').click()">📤 העלה</button>
-        </div>
-        <div class="img-adjust-row" id="img-adjust-row" ${data.image_url ? '' : 'style="display:none"'}>
-          <button type="button" class="step-img-adjust-btn" onclick="openCropEditor(document.getElementById('f-image').value,{type:'main'})">⊕ כוון מיקום תמונה</button>
-        </div>
+    ${editingId ? `
+    <!-- תצוגה מקדימה -->
+    <div class="preview-wrap">
+      <div class="preview-bar">
+        <h3>👁 תצוגה מקדימה</h3>
+        <button class="prev-refresh-btn" onclick="renderPreview()">🔄 רענן תצוגה מקדימה</button>
+      </div>
+      <div class="preview-body" id="preview-body">
+        <div style="text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">לחץ "🔄 רענן תצוגה מקדימה" לצפייה</div>
       </div>
     </div>
+    ` : ''}
 
     <!-- Actions -->
     <div class="form-actions">
@@ -711,6 +759,7 @@ function renderForm(data) {
     </div>`;
 
   initFormTransforms();
+  initDragDrop();
 }
 
 // ── Visibility toggle (in form) ───────────────────────────────────────────────
@@ -737,14 +786,143 @@ function closeForm() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ── Section partial saves ─────────────────────────────────────────────────────
+
+async function doPartialSave(btn) {
+  if (!editingId) { showToast('שמור קודם את המתכון (צור מתכון)', 'error'); return; }
+  const data = collectForm();
+  if (!data.title) { showToast('שם המתכון הוא שדה חובה', 'error'); return; }
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'שומר...';
+  try {
+    const res = await fetch(`${API}/api/recipes/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(res.status);
+    showToast('נשמר ✓', 'success');
+    await loadRecipes();
+  } catch {
+    showToast('שגיאה בשמירה', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = origText;
+  }
+}
+
+function saveSectionDetails(btn)     { doPartialSave(btn); }
+function saveSectionIngredients(btn) { doPartialSave(btn); }
+function saveSectionSteps(btn)       { doPartialSave(btn); }
+
+// ── Drag & drop reordering ────────────────────────────────────────────────────
+
+function initDragDrop() {
+  setupDragContainer('ing-rows',  '.ing-row',  null);
+  setupDragContainer('step-rows', '.step-row', reNumberSteps);
+}
+
+function setupDragContainer(containerId, rowSel, afterDrop) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let dragSrc = null;
+
+  container.addEventListener('dragstart', e => {
+    const row = e.target.closest(rowSel);
+    if (!row) return;
+    dragSrc = row;
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    const target = e.target.closest(rowSel);
+    if (!target || target === dragSrc) return;
+    const rect = target.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      container.insertBefore(dragSrc, target);
+    } else {
+      target.after(dragSrc);
+    }
+  });
+
+  container.addEventListener('dragend', () => {
+    if (dragSrc) { dragSrc.classList.remove('dragging'); dragSrc = null; }
+    if (afterDrop) afterDrop();
+  });
+}
+
+// ── Preview ───────────────────────────────────────────────────────────────────
+
+function renderPreview() {
+  const pb = document.getElementById('preview-body');
+  if (!pb) return;
+  const data = collectForm();
+  const DIFF = { easy:'קל', medium:'בינוני', hard:'מאתגר' };
+  const totalMin = (data.prep_time || 0) + (data.cook_time || 0);
+  let html = '';
+
+  if (data.image_url) {
+    const imgSrc = data.image_url.split('#')[0];
+    const m = data.image_url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+    const style = m ? `object-position:${m[1]}% ${m[2]}%;transform:scale(${m[3]});transform-origin:${m[1]}% ${m[2]}%` : '';
+    html += `<div style="width:100%;height:220px;overflow:hidden;border-radius:var(--radius);margin-bottom:1.25rem;background:var(--sand)"><img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;${style}" /></div>`;
+  }
+
+  html += `<h2 class="prev-title">${esc(data.title || '(ללא שם)')}</h2>`;
+
+  const meta = [];
+  if (data.prep_time) meta.push(`🥄 הכנה: ${data.prep_time} דק'`);
+  if (data.cook_time) meta.push(`🔥 בישול: ${data.cook_time} דק'`);
+  if (totalMin)       meta.push(`⏱ סה"כ: ${totalMin} דק'`);
+  if (data.servings)  meta.push(`🍽 ${data.servings} מנות`);
+  if (data.difficulty) meta.push(`📊 ${DIFF[data.difficulty] || data.difficulty}`);
+  if (meta.length) html += `<div class="prev-meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>`;
+
+  if (data.description) html += `<p class="prev-desc">${esc(data.description)}</p>`;
+
+  if (data.ingredients?.length) {
+    html += `<div class="prev-section-title">מרכיבים</div><ul class="prev-ing-list">`;
+    for (const ing of data.ingredients) {
+      const qty = [ing.amount, ing.unit].filter(Boolean).join('\u00a0');
+      html += `<li>${esc(ing.name)}${qty ? ` — ${esc(qty)}` : ''}${ing.note ? ` <span style="color:var(--ink-muted);font-size:.82rem">(${esc(ing.note)})</span>` : ''}</li>`;
+    }
+    html += `</ul>`;
+  }
+
+  if (data.steps?.length) {
+    html += `<div class="prev-section-title">שלבי הכנה</div>`;
+    data.steps.forEach((s, i) => {
+      const heading = esc(s.title || s.text.substring(0, 60) + (s.text.length > 60 ? '...' : ''));
+      html += `<div class="prev-step" onclick="this.classList.toggle('open')">
+        <div class="prev-step-head">
+          <div class="prev-step-badge">${i + 1}</div>
+          <div class="prev-step-title-text">${heading}</div>
+          <span style="color:var(--ink-muted);font-size:.75rem">▼</span>
+        </div>
+        <div class="prev-step-body">${esc(s.text).replace(/\n/g, '<br>')}</div>
+      </div>`;
+    });
+  }
+
+  if (data.story_text) {
+    html += `<div class="prev-section-title" style="margin-top:1rem">💬 על המתכון</div><p class="prev-desc" style="margin-top:.5rem">${esc(data.story_text).replace(/\n/g,'<br>')}</p>`;
+  }
+
+  pb.innerHTML = html;
+}
+
 // ── Ingredient rows ───────────────────────────────────────────────────────────
 
 let ingCount = 0;
 function ingRowHtml(idx, i={}) {
   const id = ingCount++;
   return `
-    <div class="ing-row" id="ing-${id}">
+    <div class="ing-row" id="ing-${id}" draggable="true">
       <div class="ing-name-wrap">
+        <span class="drag-handle" title="גרור לשינוי סדר">☰</span>
         <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${esc(i.name||'')}" />
         <button type="button" class="del-btn" onclick="delRow('ing-${id}')">✕</button>
       </div>
@@ -766,8 +944,9 @@ function stepRowHtml(idx, s={}) {
   const id = stepCount++;
   const timerMin = s.timer_seconds ? Math.round(s.timer_seconds / 60) : '';
   return `
-    <div class="step-row" id="step-${id}">
+    <div class="step-row" id="step-${id}" draggable="true">
       <div class="step-row-head">
+        <span class="drag-handle" title="גרור לשינוי סדר">☰</span>
         <div class="step-num-badge">${idx+1}</div>
         <input type="text" class="step-title-inp" placeholder="כותרת השלב (אופציונלי)" value="${esc(s.title||'')}" />
         <button type="button" class="del-btn" onclick="delRow('step-${id}');reNumberSteps()">✕</button>
