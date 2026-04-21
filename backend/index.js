@@ -103,6 +103,7 @@ async function initDB() {
       display_name  TEXT NOT NULL CHECK (display_name <> ''),
       updated_at    TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE ingredient_aliases ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
   `);
 
   console.log('DB ready');
@@ -540,12 +541,13 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
     const { rows } = await pool.query(
       `SELECT i.name AS original_name,
               COALESCE(a.display_name, i.name) AS display_name,
+              COALESCE(a.note, '') AS note,
               COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
        FROM ingredients i
        LEFT JOIN ingredient_aliases a ON a.original_name = i.name
        LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.name, a.display_name
-       ORDER BY i.name COLLATE "C"`
+       GROUP BY i.name, a.display_name, a.note
+       ORDER BY i.name`
     );
     res.json(rows);
   } catch (err) {
@@ -555,17 +557,21 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
-  const { original_name, display_name } = req.body;
+  const { original_name, display_name, note } = req.body;
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
-  const effective = display_name?.trim() || original_name;
+  const effectiveName = display_name?.trim() || original_name;
+  const effectiveNote = note?.trim() ?? '';
   try {
     await pool.query(
-      `INSERT INTO ingredient_aliases (original_name, display_name)
-       VALUES ($1, $2)
-       ON CONFLICT (original_name) DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = NOW()`,
-      [original_name, effective]
+      `INSERT INTO ingredient_aliases (original_name, display_name, note)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (original_name) DO UPDATE
+         SET display_name = EXCLUDED.display_name,
+             note         = EXCLUDED.note,
+             updated_at   = NOW()`,
+      [original_name, effectiveName, effectiveNote]
     );
-    res.json({ original_name, display_name: effective });
+    res.json({ original_name, display_name: effectiveName, note: effectiveNote });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });
@@ -574,7 +580,7 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not set in Railway' });
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY לא מוגדר ב-Railway Variables' });
 
   try {
     // Only suggest for ingredients without a manual alias yet

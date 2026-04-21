@@ -517,7 +517,8 @@ function renderIngMgrTable(rows) {
         <tr>
           <th>שם מקורי</th>
           <th>שם תצוגה</th>
-          <th style="width:60px;text-align:center">שימוש</th>
+          <th>הערות</th>
+          <th style="width:50px;text-align:center">שימוש</th>
         </tr>
       </thead>
       <tbody id="ing-mgr-tbody">
@@ -527,35 +528,44 @@ function renderIngMgrTable(rows) {
 }
 
 function ingMgrRowHtml(r) {
-  const diff = r.display_name !== r.original_name;
+  const diff = r.display_name !== r.original_name || r.note;
   return `<tr class="${diff ? 'alias-diff' : ''}" data-orig="${esc(r.original_name)}">
     <td style="color:var(--ink-light)">${esc(r.original_name)}</td>
     <td>
-      <input class="alias-inp" value="${esc(r.display_name)}"
+      <input class="alias-inp alias-name-inp" value="${esc(r.display_name)}"
         placeholder="${esc(r.original_name)}"
         data-orig="${esc(r.original_name)}"
-        onblur="saveAlias(this)"
+        onblur="saveAlias(this.closest('tr'))"
+        onkeydown="if(event.key==='Enter')this.blur()" />
+    </td>
+    <td>
+      <input class="alias-inp alias-note-inp" value="${esc(r.note || '')}"
+        placeholder="הערה..."
+        data-orig="${esc(r.original_name)}"
+        onblur="saveAlias(this.closest('tr'))"
         onkeydown="if(event.key==='Enter')this.blur()" />
     </td>
     <td class="ing-count-badge" style="text-align:center">${r.recipe_count || 0}</td>
   </tr>`;
 }
 
-async function saveAlias(input) {
-  const original_name = input.dataset.orig;
-  const display_name  = input.value.trim() || original_name;
-  input.value = display_name;
+async function saveAlias(row) {
+  const original_name = row.dataset.orig;
+  const nameInp  = row.querySelector('.alias-name-inp');
+  const noteInp  = row.querySelector('.alias-note-inp');
+  const display_name = nameInp.value.trim() || original_name;
+  const note         = noteInp.value.trim();
+  nameInp.value = display_name;
   try {
     const res = await fetch(`${API}/api/admin/ingredients/alias`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
-      body: JSON.stringify({ original_name, display_name }),
+      body: JSON.stringify({ original_name, display_name, note }),
     });
     if (!res.ok) throw new Error(res.status);
-    const row = input.closest('tr');
-    if (row) row.className = display_name !== original_name ? 'alias-diff' : '';
+    row.className = (display_name !== original_name || note) ? 'alias-diff' : '';
     const entry = ingMgrData.find(e => e.original_name === original_name);
-    if (entry) entry.display_name = display_name;
+    if (entry) { entry.display_name = display_name; entry.note = note; }
     showToast('נשמר ✓', 'success');
   } catch {
     showToast('שגיאה בשמירה', 'error');
@@ -589,8 +599,9 @@ function filterIngMgr() {
   if (!tbody) return;
   tbody.querySelectorAll('tr').forEach(tr => {
     const orig = tr.dataset.orig?.toLowerCase() || '';
-    const disp = tr.querySelector('.alias-inp')?.value.toLowerCase() || '';
-    tr.style.display = (!q || orig.includes(q) || disp.includes(q)) ? '' : 'none';
+    const disp = tr.querySelector('.alias-name-inp')?.value.toLowerCase() || '';
+    const note = tr.querySelector('.alias-note-inp')?.value.toLowerCase() || '';
+    tr.style.display = (!q || orig.includes(q) || disp.includes(q) || note.includes(q)) ? '' : 'none';
   });
 }
 
