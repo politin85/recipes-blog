@@ -398,10 +398,11 @@ const dropEl = document.getElementById('autocomplete-drop');
 
 function showDrop(items) {
   if (!items.length) { dropEl.style.display = 'none'; return; }
-  dropEl.innerHTML = items.map(i =>
-    `<div class="autocomplete-item" data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
-      onmousedown="pickAutocomplete(${i.id},'${i.name.replace(/'/g,"\\'")}',event)">${i.name}</div>`
-  ).join('');
+  dropEl.innerHTML = items.map(i => {
+    const label = i.display_name || i.name;
+    return `<div class="autocomplete-item" data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
+      onmousedown="pickAutocomplete(${i.id},'${i.name.replace(/'/g,"\\'")}',event)">${label}</div>`;
+  }).join('');
   dropEl.style.display = 'block';
 }
 
@@ -426,7 +427,8 @@ freeEl.addEventListener('input', () => {
   }
 
   const matches = allIngredients
-    .filter(i => !i.is_pantry_staple && i.name.startsWith(cur) && !selected.has(i.id))
+    .filter(i => !i.is_pantry_staple && !selected.has(i.id) &&
+      (i.name.startsWith(cur) || (i.display_name || '').startsWith(cur)))
     .slice(0, 8);
   showDrop(matches);
 });
@@ -450,7 +452,9 @@ freeEl.addEventListener('keydown', e => {
       const cur = parts[parts.length - 1].trim();
       if (cur) {
         const match = allIngredients.find(i =>
-          i.name.toLowerCase() === cur.toLowerCase() || i.name.startsWith(cur)
+          i.name.toLowerCase() === cur.toLowerCase() ||
+          (i.display_name || '').toLowerCase() === cur.toLowerCase() ||
+          i.name.startsWith(cur) || (i.display_name || '').startsWith(cur)
         );
         if (match) pickAutocomplete(match.id, match.name, null);
       }
@@ -517,7 +521,7 @@ function renderChips() {
   wrap.innerHTML = [...selected].map(id => {
     const ing = allIngredients.find(i => i.id === id);
     return ing
-      ? `<span class="chip" onclick="removeChip(${id})">${ing.name} <span class="chip-x">×</span></span>`
+      ? `<span class="chip" onclick="removeChip(${id})">${ing.display_name || ing.name} <span class="chip-x">×</span></span>`
       : '';
   }).join('');
 }
@@ -645,7 +649,7 @@ function openIngModal() {
           ${sorted.map(i => `
             <button class="ing-pill${selected.has(i.id)?' selected':''}"
               data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
-              onclick="toggleIngModal(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${i.name}</button>
+              onclick="toggleIngModal(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${i.display_name || i.name}</button>
           `).join('')}
         </div>
       </div>`;

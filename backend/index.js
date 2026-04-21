@@ -96,6 +96,15 @@ async function initDB() {
     ALTER TABLE steps   ADD COLUMN IF NOT EXISTS show_cook_timer   BOOLEAN DEFAULT true;
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ingredient_aliases (
+      id            SERIAL PRIMARY KEY,
+      original_name TEXT NOT NULL UNIQUE,
+      display_name  TEXT NOT NULL CHECK (display_name <> ''),
+      updated_at    TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
   console.log('DB ready');
 }
 
@@ -162,10 +171,12 @@ app.post('/tts', async (req, res) => {
 app.get('/api/ingredients', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT i.*, COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
+      `SELECT i.*, COALESCE(a.display_name, i.name) AS display_name,
+              COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
        FROM ingredients i
+       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
        LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.id
+       GROUP BY i.id, a.display_name
        ORDER BY recipe_count DESC, i.name`
     );
     res.json(rows);
@@ -378,9 +389,11 @@ app.get('/api/recipes/:id', async (req, res) => {
     const [{ rows: ingredients }, { rows: steps }, { rows: notes }, { rows: related }] =
       await Promise.all([
         pool.query(
-          `SELECT i.id, i.name, i.is_pantry_staple, ri.amount, ri.unit, ri.note
+          `SELECT i.id, i.name, COALESCE(a.display_name, i.name) AS display_name,
+                  i.is_pantry_staple, ri.amount, ri.unit, ri.note
            FROM recipe_ingredients ri
            JOIN ingredients i ON i.id = ri.ingredient_id
+           LEFT JOIN ingredient_aliases a ON a.original_name = i.name
            WHERE ri.recipe_id = $1`,
           [id]
         ),
@@ -517,6 +530,106 @@ app.delete('/api/recipes/:recipeId/notes/:noteId', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ─── Ingredient aliases (admin) ───────────────────────────────────────────────
+
+app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT i.name AS original_name,
+              COALESCE(a.display_name, i.name) AS display_name,
+              COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
+       FROM ingredients i
+       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
+       LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
+       GROUP BY i.name, a.display_name
+       ORDER BY i.name COLLATE "C"`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
+  const { original_name, display_name } = req.body;
+  if (!original_name) return res.status(400).json({ error: 'original_name required' });
+  const effective = display_name?.trim() || original_name;
+  try {
+    await pool.query(
+      `INSERT INTO ingredient_aliases (original_name, display_name)
+       VALUES ($1, $2)
+       ON CONFLICT (original_name) DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = NOW()`,
+      [original_name, effective]
+    );
+    res.json({ original_name, display_name: effective });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not set in Railway' });
+
+  try {
+    // Only suggest for ingredients without a manual alias yet
+    const { rows } = await pool.query(
+      `SELECT i.name FROM ingredients i
+       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
+       WHERE a.original_name IS NULL
+       ORDER BY i.name`
+    );
+    if (!rows.length) return res.json({ saved: 0, suggestions: [] });
+
+    const names = rows.map(r => r.name).join('\n');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
+        messages: [{
+          role: 'user',
+          content: `קבץ מצרכים דומים בעברית והצע שם תצוגה אחד לכל קבוצה. למשל: שמרים / שמרים יבשים / שמרים אינסטנט → שמרים יבשים מיידיים. אם מצרך ייחודי — השאר את שמו כפי שהוא. החזר JSON בלבד, ללא הסבר, ללא markdown:\n[{"original_name": "...", "display_name": "..."}]\n\nרשימת מצרכים:\n${names}`,
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(502).json({ error: `Claude API: ${errText}` });
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text.trim();
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return res.status(502).json({ error: 'Invalid Claude response format' });
+
+    const suggestions = JSON.parse(jsonMatch[0]);
+    let saved = 0;
+    for (const s of suggestions) {
+      if (!s.original_name || !s.display_name) continue;
+      await pool.query(
+        `INSERT INTO ingredient_aliases (original_name, display_name)
+         VALUES ($1, $2)
+         ON CONFLICT (original_name) DO NOTHING`,
+        [s.original_name, s.display_name]
+      );
+      saved++;
+    }
+    res.json({ saved, suggestions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
