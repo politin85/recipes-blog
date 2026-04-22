@@ -33,13 +33,15 @@
       --radius:    12px;
       --radius-lg: 20px;
     }
+    html, body { overflow-x: hidden; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Rubik', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
 
     /* ── Header ── */
-    header { background: var(--ink); padding: 0 1.25rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
-    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-    .logo { font-family:'Secular One',sans-serif; font-size:1.3rem; font-weight:700; color:var(--white); text-decoration:none; }
+    header { background: var(--ink); padding: 0 1.25rem; position: sticky; top: 0; z-index: 100; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
+    .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; gap: .5rem; }
+    .logo { font-family:'Secular One',sans-serif; font-size:1.3rem; font-weight:700; color:var(--white); text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    @media (max-width: 480px) { .logo { font-size: 1rem; } }
     .logo span { color: var(--terracotta-light); }
     .admin-badge { background: var(--terracotta); color: var(--white); font-size: .72rem; font-weight: 600; padding: .2rem .65rem; border-radius: 50px; }
     .header-right { display: flex; align-items: center; gap: .75rem; }
@@ -369,6 +371,9 @@
           <button class="suggest-btn" id="suggest-btn" onclick="suggestAliases()">
             <span class="suggest-spinner" id="suggest-spinner"></span>
             ✨ הצע שמות אחידים
+          </button>
+          <button class="suggest-btn" id="clean-all-btn" onclick="cleanAllDuplicates()" style="background:var(--olive)">
+            🧹 ניקוי כפילויות (כל המתכונים)
           </button>
         </div>
         <div id="ing-mgr-table-wrap">
@@ -1262,6 +1267,24 @@ function collectForm() {
 }
 
 // ── Batch operations ──────────────────────────────────────────────────────────
+
+async function cleanAllDuplicates() {
+  const btn = document.getElementById('clean-all-btn');
+  btn.disabled = true; btn.textContent = 'מנקה...';
+  try {
+    const res = await fetch(`${API}/api/admin/steps/clean-all-duplicates`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPw },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showToast(`ניקוי הסתיים — ${data.updated} שלבים עודכנו`, 'success');
+  } catch (e) {
+    showToast('שגיאה: ' + (e.message || ''), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🧹 ניקוי כפילויות (כל המתכונים)';
+  }
+}
 
 async function cleanDuplicates() {
   if (!editingId) return;

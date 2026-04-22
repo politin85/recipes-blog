@@ -39,6 +39,7 @@
       --radius-lg: 20px;
     }
 
+    html, body { overflow-x: hidden; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -51,10 +52,11 @@
     /* ── Header ── */
     header {
       background: var(--terracotta);
-      padding: 0 2rem;
+      padding: 0 1.25rem;
       position: sticky;
       top: 0;
       z-index: 100;
+      overflow: hidden;
       box-shadow: 0 2px 12px rgba(44,31,20,.2);
     }
     .header-inner {
@@ -64,6 +66,7 @@
       align-items: center;
       justify-content: space-between;
       height: 64px;
+      gap: .5rem;
     }
     .logo {
       font-family: 'Secular One', sans-serif;
@@ -73,6 +76,7 @@
       text-decoration: none;
       letter-spacing: 0.01em;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .logo span { color: var(--sand); }
     .nav-link {
@@ -80,11 +84,19 @@
       font-size: .9rem; display: flex; align-items: center; gap: .4rem;
       padding: .35rem .9rem; border-radius: 50px;
       border: 1.5px solid rgba(255,255,255,.35);
-      transition: all .2s; white-space: nowrap;
+      transition: all .2s; white-space: nowrap; flex-shrink: 0;
     }
     .nav-link:hover { background: rgba(255,255,255,.15); color: var(--white); border-color: rgba(255,255,255,.6); }
     @media (max-width: 768px) {
+      .logo { font-size: 1.2rem; }
       .nav-link { font-size: .75rem; padding: .3rem .65rem; }
+    }
+    @media (max-width: 480px) {
+      .logo { font-size: 1rem; }
+      .nav-link { font-size: .7rem; padding: .25rem .55rem; }
+    }
+    @media (max-width: 380px) {
+      .nav-link .nav-text { display: none; }
     }
 
     /* ── Hero ── */
@@ -537,8 +549,8 @@
   <div class="header-inner">
     <a href="index.html" class="logo" id="site-logo">מתכונים <span>מחושבים</span></a>
     <div style="display:flex;gap:.75rem;align-items:center">
-      <a href="fridge.html" class="nav-link">🧊 מתכון לפי מצרכים</a>
-      <a href="admin.html" class="nav-link" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.82rem">⚙️</a>
+      <a href="fridge.html" class="nav-link">🧊 <span class="nav-text">מתכון לפי מצרכים</span></a>
+      <a href="admin.html" class="nav-link" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.35rem .7rem;flex-shrink:0">⚙️</a>
     </div>
   </div>
 </header>

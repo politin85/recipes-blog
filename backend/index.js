@@ -750,6 +750,14 @@ app.post('/api/admin/steps/sync-ingredient-names', requireAdmin, async (req, res
   }
 });
 
+function cleanDuplicateAmounts(text) {
+  return text
+    .replace(/(\([^)]*(?:גרם|מ״ל|מ"ל|כף|כפית|ק״ג|ק"ג|ליטר|יחידות?|ס"מ|°C|מעלות|מ"מ)[^)]*\))\s*\1+/g, '$1')
+    .replace(/(\(\d+[^)]*\))\s*\1+/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 app.post('/api/admin/recipes/:id/clean-duplicates', requireAdmin, async (req, res) => {
   const recipeId = parseInt(req.params.id);
   try {
@@ -758,10 +766,25 @@ app.post('/api/admin/recipes/:id/clean-duplicates', requireAdmin, async (req, re
     );
     let updated = 0;
     for (const step of steps) {
-      // Remove duplicate amount patterns like "(60 ג׳) (60 ג׳)" or "(X) (X)"
-      const newText = step.text
-        .replace(/(\([^)]{1,20}\))\s+\1/g, '$1')
-        .replace(/(\([^)]{1,20}\))\s*(\([^)]{1,20}\))/g, (m, a, b) => a === b ? a : m);
+      const newText = cleanDuplicateAmounts(step.text);
+      if (newText !== step.text) {
+        await pool.query('UPDATE steps SET text = $1 WHERE id = $2', [newText, step.id]);
+        updated++;
+      }
+    }
+    res.json({ updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/steps/clean-all-duplicates', requireAdmin, async (req, res) => {
+  try {
+    const { rows: steps } = await pool.query('SELECT id, text FROM steps');
+    let updated = 0;
+    for (const step of steps) {
+      const newText = cleanDuplicateAmounts(step.text);
       if (newText !== step.text) {
         await pool.query('UPDATE steps SET text = $1 WHERE id = $2', [newText, step.id]);
         updated++;
