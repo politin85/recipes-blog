@@ -750,6 +750,18 @@ app.post('/api/admin/steps/sync-ingredient-names', requireAdmin, async (req, res
   }
 });
 
+// Strips ALL parenthetical amounts from step text (used before dynamic re-insertion by frontend)
+const AMOUNT_UNITS = 'גרם|מ״ל|מ"ל|מ\'ל|כף|כפות|כפית|כפיות|ק״ג|ק"ג|ליטר|יחידות?|יח׳|יח\'|ס"מ|°C|מעלות|ג׳|ג\'|מל|כוס|כוסות|מ"מ';
+const AMOUNT_RE = new RegExp(
+  '\\s*\\([^)]*(?:' + AMOUNT_UNITS + ')[^)]*\\)',
+  'gi'
+);
+
+function stripAmountsFromText(text) {
+  return text.replace(AMOUNT_RE, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+// Legacy dedup helper kept for /clean-duplicates endpoint
 function cleanDuplicateAmounts(text) {
   return text
     .replace(/(\([^)]*(?:גרם|מ״ל|מ"ל|כף|כפית|ק״ג|ק"ג|ליטר|יחידות?|ס"מ|°C|מעלות|מ"מ)[^)]*\))\s*\1+/g, '$1')
@@ -791,6 +803,34 @@ app.post('/api/admin/steps/clean-all-duplicates', requireAdmin, async (req, res)
       }
     }
     res.json({ updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/steps/strip-amounts', requireAdmin, async (req, res) => {
+  try {
+    const { rows: steps } = await pool.query(
+      'SELECT s.id, s.text, s.recipe_id, s.step_order, r.title AS recipe_title FROM steps s JOIN recipes r ON r.id = s.recipe_id'
+    );
+    let updated = 0;
+    const remaining = [];
+    const checkRe = new RegExp('\\([^)]*(?:' + AMOUNT_UNITS + ')[^)]*\\)', 'i');
+
+    for (const step of steps) {
+      const newText = stripAmountsFromText(step.text);
+      if (newText !== step.text) {
+        await pool.query('UPDATE steps SET text = $1 WHERE id = $2', [newText, step.id]);
+        updated++;
+        console.log(`[strip-amounts] step ${step.id} (${step.recipe_title} #${step.step_order}): updated`);
+      }
+      if (checkRe.test(newText)) {
+        remaining.push({ id: step.id, recipe_title: step.recipe_title, step_order: step.step_order, text: newText });
+        console.warn(`[strip-amounts] step ${step.id} still has amount pattern: ${newText}`);
+      }
+    }
+    res.json({ updated, remaining_count: remaining.length, remaining });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });

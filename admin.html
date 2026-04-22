@@ -375,6 +375,9 @@
           <button class="suggest-btn" id="clean-all-btn" onclick="cleanAllDuplicates()" style="background:var(--olive)">
             🧹 ניקוי כפילויות (כל המתכונים)
           </button>
+          <button class="suggest-btn" id="strip-amounts-btn" onclick="stripAllAmounts()" style="background:#8B4513;color:#fff">
+            ✂️ הסר כמויות מטקסטים (חד-פעמי)
+          </button>
         </div>
         <div id="ing-mgr-table-wrap">
           <div class="spinner" style="width:24px;height:24px;border-width:2px;margin:1rem auto"></div>
@@ -1267,6 +1270,30 @@ function collectForm() {
 }
 
 // ── Batch operations ──────────────────────────────────────────────────────────
+
+async function stripAllAmounts() {
+  if (!confirm('פעולה זו תסיר את כל הכמויות בסוגריים מטקסטי השלבים ב-DB.\nהכמויות יוצגו דינמית מרשימת המצרכים.\n\nהמשך?')) return;
+  const btn = document.getElementById('strip-amounts-btn');
+  btn.disabled = true; btn.textContent = 'מסיר כמויות...';
+  try {
+    const res = await fetch(`${API}/api/admin/steps/strip-amounts`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPw },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    let msg = `עודכנו ${data.updated} שלבים.`;
+    if (data.remaining_count > 0) {
+      msg += ` נותרו ${data.remaining_count} שלבים לבדיקה ידנית (ראה קונסול).`;
+      console.table(data.remaining.map(s => ({ id: s.id, מתכון: s.recipe_title, שלב: s.step_order, טקסט: s.text })));
+    }
+    showToast(msg, data.remaining_count > 0 ? '' : 'success');
+  } catch (e) {
+    showToast('שגיאה: ' + (e.message || ''), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✂️ הסר כמויות מטקסטים (חד-פעמי)';
+  }
+}
 
 async function cleanAllDuplicates() {
   const btn = document.getElementById('clean-all-btn');
