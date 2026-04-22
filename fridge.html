@@ -361,7 +361,8 @@ const CATEGORY_EMOJI = {
 const DIFF_LABEL = { easy:'קל', medium:'בינוני', hard:'מאתגר' };
 
 let allIngredients = [];
-let selected = new Set();
+let displayGroups = {};   // display_name → [id, ...]
+let selected = new Set(); // stores display_names
 let pantryEnabled = false;
 let autoSearchTimer = null;
 let acSelectedIdx = -1;
@@ -388,8 +389,38 @@ fetch(`${API}/api/ingredients`)
   .then(r => r.json())
   .then(data => {
     allIngredients = data.sort((a, b) => (b.recipe_count || 0) - (a.recipe_count || 0));
+    buildDisplayGroups();
   })
   .catch(() => {});
+
+function buildDisplayGroups() {
+  displayGroups = {};
+  for (const i of allIngredients) {
+    const dn = i.display_name || i.name;
+    (displayGroups[dn] = displayGroups[dn] || []).push(i.id);
+  }
+}
+
+function getDisplayName(id) {
+  const ing = allIngredients.find(i => i.id === id);
+  return ing ? (ing.display_name || ing.name) : null;
+}
+
+function getSelectedIds() {
+  const ids = [];
+  for (const dn of selected) {
+    (displayGroups[dn] || []).forEach(id => ids.push(id));
+  }
+  return ids;
+}
+
+function syncPillsForDn(dn, sel) {
+  (displayGroups[dn] || []).forEach(id => {
+    document.querySelectorAll(`.ing-pill[data-id="${id}"]`).forEach(p =>
+      p.classList.toggle('selected', sel)
+    );
+  });
+}
 
 // ── Free text search + autocomplete ──────────────────────────────────────────
 
@@ -397,8 +428,14 @@ const freeEl = document.getElementById('free-search');
 const dropEl = document.getElementById('autocomplete-drop');
 
 function showDrop(items) {
-  if (!items.length) { dropEl.style.display = 'none'; return; }
-  dropEl.innerHTML = items.map(i => {
+  const seen = new Set();
+  const deduped = items.filter(i => {
+    const dn = i.display_name || i.name;
+    if (seen.has(dn)) return false;
+    seen.add(dn); return true;
+  });
+  if (!deduped.length) { dropEl.style.display = 'none'; return; }
+  dropEl.innerHTML = deduped.map(i => {
     const label = i.display_name || i.name;
     return `<div class="autocomplete-item" data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
       onmousedown="pickAutocomplete(${i.id},'${i.name.replace(/'/g,"\\'")}',event)">${label}</div>`;
@@ -411,7 +448,7 @@ freeEl.addEventListener('focus', () => {
   const parts = freeEl.value.split(',');
   const cur = parts[parts.length - 1].trim();
   if (cur) return;
-  const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.id)).slice(0, 10);
+  const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name)).slice(0, 10);
   showDrop(top);
 });
 
@@ -421,13 +458,13 @@ freeEl.addEventListener('input', () => {
   acSelectedIdx = -1;
 
   if (!cur) {
-    const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.id)).slice(0, 10);
+    const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name)).slice(0, 10);
     showDrop(top);
     return;
   }
 
   const matches = allIngredients
-    .filter(i => !i.is_pantry_staple && !selected.has(i.id) &&
+    .filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name) &&
       (i.name.startsWith(cur) || (i.display_name || '').startsWith(cur)))
     .slice(0, 8);
   showDrop(matches);
@@ -480,36 +517,34 @@ function pickAutocomplete(id, name, e) {
 // ── Add / remove ingredients ──────────────────────────────────────────────────
 
 function addIngredient(id, name) {
-  if (selected.has(id)) return;
-  selected.add(id);
+  const dn = getDisplayName(id) || name;
+  if (selected.has(dn)) return;
+  selected.add(dn);
   renderChips();
-  syncPillState(id, true);
+  syncPillsForDn(dn, true);
   scheduleAutoSearch();
 }
 
-function removeChip(id) {
-  selected.delete(id);
+function removeChip(dn) {
+  selected.delete(dn);
   renderChips();
-  syncPillState(id, false);
+  syncPillsForDn(dn, false);
   scheduleAutoSearch();
 }
 
 function toggleIngPill(id, name, btn) {
-  if (selected.has(id)) {
-    selected.delete(id);
-    btn.classList.remove('selected');
+  const dn = getDisplayName(id) || name;
+  if (selected.has(dn)) {
+    selected.delete(dn);
+    syncPillsForDn(dn, false);
     renderChips();
     scheduleAutoSearch();
   } else {
-    addIngredient(id, name);
-    btn.classList.add('selected');
+    selected.add(dn);
+    syncPillsForDn(dn, true);
+    renderChips();
+    scheduleAutoSearch();
   }
-}
-
-function syncPillState(id, sel) {
-  document.querySelectorAll(`.ing-pill[data-id="${id}"]`).forEach(p =>
-    p.classList.toggle('selected', sel)
-  );
 }
 
 function renderChips() {
@@ -518,12 +553,9 @@ function renderChips() {
     wrap.innerHTML = '<span class="empty-chips">עדיין לא הוספת מרכיבים</span>';
     return;
   }
-  wrap.innerHTML = [...selected].map(id => {
-    const ing = allIngredients.find(i => i.id === id);
-    return ing
-      ? `<span class="chip" onclick="removeChip(${id})">${ing.display_name || ing.name} <span class="chip-x">×</span></span>`
-      : '';
-  }).join('');
+  wrap.innerHTML = [...selected].map(dn =>
+    `<span class="chip" onclick="removeChip(${JSON.stringify(dn)})">${dn} <span class="chip-x">×</span></span>`
+  ).join('');
 }
 
 // ── Pantry toggle ─────────────────────────────────────────────────────────────
@@ -553,7 +585,7 @@ async function autoSearch() {
     const res = await fetch(`${API}/api/recipes/by-ingredients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ingredient_ids: [...selected], include_pantry: pantryEnabled }),
+      body: JSON.stringify({ ingredient_ids: getSelectedIds(), include_pantry: pantryEnabled }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(res.status);
@@ -642,15 +674,22 @@ function openIngModal() {
   });
   document.getElementById('ing-modal-body').innerHTML = cats.map(cat => {
     const sorted = buckets[cat].sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    const seenDn = new Set();
+    const deduped = sorted.filter(i => {
+      const dn = i.display_name || i.name;
+      if (seenDn.has(dn)) return false;
+      seenDn.add(dn); return true;
+    });
     return `
       <div class="ing-modal-cat">
         <div class="ing-modal-cat-title">${cat}</div>
         <div class="ing-group">
-          ${sorted.map(i => `
-            <button class="ing-pill${selected.has(i.id)?' selected':''}"
+          ${deduped.map(i => {
+            const dn = i.display_name || i.name;
+            return `<button class="ing-pill${selected.has(dn)?' selected':''}"
               data-id="${i.id}" data-name="${i.name.replace(/"/g,'&quot;')}"
-              onclick="toggleIngModal(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${i.display_name || i.name}</button>
-          `).join('')}
+              onclick="toggleIngModal(${i.id},'${i.name.replace(/'/g,"\\'")}',this)">${dn}</button>`;
+          }).join('')}
         </div>
       </div>`;
   }).join('');
@@ -660,17 +699,17 @@ function openIngModal() {
 function closeIngModal() { document.getElementById('ing-modal').classList.remove('show'); }
 
 function toggleIngModal(id, name, btn) {
-  if (selected.has(id)) {
-    selected.delete(id);
+  const dn = getDisplayName(id) || name;
+  if (selected.has(dn)) {
+    selected.delete(dn);
     btn.classList.remove('selected');
-    syncPillState(id, false);
+    syncPillsForDn(dn, false);
   } else {
-    selected.add(id);
+    selected.add(dn);
     btn.classList.add('selected');
-    syncPillState(id, true);
+    syncPillsForDn(dn, true);
   }
   renderChips();
-  document.getElementById('search-btn').disabled = selected.size === 0;
   scheduleAutoSearch();
 }
 

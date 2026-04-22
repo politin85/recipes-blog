@@ -540,13 +540,13 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT i.name AS original_name,
-              COALESCE(a.display_name, i.name) AS display_name,
-              COALESCE(a.note, '') AS note,
+              COALESCE(MIN(a.display_name), i.name) AS display_name,
+              COALESCE(MIN(a.note), MIN(ri.note), '') AS note,
               COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
        FROM ingredients i
        LEFT JOIN ingredient_aliases a ON a.original_name = i.name
        LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.name, a.display_name, a.note
+       GROUP BY i.name
        ORDER BY i.name`
     );
     res.json(rows);
@@ -653,7 +653,7 @@ app.get('/api/settings', async (req, res) => {
 });
 
 app.put('/api/settings', requireAdmin, async (req, res) => {
-  const allowed = ['site_name', 'hero_title', 'site_description', 'hero_image'];
+  const allowed = ['site_name', 'hero_title', 'site_description', 'hero_image', 'hero_image_url'];
   const entries = Object.entries(req.body).filter(([k]) => allowed.includes(k));
   if (!entries.length) return res.status(400).json({ error: 'No valid keys' });
 
@@ -667,6 +667,107 @@ app.put('/api/settings', requireAdmin, async (req, res) => {
     }
     const { rows } = await pool.query('SELECT key, value FROM site_settings');
     res.json(Object.fromEntries(rows.map(r => [r.key, r.value])));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ─── Batch step operations (admin) ───────────────────────────────────────────
+
+app.post('/api/admin/steps/generate-titles', requireAdmin, async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY לא מוגדר ב-Railway Variables' });
+
+  const { recipe_id } = req.body;
+  try {
+    const where = recipe_id ? 'WHERE s.recipe_id = $1 AND' : 'WHERE';
+    const params = recipe_id ? [recipe_id] : [];
+    const { rows: steps } = await pool.query(
+      `SELECT s.id, s.text FROM steps s
+       ${where} (s.title IS NULL OR s.title = '')
+       ORDER BY s.recipe_id, s.step_order`,
+      params
+    );
+    if (!steps.length) return res.json({ updated: 0 });
+
+    let updated = 0;
+    for (const step of steps) {
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 64,
+            messages: [{ role: 'user', content: `כתוב כותרת קצרה (3-5 מילים) בעברית לשלב ההכנה הבא. החזר רק את הכותרת, ללא סימני פיסוק מיוחדים:\n${step.text.slice(0, 300)}` }],
+          }),
+        });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        const title = data.content[0].text.trim().replace(/^["״]|["״]$/g, '');
+        await pool.query('UPDATE steps SET title = $1 WHERE id = $2', [title, step.id]);
+        updated++;
+      } catch {}
+    }
+    res.json({ updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/steps/sync-ingredient-names', requireAdmin, async (req, res) => {
+  const { recipe_id } = req.body;
+  try {
+    const { rows: aliases } = await pool.query(
+      `SELECT original_name, display_name FROM ingredient_aliases
+       WHERE original_name <> display_name`
+    );
+    if (!aliases.length) return res.json({ updated: 0 });
+
+    const where = recipe_id ? 'WHERE recipe_id = $1' : '';
+    const params = recipe_id ? [recipe_id] : [];
+    const { rows: steps } = await pool.query(`SELECT id, text FROM steps ${where}`, params);
+
+    let updated = 0;
+    for (const step of steps) {
+      let newText = step.text;
+      for (const { original_name, display_name } of aliases) {
+        if (newText.includes(original_name)) {
+          newText = newText.split(original_name).join(display_name);
+        }
+      }
+      if (newText !== step.text) {
+        await pool.query('UPDATE steps SET text = $1 WHERE id = $2', [newText, step.id]);
+        updated++;
+      }
+    }
+    res.json({ updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/recipes/:id/clean-duplicates', requireAdmin, async (req, res) => {
+  const recipeId = parseInt(req.params.id);
+  try {
+    const { rows: steps } = await pool.query(
+      'SELECT id, text FROM steps WHERE recipe_id = $1', [recipeId]
+    );
+    let updated = 0;
+    for (const step of steps) {
+      // Remove duplicate amount patterns like "(60 ג׳) (60 ג׳)" or "(X) (X)"
+      const newText = step.text
+        .replace(/(\([^)]{1,20}\))\s+\1/g, '$1')
+        .replace(/(\([^)]{1,20}\))\s*(\([^)]{1,20}\))/g, (m, a, b) => a === b ? a : m);
+      if (newText !== step.text) {
+        await pool.query('UPDATE steps SET text = $1 WHERE id = $2', [newText, step.id]);
+        updated++;
+      }
+    }
+    res.json({ updated });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });

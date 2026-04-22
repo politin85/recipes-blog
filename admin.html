@@ -622,8 +622,9 @@ async function loadSiteSettings() {
     if (s.site_name)        document.getElementById('s-site-name').value        = s.site_name;
     if (s.hero_title)       document.getElementById('s-hero-title').value       = s.hero_title;
     if (s.site_description) document.getElementById('s-site-description').value = s.site_description;
-    if (s.hero_image) {
-      document.getElementById('s-hero-image').value = s.hero_image;
+    const heroUrl = s.hero_image_url || s.hero_image;
+    if (heroUrl) {
+      document.getElementById('s-hero-image').value = heroUrl;
       updateHeroPreview();
     }
   } catch {}
@@ -634,7 +635,7 @@ async function saveSettings() {
     site_name:        document.getElementById('s-site-name').value.trim(),
     hero_title:       document.getElementById('s-hero-title').value.trim(),
     site_description: document.getElementById('s-site-description').value.trim(),
-    hero_image:       document.getElementById('s-hero-image').value.trim(),
+    hero_image_url:   document.getElementById('s-hero-image').value.trim(),
   };
   const btn = document.getElementById('settings-save-btn');
   btn.disabled = true; btn.textContent = 'שומר...';
@@ -926,6 +927,7 @@ function renderForm(data) {
     <!-- Actions -->
     <div class="form-actions">
       <button class="cancel-btn" type="button" onclick="closeForm()">ביטול</button>
+      ${!isNew ? `<button class="calc-btn" type="button" onclick="cleanDuplicates()" style="flex-shrink:0">🧹 ניקוי כפילות</button>` : ''}
       <button class="submit-btn" id="submit-btn" type="button" onclick="submitForm()">${isNew ? 'צור מתכון ✓' : 'שמור שינויים ✓'}</button>
     </div>`;
 
@@ -1257,6 +1259,41 @@ function collectForm() {
     tags, ingredients, steps,
     image_url:   document.getElementById('f-image').value.trim() || null,
   };
+}
+
+// ── Batch operations ──────────────────────────────────────────────────────────
+
+async function cleanDuplicates() {
+  if (!editingId) return;
+  try {
+    const res = await fetch(`${API}/api/admin/recipes/${editingId}/clean-duplicates`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPw },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showToast(`ניקוי הסתיים — ${data.updated} שלבים עודכנו`, 'success');
+    if (data.updated > 0) await reloadFormData();
+  } catch (e) {
+    showToast('שגיאה בניקוי: ' + (e.message || ''), 'error');
+  }
+}
+
+async function reloadFormData() {
+  try {
+    const res = await fetch(`${API}/api/recipes/${editingId}`);
+    if (!res.ok) return;
+    const r = await res.json();
+    const steps = document.getElementById('steps-list');
+    if (steps) {
+      r.steps.forEach(s => {
+        const ta = steps.querySelector(`[data-step-id="${s.id}"] .step-text-inp`);
+        if (ta) ta.value = s.text;
+        const ti = steps.querySelector(`[data-step-id="${s.id}"] .step-title-inp`);
+        if (ti && s.title) ti.value = s.title;
+      });
+    }
+  } catch {}
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────────

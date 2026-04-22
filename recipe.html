@@ -544,6 +544,11 @@
         <div class="steps-bar">
           <h2>הוראות הכנה</h2>
           <div class="steps-bar-right">
+            <select class="voice-select" id="sound-select" title="צליל טיימר">
+              <option value="bell">🔔 פעמון</option>
+              <option value="beep">📢 ביפ</option>
+              <option value="melody">🎵 מלודיה</option>
+            </select>
             <select class="voice-select" id="voice-select">
               <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
               <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
@@ -612,6 +617,8 @@ let currentServings = 1;
 const timers = {};
 const stepOriginals = {};
 let selectedVoice = localStorage.getItem('ttsVoice') || 'he-IL-Wavenet-A';
+let selectedSound = localStorage.getItem('timerSound') || 'bell';
+const stepAudios = {}; // sid → { audio: Audio, state: 'idle'|'playing'|'paused' }
 
 // ── Fetch & init ──────────────────────────────────────────────────────────────
 
@@ -641,6 +648,11 @@ if (!id) {
       initScrollTitle();
       const vs = document.getElementById('voice-select');
       if (vs) { vs.value = selectedVoice; vs.addEventListener('change', e => { selectedVoice = e.target.value; localStorage.setItem('ttsVoice', selectedVoice); }); }
+      const ss = document.getElementById('sound-select');
+      if (ss) { ss.value = selectedSound; ss.addEventListener('change', e => { selectedSound = e.target.value; localStorage.setItem('timerSound', selectedSound); }); }
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
     })
     .catch(() => {
       document.getElementById('page-loading').style.display = 'none';
@@ -967,13 +979,15 @@ function toggleTimer(id, total) {
   if (timers[id]?.running) {
     pauseTimer(id);
   } else {
-    startTimer(id, total);
+    const labelEl = document.getElementById(`timer-display-${id}`)?.closest('.timer-wrap')?.querySelector('span[style]');
+    startTimer(id, total, labelEl?.textContent?.trim());
   }
 }
 
-function startTimer(id, total) {
+function startTimer(id, total, label) {
   if (!timers[id]) timers[id] = { total, pausedMs: 0, running: false };
   timers[id].running = true;
+  if (label) timers[id].label = label;
   timers[id].startEpoch = Date.now();
 
   const btn      = document.getElementById(`timer-btn-${id}`);
@@ -1002,7 +1016,7 @@ function startTimer(id, total) {
       display.classList.remove('running');
       display.classList.add('done');
       bar.style.width = '0%';
-      playBeep();
+      playBeep(timers[id].label);
     }
   }, 250);
 }
@@ -1034,20 +1048,41 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-function playBeep() {
+function playBeep(timerLabel) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.5, 1.0].forEach(offset => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+    const type = selectedSound || 'bell';
+    if (type === 'bell') {
+      [0, 0.55, 1.1].forEach(offset => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.3, ctx.currentTime + offset);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.4);
+        o.start(ctx.currentTime + offset); o.stop(ctx.currentTime + offset + 0.4);
+      });
+    } else if (type === 'beep') {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 880;
-      g.gain.setValueAtTime(0.3, ctx.currentTime + offset);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.3);
-      o.start(ctx.currentTime + offset);
-      o.stop(ctx.currentTime + offset + 0.3);
-    });
+      o.frequency.value = 440;
+      g.gain.setValueAtTime(0.4, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.6);
+    } else if (type === 'melody') {
+      [523, 659, 784].forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.3);
+        o.start(ctx.currentTime + i * 0.25); o.stop(ctx.currentTime + i * 0.25 + 0.3);
+      });
+    }
   } catch {}
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const label = timerLabel || 'הטיימר הסתיים';
+    new Notification('⏰ ' + label, { body: recipe?.title || 'מתכון', icon: 'favicon.ico', silent: true });
+  }
 }
 
 // ── TTS ───────────────────────────────────────────────────────────────────────
@@ -1057,34 +1092,36 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
   const label = document.getElementById('tts-label');
   const audio = document.getElementById('tts-audio');
 
-  if (audio.src && !audio.paused) { audio.pause(); label.textContent = 'הפעל קריינות'; return; }
-  if (audio.src && audio.paused)  { audio.play(); label.textContent = 'עצור'; return; }
+  if (audio.src && !audio.paused) {
+    audio.pause();
+    label.textContent = '▶ המשך';
+    return;
+  }
+  if (audio.src && audio.paused && audio.currentTime > 0) {
+    audio.play();
+    label.textContent = '⏸ השהה';
+    return;
+  }
 
   btn.disabled = true;
   label.textContent = 'מכין קריינות...';
 
   const text = buildTTSText();
-  const body = { text, voice: selectedVoice };
-  console.log('[TTS] sending body:', JSON.stringify(body).slice(0, 200));
   try {
     const res = await fetch(`${API}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ text, voice: selectedVoice }),
     });
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('[TTS] error response:', res.status, errText);
-      throw new Error(errText);
-    }
+    if (!res.ok) { const errText = await res.text(); throw new Error(errText); }
     const data = await res.json();
     if (!data.audioContent) throw new Error('no audioContent');
     audio.src = `data:audio/mp3;base64,${data.audioContent}`;
     audio.style.display = 'block';
     audio.play();
-    label.textContent = 'עצור';
+    label.textContent = '⏸ השהה';
+    audio.onended = () => { label.textContent = 'הפעל קריינות'; audio.src = ''; };
   } catch (e) {
-    console.error('[TTS] caught:', e);
     label.textContent = 'שגיאה — נסה שוב';
   } finally {
     btn.disabled = false;
@@ -1092,10 +1129,26 @@ document.getElementById('tts-btn').addEventListener('click', async () => {
 });
 
 async function speakStep(sid) {
+  const btn = document.querySelector(`.step-tts-btn[data-sid="${sid}"]`);
+  const sa = stepAudios[sid];
+
+  if (sa) {
+    if (sa.state === 'playing') {
+      sa.audio.pause();
+      sa.state = 'paused';
+      btn.textContent = '▶ המשך';
+      return;
+    }
+    if (sa.state === 'paused') {
+      sa.audio.play();
+      sa.state = 'playing';
+      btn.textContent = '⏸ השהה';
+      return;
+    }
+  }
+
   const step = (recipe.steps || []).find(s => s.id === sid);
   if (!step) return;
-  const btn = document.querySelector(`.step-tts-btn[data-sid="${sid}"]`);
-  const origText = btn.textContent;
   btn.disabled = true;
   btn.textContent = '🔊 ...';
   try {
@@ -1104,20 +1157,22 @@ async function speakStep(sid) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: step.text, voice: selectedVoice }),
     });
-    if (!res.ok) {
-      const errBody = await res.text();
-      console.error('[TTS step] error', res.status, errBody);
-      throw new Error(errBody);
-    }
+    if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     if (!data.audioContent) throw new Error();
     const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+    stepAudios[sid] = { audio, state: 'playing' };
+    btn.disabled = false;
+    btn.textContent = '⏸ השהה';
     audio.play();
-    btn.textContent = '🔊 מנגן...';
-    audio.onended = () => { btn.textContent = origText; btn.disabled = false; };
+    audio.onended = () => {
+      delete stepAudios[sid];
+      btn.textContent = '🔊 הקרא שלב';
+    };
   } catch {
-    btn.textContent = 'שגיאה';
-    setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
+    btn.textContent = '⚠️ שגיאה';
+    delete stepAudios[sid];
+    setTimeout(() => { btn.textContent = '🔊 הקרא שלב'; btn.disabled = false; }, 2000);
   }
 }
 

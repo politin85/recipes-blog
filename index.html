@@ -72,6 +72,7 @@
       color: var(--white);
       text-decoration: none;
       letter-spacing: 0.01em;
+      white-space: nowrap;
     }
     .logo span { color: var(--sand); }
     .nav-link {
@@ -79,9 +80,12 @@
       font-size: .9rem; display: flex; align-items: center; gap: .4rem;
       padding: .35rem .9rem; border-radius: 50px;
       border: 1.5px solid rgba(255,255,255,.35);
-      transition: all .2s;
+      transition: all .2s; white-space: nowrap;
     }
     .nav-link:hover { background: rgba(255,255,255,.15); color: var(--white); border-color: rgba(255,255,255,.6); }
+    @media (max-width: 768px) {
+      .nav-link { font-size: .75rem; padding: .3rem .65rem; }
+    }
 
     /* ── Hero ── */
     .hero {
@@ -668,9 +672,10 @@
         const el = document.getElementById('hero-subtitle');
         if (el) el.textContent = s.site_description;
       }
-      if (s.hero_image) {
+      const heroUrl = s.hero_image_url || s.hero_image;
+      if (heroUrl) {
         const heroEl = document.getElementById('hero-section');
-        if (heroEl) heroEl.style.backgroundImage = `url('${s.hero_image.split('#')[0]}')`;
+        if (heroEl) heroEl.style.backgroundImage = `url('${heroUrl.split('#')[0]}')`;
       }
     } catch {}
   }
