@@ -99,11 +99,18 @@ async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ingredient_aliases (
       id            SERIAL PRIMARY KEY,
-      original_name TEXT NOT NULL UNIQUE,
+      original_name TEXT NOT NULL,
       display_name  TEXT NOT NULL CHECK (display_name <> ''),
+      note          TEXT NOT NULL DEFAULT '',
       updated_at    TIMESTAMP DEFAULT NOW()
     );
     ALTER TABLE ingredient_aliases ADD COLUMN IF NOT EXISTS note TEXT DEFAULT '';
+    UPDATE ingredient_aliases SET note = '' WHERE note IS NULL;
+    ALTER TABLE ingredient_aliases ALTER COLUMN note SET NOT NULL;
+    ALTER TABLE ingredient_aliases ALTER COLUMN note SET DEFAULT '';
+    ALTER TABLE ingredient_aliases DROP CONSTRAINT IF EXISTS ingredient_aliases_original_name_key;
+    CREATE UNIQUE INDEX IF NOT EXISTS ingredient_aliases_name_note_idx
+      ON ingredient_aliases (original_name, note);
   `);
 
   console.log('DB ready');
@@ -394,7 +401,8 @@ app.get('/api/recipes/:id', async (req, res) => {
                   i.is_pantry_staple, ri.amount, ri.unit, ri.note
            FROM recipe_ingredients ri
            JOIN ingredients i ON i.id = ri.ingredient_id
-           LEFT JOIN ingredient_aliases a ON a.original_name = i.name
+           LEFT JOIN ingredient_aliases a
+             ON a.original_name = i.name AND a.note = COALESCE(ri.note, '')
            WHERE ri.recipe_id = $1`,
           [id]
         ),
@@ -539,41 +547,53 @@ app.delete('/api/recipes/:recipeId/notes/:noteId', async (req, res) => {
 app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT i.name AS original_name,
-              COALESCE(MIN(a.display_name), i.name) AS display_name,
-              COALESCE(MIN(a.note), MIN(ri.note), '') AS note,
-              COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
-       FROM ingredients i
-       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
-       LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.name
-       ORDER BY i.name`
+      `SELECT
+         i.name AS original_name,
+         ri.note,
+         COALESCE(ia.display_name, i.name) AS display_name,
+         COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON i.id = ri.ingredient_id
+       LEFT JOIN ingredient_aliases ia
+         ON ia.original_name = i.name
+         AND (ia.note = ri.note
+              OR (ia.note = '' AND (ri.note IS NULL OR ri.note = '')))
+       GROUP BY i.name, ri.note, ia.display_name
+       ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
     );
+    console.log('[ingredients/all] rows:', rows.length, JSON.stringify(rows.slice(0, 3)));
     res.json(rows);
   } catch (err) {
-    console.error(err);
+    console.error('[ingredients/all] error:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
-  const { original_name, display_name, note } = req.body;
+  const { original_name, display_name, note, new_note } = req.body;
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
-  const effectiveName = display_name?.trim() || original_name;
-  const effectiveNote = note?.trim() ?? '';
+  const effectiveName    = display_name?.trim() || original_name;
+  const effectiveNote    = note?.trim() ?? '';
+  const effectiveNewNote = new_note !== undefined ? (new_note?.trim() ?? '') : effectiveNote;
   try {
+    if (effectiveNewNote !== effectiveNote) {
+      await pool.query(
+        `DELETE FROM ingredient_aliases WHERE original_name = $1 AND note = $2`,
+        [original_name, effectiveNote]
+      );
+    }
     await pool.query(
       `INSERT INTO ingredient_aliases (original_name, display_name, note)
        VALUES ($1, $2, $3)
-       ON CONFLICT (original_name) DO UPDATE
+       ON CONFLICT (original_name, note) DO UPDATE
          SET display_name = EXCLUDED.display_name,
-             note         = EXCLUDED.note,
              updated_at   = NOW()`,
-      [original_name, effectiveName, effectiveNote]
+      [original_name, effectiveName, effectiveNewNote]
     );
-    res.json({ original_name, display_name: effectiveName, note: effectiveNote });
+    console.log('[alias PUT] saved:', original_name, '->', effectiveName, 'note:', effectiveNewNote);
+    res.json({ original_name, display_name: effectiveName, note: effectiveNewNote });
   } catch (err) {
-    console.error(err);
+    console.error('[alias PUT] error:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

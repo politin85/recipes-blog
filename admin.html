@@ -522,6 +522,7 @@ async function loadIngMgr() {
     });
     if (!res.ok) throw new Error(res.status);
     ingMgrData = await res.json();
+    console.log('[loadIngMgr] rows:', ingMgrData.length, ingMgrData.slice(0, 3));
     renderIngMgrTable(ingMgrData);
   } catch {
     document.getElementById('ing-mgr-table-wrap').innerHTML =
