@@ -108,7 +108,40 @@
       aspect-ratio: 16 / 5;
       min-height: 180px;
       max-height: 420px;
-      display: block;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 25%,
+        rgba(44, 31, 20, 0.45) 65%,
+        rgba(44, 31, 20, 0.78) 100%
+      );
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem 2.5rem;
+      gap: .35rem;
+    }
+    .hero-tagline {
+      font-family: 'Secular One', sans-serif;
+      font-size: clamp(1.3rem, 3vw, 2.2rem);
+      color: var(--white);
+      line-height: 1.2;
+      text-shadow: 0 2px 10px rgba(0,0,0,.3);
+    }
+    .hero-subtitle {
+      font-size: clamp(.8rem, 1.4vw, 1rem);
+      color: rgba(255, 255, 255, .75);
+      font-weight: 300;
+      letter-spacing: .03em;
+    }
+    @media (max-width: 640px) {
+      .hero-overlay { padding: 1.25rem 1.5rem; }
     }
 
     /* ── Search bar ── */
@@ -592,7 +625,12 @@
   </div>
 </header>
 
-<section class="hero" id="hero-section" style="background-image:url('https://res.cloudinary.com/dnrswj6aw/image/upload/v1776513274/recipes/blog_cover.png')"></section>
+<section class="hero" id="hero-section" style="background-image:url('https://res.cloudinary.com/dnrswj6aw/image/upload/v1776513274/recipes/blog_cover.png')">
+  <div class="hero-overlay">
+    <h1 class="hero-tagline" id="hero-title">מתכונים מחושבים</h1>
+    <p class="hero-subtitle" id="hero-subtitle">המטבח פוגש טכנולוגיה</p>
+  </div>
+</section>
 
 <main>
   <div class="filters-wrap">
