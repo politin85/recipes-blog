@@ -546,12 +546,12 @@ app.delete('/api/recipes/:recipeId/notes/:noteId', async (req, res) => {
 
 app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query(
+    const result = await pool.query(
       `SELECT
          i.name AS original_name,
          ri.note,
          COALESCE(ia.display_name, i.name) AS display_name,
-         COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
+         COUNT(DISTINCT ri.recipe_id) AS usage_count
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
        LEFT JOIN ingredient_aliases ia
@@ -562,10 +562,10 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
        GROUP BY i.name, ri.note, ia.display_name
        ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
     );
-    console.log('[ingredients/all] rows:', rows.length, JSON.stringify(rows.slice(0, 3)));
-    res.json(rows);
+    console.log('[INGREDIENTS] First 3 rows:', JSON.stringify(result.rows.slice(0, 3)));
+    res.json(result.rows);
   } catch (err) {
-    console.error('[ingredients/all] error:', err);
+    console.error('[INGREDIENTS] error:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

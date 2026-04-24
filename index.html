@@ -53,12 +53,12 @@
     header {
       background: var(--terracotta);
       padding: 0 1.25rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      overflow: hidden;
+      position: fixed;
+      top: 0; right: 0; left: 0;
+      z-index: 1000;
       box-shadow: 0 2px 12px rgba(44,31,20,.2);
     }
+    body { padding-top: 64px; }
     .header-inner {
       max-width: 1200px;
       margin: 0 auto;
@@ -587,8 +587,8 @@
 
 <header>
   <div class="header-inner">
-    <a href="index.html" class="logo" id="site-logo">מתכונים <span>מחושבים</span></a>
     <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="תפריט">☰</button>
+    <a href="index.html" class="logo" id="site-logo">מתכונים <span>מחושבים</span></a>
   </div>
 </header>
 
