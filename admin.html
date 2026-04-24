@@ -1089,7 +1089,7 @@ function renderPreview() {
     html += `<div class="prev-section-title">מרכיבים</div><ul class="prev-ing-list">`;
     for (const ing of data.ingredients) {
       const qty = [ing.amount, ing.unit].filter(Boolean).join('\u00a0');
-      html += `<li>${esc(ing.name)}${qty ? ` — ${esc(qty)}` : ''}${ing.note ? ` <span style="color:var(--ink-muted);font-size:.82rem">(${esc(ing.note)})</span>` : ''}</li>`;
+      html += `<li>${esc(ing.display_name || ing.name)}${qty ? ` — ${esc(qty)}` : ''}${ing.note ? ` <span style="color:var(--ink-muted);font-size:.82rem">(${esc(ing.note)})</span>` : ''}</li>`;
     }
     html += `</ul>`;
   }
@@ -1121,11 +1121,13 @@ function renderPreview() {
 let ingCount = 0;
 function ingRowHtml(idx, i={}) {
   const id = ingCount++;
+  const displayVal = esc(i.display_name || i.name || '');
+  const origVal    = esc(i.name || '');
   return `
     <div class="ing-row" id="ing-${id}" draggable="true">
       <div class="ing-name-wrap">
         <span class="drag-handle" title="גרור לשינוי סדר">☰</span>
-        <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${esc(i.name||'')}" />
+        <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${displayVal}" data-original="${origVal}" data-display="${displayVal}" />
         <button type="button" class="del-btn" onclick="delRow('ing-${id}')">✕</button>
       </div>
       <div class="ing-sub">
@@ -1253,12 +1255,19 @@ function collectForm() {
   const tags = document.getElementById('f-tags').value
     .split(',').map(t => t.trim()).filter(Boolean);
 
-  const ingredients = [...document.querySelectorAll('.ing-row')].map(row => ({
-    name:   row.querySelector('.ing-name').value.trim(),
-    amount: parseFloat(row.querySelector('.ing-amount').value) || null,
-    unit:   row.querySelector('.ing-unit').value.trim() || null,
-    note:   row.querySelector('.ing-note-col').value.trim() || null,
-  })).filter(i => i.name);
+  const ingredients = [...document.querySelectorAll('.ing-row')].map(row => {
+    const inp   = row.querySelector('.ing-name');
+    const typed = inp.value.trim();
+    const orig  = inp.dataset.original || '';
+    const disp  = inp.dataset.display  || '';
+    const name  = (orig && typed === disp) ? orig : typed;
+    return {
+      name,
+      amount: parseFloat(row.querySelector('.ing-amount').value) || null,
+      unit:   row.querySelector('.ing-unit').value.trim() || null,
+      note:   row.querySelector('.ing-note-col').value.trim() || null,
+    };
+  }).filter(i => i.name);
 
   const steps = [...document.querySelectorAll('.step-row')].map(row => {
     const mins = parseInt(row.querySelector('.step-timer-inp').value) || null;
