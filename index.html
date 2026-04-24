@@ -153,82 +153,122 @@
     }
 
     /* ── Filters wrap ── */
-    .filters-wrap {
-      margin-bottom: 2.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: .6rem;
-    }
-    .filter-row {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      min-height: 38px;
-    }
-    .filter-row-label {
-      font-size: .82rem;
-      color: var(--ink-muted);
-      font-weight: 600;
-      white-space: nowrap;
-      flex-shrink: 0;
-      min-width: 52px;
-    }
-    .chips-row {
-      display: flex;
-      gap: .45rem;
-      flex-wrap: wrap;
-    }
-    .filter-btn {
-      padding: .4rem 1rem;
-      border-radius: 50px;
-      border: 1.5px solid var(--sand-dark);
-      background: var(--white);
-      color: var(--ink-light);
-      font-family: 'Rubik', sans-serif;
-      font-size: .875rem;
-      cursor: pointer;
-      transition: all .2s;
-      white-space: nowrap;
-    }
-    .filter-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
-    .filter-btn.active {
-      background: var(--terracotta);
-      border-color: var(--terracotta);
-      color: var(--white);
-    }
-    .filter-btn.active.cat-chip {
-      background: var(--olive);
-      border-color: var(--olive);
-    }
-    .filter-btn.cat-chip:hover { border-color: var(--olive); color: var(--olive); }
+    .filters-wrap { margin-bottom: 2rem; }
 
-    .sort-row {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-      flex-wrap: wrap;
-      padding-top: .35rem;
+    /* ── Hamburger ── */
+    .hamburger-btn {
+      background: none; border: none; color: rgba(255,255,255,.9);
+      font-size: 1.5rem; cursor: pointer; padding: .2rem .4rem;
+      line-height: 1; transition: opacity .2s; flex-shrink: 0;
     }
-    .sort-label {
-      font-size: .82rem;
-      color: var(--ink-muted);
-      font-weight: 600;
-      white-space: nowrap;
+    .hamburger-btn:hover { opacity: .75; }
+
+    /* ── Drawer ── */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 400; opacity: 0; pointer-events: none; transition: opacity .3s;
     }
-    .sort-select {
-      padding: .4rem .85rem;
-      border-radius: 50px;
-      border: 1.5px solid var(--sand-dark);
-      background: var(--white);
-      color: var(--ink-light);
-      font-family: 'Rubik', sans-serif;
-      font-size: .875rem;
-      cursor: pointer;
-      outline: none;
-      direction: rtl;
-      transition: border-color .2s;
+    .drawer-overlay.show { opacity: 1; pointer-events: all; }
+    .drawer {
+      position: fixed; top: 0; right: 0; height: 100%; width: 280px;
+      background: var(--cream); border-left: 1px solid var(--sand-dark);
+      z-index: 401; transform: translateX(100%);
+      transition: transform .3s ease;
+      display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
     }
-    .sort-select:focus { border-color: var(--terracotta); }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head {
+      background: var(--terracotta); color: var(--white);
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .drawer-logo { font-family:'Secular One',sans-serif; font-size:1.1rem; font-weight:700; }
+    .drawer-logo span { color: var(--sand); }
+    .drawer-x { background:none; border:none; color:var(--white); font-size:1.25rem; cursor:pointer; padding:.15rem .4rem; line-height:1; }
+    .drawer-nav { list-style:none; flex:1; overflow-y:auto; padding:.5rem 0; }
+    .drawer-nav li a {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.9rem 1.25rem; color:var(--ink); text-decoration:none;
+      font-size:.95rem; font-family:'Rubik',sans-serif; transition:background .15s;
+    }
+    .drawer-nav li a:hover { background: var(--sand); }
+    .drawer-nav li a.current { color:var(--terracotta); font-weight:500; }
+
+    /* ── Floating filter FAB ── */
+    .filter-fab {
+      position: fixed; bottom: 24px; left: 24px; z-index: 100;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--terracotta); color: var(--white);
+      border: none; cursor: pointer; font-size: 1.3rem;
+      box-shadow: 0 4px 16px rgba(194,98,47,.45);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .filter-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(194,98,47,.55); }
+    .filter-fab-badge {
+      position: absolute; top: -4px; left: -4px;
+      background: var(--olive); color: var(--white);
+      font-size: .7rem; font-weight: 700;
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--white);
+    }
+
+    /* ── Filter modal ── */
+    .filter-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 410; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .filter-overlay.show { opacity: 1; pointer-events: all; }
+    .filter-modal {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      z-index: 411; transform: translateY(100%);
+      transition: transform .3s ease;
+      max-height: 85vh; display: flex; flex-direction: column;
+      box-shadow: var(--shadow-lg);
+    }
+    .filter-modal.open { transform: translateY(0); }
+    .filter-modal-head {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--sand);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .filter-modal-head h3 { font-family:'Secular One',sans-serif; font-size:1.1rem; font-weight:600; }
+    .filter-modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--ink-muted); padding:.2rem .4rem; }
+    .filter-modal-body { padding: 1.25rem; overflow-y: auto; flex: 1; }
+    .filter-group { margin-bottom: 1rem; }
+    .filter-group label { display:block; font-size:.82rem; font-weight:600; color:var(--ink-light); margin-bottom:.35rem; }
+    .filter-group select {
+      width: 100%; padding: .65rem .9rem;
+      border: 1.5px solid var(--sand-dark); border-radius: var(--radius);
+      font-family:'Rubik',sans-serif; font-size:.95rem; color:var(--ink);
+      background: var(--white); outline: none; direction: rtl;
+      transition: border-color .2s; cursor: pointer;
+    }
+    .filter-group select:focus { border-color: var(--terracotta); }
+    .filter-modal-foot {
+      padding: 1rem 1.25rem; border-top: 1px solid var(--sand);
+      display: flex; gap: .75rem; flex-shrink: 0;
+    }
+    .filter-modal-foot button {
+      flex: 1; padding: .8rem; border-radius: var(--radius);
+      font-family:'Rubik',sans-serif; font-size:.95rem; font-weight:500; cursor:pointer; transition:all .2s;
+    }
+    .filter-clear-btn { background:var(--white); border:1.5px solid var(--sand-dark); color:var(--ink-light); }
+    .filter-clear-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
+    .filter-apply-btn { background:var(--terracotta); border:none; color:var(--white); }
+    .filter-apply-btn:hover { background:var(--terracotta-light); }
+
+    /* ── Favorites ── */
+    .fav-btn {
+      position: absolute; top: .5rem; left: .5rem;
+      background: rgba(255,255,255,.85); border: none; border-radius: 50%;
+      width: 32px; height: 32px; display: flex; align-items:center; justify-content:center;
+      cursor: pointer; font-size: 1rem; transition: all .2s; z-index: 2;
+    }
+    .fav-btn:hover { background: var(--white); transform: scale(1.12); }
+    .fav-btn.fav-on { background: #FFF3CD; }
+
     .clear-btn {
       padding: .4rem 1rem;
       border-radius: 50px;
@@ -548,10 +588,7 @@
 <header>
   <div class="header-inner">
     <a href="index.html" class="logo" id="site-logo">מתכונים <span>מחושבים</span></a>
-    <div style="display:flex;gap:.75rem;align-items:center">
-      <a href="fridge.html" class="nav-link">🧊 <span class="nav-text">מתכון לפי מצרכים</span></a>
-      <a href="admin.html" class="nav-link" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.35rem .7rem;flex-shrink:0">⚙️</a>
-    </div>
+    <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="תפריט">☰</button>
   </div>
 </header>
 
@@ -559,7 +596,6 @@
 
 <main>
   <div class="filters-wrap">
-    <!-- Search -->
     <div class="search-wrap">
       <input type="text" id="search-input" placeholder="חפש מתכון..." autocomplete="off" />
       <span class="search-icon">
@@ -568,52 +604,10 @@
         </svg>
       </span>
     </div>
-
-    <!-- Category chips (built from data) -->
-    <div class="filter-row" id="cat-filter-row" style="display:none">
-      <span class="filter-row-label">קטגוריה:</span>
-      <div class="chips-row" id="cat-chips"></div>
-    </div>
-
-    <!-- Difficulty chips -->
-    <div class="filter-row">
-      <span class="filter-row-label">קושי:</span>
-      <div class="chips-row">
-        <button class="filter-btn active" data-difficulty="">הכל</button>
-        <button class="filter-btn" data-difficulty="easy">קל</button>
-        <button class="filter-btn" data-difficulty="medium">בינוני</button>
-        <button class="filter-btn" data-difficulty="hard">מאתגר</button>
-      </div>
-    </div>
-
-    <!-- Time chips -->
-    <div class="filter-row">
-      <span class="filter-row-label">זמן:</span>
-      <div class="chips-row">
-        <button class="filter-btn active" data-time="">כל הזמנים</button>
-        <button class="filter-btn" data-time="short">עד 30 דק'</button>
-        <button class="filter-btn" data-time="medium">30–60 דק'</button>
-        <button class="filter-btn" data-time="long">שעה+</button>
-      </div>
-    </div>
-
-    <!-- Sort + clear -->
-    <div class="sort-row">
-      <span class="sort-label">מיון:</span>
-      <select id="sort-select" class="sort-select">
-        <option value="date-desc">חדש לישן</option>
-        <option value="date-asc">ישן לחדש</option>
-        <option value="diff-easy">קושי: קל → מאתגר</option>
-        <option value="diff-hard">קושי: מאתגר → קל</option>
-        <option value="time-asc">זמן: קצר → ארוך</option>
-        <option value="time-desc">זמן: ארוך → קצר</option>
-      </select>
-      <button id="clear-btn" class="clear-btn" style="display:none" onclick="clearFilters()">✕ נקה הכל</button>
-    </div>
   </div>
 
   <div class="section-header">
-    <h2 class="section-title">כל המתכונים</h2>
+    <h2 class="section-title" id="section-title-text">כל המתכונים</h2>
     <span class="recipe-count" id="recipe-count"></span>
     <div class="view-toggle">
       <button class="view-btn" id="view-grid-btn" title="תצוגת כרטיסים" onclick="setView('grid')">
@@ -641,9 +635,79 @@
   </div>
 </main>
 
+<button class="filter-fab" id="filter-fab" onclick="openFilterModal()" aria-label="סינון ומיון">
+  🔧
+  <span class="filter-fab-badge" id="filter-badge" style="display:none">0</span>
+</button>
+
 <footer>
   <p>מתכונים מחושבים &nbsp;|&nbsp; המטבח פוגש טכנולוגיה &nbsp;|&nbsp; ניר פוליטי &nbsp;© 2026</p>
 </footer>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-logo">מתכונים <span>מחושבים</span></div>
+    <button class="drawer-x" onclick="closeDrawer()">✕</button>
+  </div>
+  <ul class="drawer-nav">
+    <li><a href="#" onclick="showFavoritesView();closeDrawer();return false">⭐ מועדפים</a></li>
+    <li><a href="#" onclick="showAllRecipes();closeDrawer();return false">🔍 כל המתכונים</a></li>
+    <li><a href="fridge.html">🥦 מתכון לפי מצרכים</a></li>
+    <li><a href="admin.html">⚙️ ניהול מתכונים</a></li>
+  </ul>
+</div>
+
+<!-- Filter modal -->
+<div class="filter-overlay" id="filter-overlay" onclick="closeFilterModal()"></div>
+<div class="filter-modal" id="filter-modal">
+  <div class="filter-modal-head">
+    <h3>סינון ומיון</h3>
+    <button class="filter-modal-close" onclick="closeFilterModal()">✕</button>
+  </div>
+  <div class="filter-modal-body">
+    <div class="filter-group">
+      <label>קטגוריה</label>
+      <select id="modal-cat-select">
+        <option value="">הכל</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>רמת קושי</label>
+      <select id="modal-diff-select">
+        <option value="">הכל</option>
+        <option value="easy">קל</option>
+        <option value="medium">בינוני</option>
+        <option value="hard">מאתגר</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>זמן הכנה</label>
+      <select id="modal-time-select">
+        <option value="">כל הזמנים</option>
+        <option value="short">עד 30 דק'</option>
+        <option value="medium">30–60 דק'</option>
+        <option value="long">שעה+</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>מיון</label>
+      <select id="modal-sort-select">
+        <option value="date-desc">חדש לישן</option>
+        <option value="date-asc">ישן לחדש</option>
+        <option value="diff-easy">קושי: קל → מאתגר</option>
+        <option value="diff-hard">קושי: מאתגר → קל</option>
+        <option value="time-asc">זמן: קצר → ארוך</option>
+        <option value="time-desc">זמן: ארוך → קצר</option>
+      </select>
+    </div>
+  </div>
+  <div class="filter-modal-foot">
+    <button class="filter-clear-btn" onclick="clearFilterModal()">נקה הכל</button>
+    <button class="filter-apply-btn" onclick="applyFilterModal()">החל</button>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script>
@@ -660,6 +724,7 @@
   let activeFilters = { search: '', category: '', difficulty: '', timeRange: '' };
   let sortBy = 'date-desc';
   let viewMode = localStorage.getItem('recipeViewMode') || 'grid';
+  let favMode = false;
 
   // ── Settings ──────────────────────────────────────────────────────────────────
 
@@ -668,7 +733,6 @@
       const res = await fetch(`${API}/api/settings`);
       if (!res.ok) return;
       const s = await res.json();
-
       if (s.site_name) {
         document.title = `${s.site_name} — מתכונים ביתיים`;
         const logoEl = document.getElementById('site-logo');
@@ -676,14 +740,8 @@
         const footerEl = document.getElementById('footer-name');
         if (footerEl) footerEl.textContent = s.site_name;
       }
-      if (s.hero_title) {
-        const el = document.getElementById('hero-title');
-        if (el) el.textContent = s.hero_title;
-      }
-      if (s.site_description) {
-        const el = document.getElementById('hero-subtitle');
-        if (el) el.textContent = s.site_description;
-      }
+      if (s.hero_title) { const el = document.getElementById('hero-title'); if (el) el.textContent = s.hero_title; }
+      if (s.site_description) { const el = document.getElementById('hero-subtitle'); if (el) el.textContent = s.site_description; }
       const heroUrl = s.hero_image_url || s.hero_image;
       if (heroUrl) {
         const heroEl = document.getElementById('hero-section');
@@ -699,7 +757,7 @@
       const res = await fetch(`${API}/api/recipes`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       allRecipes = await res.json();
-      buildCategoryChips();
+      buildCategoryOptions();
       render();
     } catch {
       document.getElementById('recipes-grid').innerHTML = `
@@ -710,43 +768,117 @@
     }
   }
 
-  function buildCategoryChips() {
+  function buildCategoryOptions() {
     const cats = [...new Set(allRecipes.map(r => r.category).filter(Boolean))].sort();
-    if (!cats.length) return;
-    const row = document.getElementById('cat-filter-row');
-    const wrap = document.getElementById('cat-chips');
-    wrap.innerHTML =
-      `<button class="filter-btn cat-chip active" data-category="">הכל</button>` +
-      cats.map(c =>
-        `<button class="filter-btn cat-chip" data-category="${esc(c)}">${esc(c)}</button>`
-      ).join('');
-    row.style.display = 'flex';
+    const sel = document.getElementById('modal-cat-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">הכל</option>' +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  }
 
-    wrap.querySelectorAll('.cat-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        wrap.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeFilters.category = btn.dataset.category;
-        updateClearBtn();
-        render();
-      });
+  // ── Favorites ─────────────────────────────────────────────────────────────────
+
+  function getFavorites() { return JSON.parse(localStorage.getItem('recipeFavorites') || '[]'); }
+
+  function toggleFav(id, e) {
+    e.preventDefault(); e.stopPropagation();
+    const favs = getFavorites();
+    const idx = favs.indexOf(id);
+    if (idx >= 0) favs.splice(idx, 1); else favs.push(id);
+    localStorage.setItem('recipeFavorites', JSON.stringify(favs));
+    const isFav = favs.includes(id);
+    document.querySelectorAll(`.fav-btn[data-id="${id}"]`).forEach(btn => {
+      btn.classList.toggle('fav-on', isFav);
+      btn.title = isFav ? 'הסר ממועדפים' : 'הוסף למועדפים';
+      btn.textContent = isFav ? '⭐' : '☆';
     });
+    if (favMode) render();
+  }
+
+  function showFavoritesView() {
+    favMode = true;
+    document.getElementById('section-title-text').textContent = '⭐ מועדפים';
+    render();
+  }
+
+  function showAllRecipes() {
+    favMode = false;
+    document.getElementById('section-title-text').textContent = 'כל המתכונים';
+    render();
+  }
+
+  // ── Drawer ────────────────────────────────────────────────────────────────────
+
+  function toggleDrawer() {
+    document.getElementById('drawer').classList.contains('open') ? closeDrawer() : openDrawer();
+  }
+  function openDrawer() {
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  // ── Filter modal ──────────────────────────────────────────────────────────────
+
+  function openFilterModal() {
+    document.getElementById('modal-cat-select').value = activeFilters.category;
+    document.getElementById('modal-diff-select').value = activeFilters.difficulty;
+    document.getElementById('modal-time-select').value = activeFilters.timeRange;
+    document.getElementById('modal-sort-select').value = sortBy;
+    document.getElementById('filter-overlay').classList.add('show');
+    document.getElementById('filter-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeFilterModal() {
+    document.getElementById('filter-overlay').classList.remove('show');
+    document.getElementById('filter-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function applyFilterModal() {
+    activeFilters.category  = document.getElementById('modal-cat-select').value;
+    activeFilters.difficulty = document.getElementById('modal-diff-select').value;
+    activeFilters.timeRange = document.getElementById('modal-time-select').value;
+    sortBy = document.getElementById('modal-sort-select').value;
+    updateFilterBadge();
+    closeFilterModal();
+    render();
+  }
+  function clearFilterModal() {
+    document.getElementById('modal-cat-select').value = '';
+    document.getElementById('modal-diff-select').value = '';
+    document.getElementById('modal-time-select').value = '';
+    document.getElementById('modal-sort-select').value = 'date-desc';
+  }
+  function updateFilterBadge() {
+    const count = [activeFilters.category, activeFilters.difficulty, activeFilters.timeRange]
+      .filter(Boolean).length + (sortBy !== 'date-desc' ? 1 : 0);
+    const badge = document.getElementById('filter-badge');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
   }
 
   // ── Filtering ─────────────────────────────────────────────────────────────────
 
   function filtered() {
-    return allRecipes.filter(r => {
+    let list = allRecipes;
+    if (favMode) {
+      const favs = getFavorites();
+      list = list.filter(r => favs.includes(r.id));
+    }
+    return list.filter(r => {
       if (activeFilters.difficulty && r.difficulty !== activeFilters.difficulty) return false;
-      if (activeFilters.category  && r.category  !== activeFilters.category)  return false;
-
+      if (activeFilters.category   && r.category   !== activeFilters.category)  return false;
       if (activeFilters.timeRange) {
         const total = (r.prep_time || 0) + (r.cook_time || 0);
         if (activeFilters.timeRange === 'short'  && total > 30)             return false;
         if (activeFilters.timeRange === 'medium' && (total <= 30 || total > 60)) return false;
         if (activeFilters.timeRange === 'long'   && total <= 60)            return false;
       }
-
       if (activeFilters.search) {
         const q = activeFilters.search.toLowerCase();
         const inTitle = r.title.toLowerCase().includes(q);
@@ -784,8 +916,8 @@
       grid.className = 'recipes-grid';
       grid.innerHTML = `
         <div class="state-box">
-          <div class="icon">🔍</div>
-          <p>לא נמצאו מתכונים תואמים</p>
+          <div class="icon">${favMode ? '⭐' : '🔍'}</div>
+          <p>${favMode ? 'עדיין אין מועדפים. לחץ ☆ על מתכון כדי להוסיף.' : 'לא נמצאו מתכונים תואמים'}</p>
         </div>`;
       return;
     }
@@ -830,6 +962,8 @@
     const timeStr   = totalMin ? `${totalMin} דק'` : '';
     const emoji     = CATEGORY_EMOJI[r.category] || '🍴';
     const diffLabel = DIFFICULTY_LABEL[r.difficulty] || '';
+    const favs      = getFavorites();
+    const isFav     = favs.includes(r.id);
 
     const imageHtml = r.image_url
       ? (() => {
@@ -843,7 +977,7 @@
       : `<div class="list-placeholder">${emoji}</div>`;
 
     return `
-      <a class="list-card" href="recipe.html?id=${r.id}">
+      <a class="list-card" href="recipe.html?id=${r.id}" style="position:relative">
         <div class="list-image">${imageHtml}</div>
         <div class="list-body">
           <div class="list-title">${esc(r.title)}</div>
@@ -857,6 +991,7 @@
             ${diffLabel ? `<span class="difficulty-badge ${r.difficulty}" style="margin-right:0">${diffLabel}</span>` : ''}
           </div>
         </div>
+        <button class="fav-btn" data-id="${r.id}" onclick="toggleFav(${r.id},event)" title="${isFav ? 'הסר ממועדפים' : 'הוסף למועדפים'}" style="top:.5rem;right:.5rem;left:auto">${isFav ? '⭐' : '☆'}</button>
       </a>`;
   }
 
@@ -866,6 +1001,8 @@
     const emoji     = CATEGORY_EMOJI[r.category] || '🍴';
     const diffLabel = DIFFICULTY_LABEL[r.difficulty] || '';
     const tags      = (r.tags || []).slice(0, 3);
+    const favs      = getFavorites();
+    const isFav     = favs.includes(r.id);
 
     const imageHtml = r.image_url
       ? (() => {
@@ -883,6 +1020,7 @@
         <div class="card-image">
           ${imageHtml}
           ${r.category ? `<span class="card-category">${esc(r.category)}</span>` : ''}
+          <button class="fav-btn" data-id="${r.id}" onclick="toggleFav(${r.id},event)" title="${isFav ? 'הסר ממועדפים' : 'הוסף למועדפים'}">${isFav ? '⭐' : '☆'}</button>
         </div>
         <div class="card-body">
           <h3 class="card-title">${esc(r.title)}</h3>
@@ -912,66 +1050,13 @@
 
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // ── Filter controls ───────────────────────────────────────────────────────────
+  // ── Search ────────────────────────────────────────────────────────────────────
 
-  function updateClearBtn() {
-    const active = activeFilters.search || activeFilters.category ||
-                   activeFilters.difficulty || activeFilters.timeRange;
-    document.getElementById('clear-btn').style.display = active ? '' : 'none';
-  }
-
-  function clearFilters() {
-    activeFilters = { search: '', category: '', difficulty: '', timeRange: '' };
-    document.getElementById('search-input').value = '';
-
-    document.querySelectorAll('[data-difficulty]').forEach(b => {
-      b.classList.toggle('active', b.dataset.difficulty === '');
-    });
-    document.querySelectorAll('[data-time]').forEach(b => {
-      b.classList.toggle('active', b.dataset.time === '');
-    });
-    document.querySelectorAll('.cat-chip').forEach(b => {
-      b.classList.toggle('active', b.dataset.category === '');
-    });
-    updateClearBtn();
-    render();
-  }
-
-  // Difficulty chips
-  document.querySelectorAll('[data-difficulty]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-difficulty]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilters.difficulty = btn.dataset.difficulty;
-      updateClearBtn();
-      render();
-    });
-  });
-
-  // Time chips
-  document.querySelectorAll('[data-time]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-time]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilters.timeRange = btn.dataset.time;
-      updateClearBtn();
-      render();
-    });
-  });
-
-  // Sort
-  document.getElementById('sort-select').addEventListener('change', e => {
-    sortBy = e.target.value;
-    render();
-  });
-
-  // Search
   let searchTimer;
   document.getElementById('search-input').addEventListener('input', e => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       activeFilters.search = e.target.value.trim();
-      updateClearBtn();
       render();
     }, 200);
   });
@@ -980,6 +1065,11 @@
 
   document.getElementById('view-grid-btn').classList.toggle('active', viewMode === 'grid');
   document.getElementById('view-list-btn').classList.toggle('active', viewMode === 'list');
+
+  if (location.hash === '#favorites') {
+    favMode = true;
+    document.getElementById('section-title-text').textContent = '⭐ מועדפים';
+  }
 
   loadSettings();
   loadRecipes();

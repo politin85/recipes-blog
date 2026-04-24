@@ -286,6 +286,22 @@
     #crop-img-el { position: absolute; pointer-events: none; display: block; }
     .crop-controls { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; }
     .crop-zoom-slider { flex: 1; accent-color: var(--terracotta); cursor: pointer; }
+
+    /* ── Hamburger + Drawer ── */
+    .hamburger-btn { background:none; border:none; color:rgba(255,255,255,.9); font-size:1.5rem; cursor:pointer; padding:.2rem .4rem; line-height:1; transition:opacity .2s; flex-shrink:0; }
+    .hamburger-btn:hover { opacity:.75; }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:400; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .drawer-overlay.show { opacity:1; pointer-events:all; }
+    .drawer { position:fixed; top:0; right:0; height:100%; width:280px; background:var(--cream); border-left:1px solid var(--sand-dark); z-index:401; transform:translateX(100%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
+    .drawer.open { transform:translateX(0); }
+    .drawer-head { background:var(--terracotta); color:var(--white); padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .drawer-logo { font-family:'Secular One',sans-serif; font-size:1.1rem; font-weight:700; }
+    .drawer-logo span { color:var(--sand); }
+    .drawer-x { background:none; border:none; color:var(--white); font-size:1.25rem; cursor:pointer; padding:.15rem .4rem; line-height:1; }
+    .drawer-nav { list-style:none; flex:1; overflow-y:auto; padding:.5rem 0; }
+    .drawer-nav li a { display:flex; align-items:center; gap:.75rem; padding:.9rem 1.25rem; color:var(--ink); text-decoration:none; font-size:.95rem; font-family:'Rubik',sans-serif; transition:background .15s; }
+    .drawer-nav li a:hover { background:var(--sand); }
+    .drawer-nav li a.current { color:var(--terracotta); font-weight:500; }
   </style>
 </head>
 <body>
@@ -293,9 +309,9 @@
 <header>
   <div class="header-inner">
     <a href="index.html" class="logo">מתכונים <span>מחושבים</span></a>
-    <div class="header-right">
-      <a href="index.html" class="back-btn">← לאתר</a>
+    <div style="display:flex;align-items:center;gap:.75rem">
       <span class="admin-badge">ניהול</span>
+      <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="תפריט">☰</button>
     </div>
   </div>
 </header>
@@ -536,22 +552,19 @@ function renderIngMgrTable(rows) {
 }
 
 function ingMgrRowHtml(r) {
-  const diff = r.display_name !== r.original_name || r.note;
-  return `<tr class="${diff ? 'alias-diff' : ''}" data-orig="${esc(r.original_name)}">
-    <td style="color:var(--ink-light)">${esc(r.original_name)}</td>
+  const diff = r.display_name !== r.original_name;
+  const noteCtx = r.note ? `<span style="font-size:.72rem;color:var(--ink-muted)"> — ${esc(r.note)}</span>` : '';
+  return `<tr class="${diff ? 'alias-diff' : ''}"
+    data-orig="${esc(r.original_name)}" data-note="${esc(r.note || '')}">
+    <td style="color:var(--ink-light)">${esc(r.original_name)}${noteCtx}</td>
     <td>
       <input class="alias-inp alias-name-inp" value="${esc(r.display_name)}"
         placeholder="${esc(r.original_name)}"
-        data-orig="${esc(r.original_name)}"
         onblur="saveAlias(this.closest('tr'))"
         onkeydown="if(event.key==='Enter')this.blur()" />
     </td>
     <td>
-      <input class="alias-inp alias-note-inp" value="${esc(r.note || '')}"
-        placeholder="הערה..."
-        data-orig="${esc(r.original_name)}"
-        onblur="saveAlias(this.closest('tr'))"
-        onkeydown="if(event.key==='Enter')this.blur()" />
+      <span style="font-size:.82rem;color:var(--ink-muted)">${esc(r.note || '')}</span>
     </td>
     <td class="ing-count-badge" style="text-align:center">${r.recipe_count || 0}</td>
   </tr>`;
@@ -559,10 +572,9 @@ function ingMgrRowHtml(r) {
 
 async function saveAlias(row) {
   const original_name = row.dataset.orig;
+  const note         = row.dataset.note || '';
   const nameInp  = row.querySelector('.alias-name-inp');
-  const noteInp  = row.querySelector('.alias-note-inp');
   const display_name = nameInp.value.trim() || original_name;
-  const note         = noteInp.value.trim();
   nameInp.value = display_name;
   try {
     const res = await fetch(`${API}/api/admin/ingredients/alias`, {
@@ -571,9 +583,9 @@ async function saveAlias(row) {
       body: JSON.stringify({ original_name, display_name, note }),
     });
     if (!res.ok) throw new Error(res.status);
-    row.className = (display_name !== original_name || note) ? 'alias-diff' : '';
-    const entry = ingMgrData.find(e => e.original_name === original_name);
-    if (entry) { entry.display_name = display_name; entry.note = note; }
+    row.className = display_name !== original_name ? 'alias-diff' : '';
+    const entry = ingMgrData.find(e => e.original_name === original_name && e.note === note);
+    if (entry) entry.display_name = display_name;
     showToast('נשמר ✓', 'success');
   } catch {
     showToast('שגיאה בשמירה', 'error');
@@ -1668,6 +1680,25 @@ function initFormTransforms() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/recipes-blog/sw.js').catch(() => {});
 }
+</script>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-logo">מתכונים <span>מחושבים</span></div>
+    <button class="drawer-x" onclick="closeDrawer()">✕</button>
+  </div>
+  <ul class="drawer-nav">
+    <li><a href="index.html#favorites">⭐ מועדפים</a></li>
+    <li><a href="index.html">🔍 כל המתכונים</a></li>
+    <li><a href="fridge.html">🥦 מתכון לפי מצרכים</a></li>
+    <li><a href="admin.html" class="current">⚙️ ניהול מתכונים</a></li>
+  </ul>
+</div>
+<script>
+function toggleDrawer() { document.getElementById('drawer').classList.contains('open') ? closeDrawer() : openDrawer(); }
+function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('show'); document.body.style.overflow='hidden'; }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('show'); document.body.style.overflow=''; }
 </script>
 </body>
 </html>
