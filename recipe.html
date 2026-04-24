@@ -911,21 +911,26 @@ function stripExistingAmounts(text) {
   return text.replace(_AMOUNT_STRIP_RE, '').replace(/\s{2,}/g, ' ').trim();
 }
 
+// Hebrew letter range — used for word-boundary assertions
+const _HEB_CHAR = '[\\u05D0-\\u05EA\\u05B0-\\u05BD]';
+
 function highlightIngredients(text) {
   if (!recipe.ingredients?.length) return text;
   let result = stripExistingAmounts(text);
   const sorted = [...recipe.ingredients].sort((a, b) => b.name.length - a.name.length);
   for (const ing of sorted) {
     const displayName = ing.display_name || ing.name;
-    if (!result.includes(ing.name) && !result.includes(displayName)) continue;
     const ratio = currentServings / baseServings;
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
     const replacement = `<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
-    // Match original name or display name + optionally consume any existing parenthetical amount
     for (const nameVariant of [...new Set([ing.name, displayName])]) {
       const escN = nameVariant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      result = result.replace(new RegExp(escN + '\\s*(?:\\([^)]*\\))?', 'g'), replacement);
+      // Negative lookbehind/ahead prevents matching inside longer Hebrew words (e.g. "חלב" ≠ "חלבונים")
+      result = result.replace(
+        new RegExp(`(?<!${_HEB_CHAR})${escN}(?!${_HEB_CHAR})(?:\\s*(?:\\([^)]*\\)))?`, 'g'),
+        replacement
+      );
     }
   }
   return result;
