@@ -21,7 +21,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@300;400;500;600&family=Noto+Serif+Hebrew:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --terracotta:       #C2622F;
@@ -91,10 +91,11 @@
       margin-bottom: 1rem;
     }
     .recipe-title {
-      font-family: 'Secular One', sans-serif;
-      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
       font-weight: 700; color: var(--white);
-      line-height: 1.25; margin-bottom: .9rem;
+      line-height: 1.2; margin-bottom: .9rem;
+      letter-spacing: -0.01em;
     }
     .recipe-desc {
       font-size: 1.05rem; color: rgba(255,255,255,.82);
@@ -286,8 +287,9 @@
     }
     .step.done .step-num { background:var(--olive); }
     .step-header-title {
-      flex:1; font-family:'Noto Serif Hebrew',serif;
-      font-size:1rem; font-weight:600; color:var(--ink);
+      flex:1; font-family:'Noto Serif Hebrew', serif;
+      font-size:1.05rem; font-weight:600; color:var(--ink);
+      letter-spacing: -.005em;
     }
     .step-header-right { display:flex; align-items:center; gap:.5rem; }
     .step-check { color:var(--olive); font-size:1rem; display:none; }
