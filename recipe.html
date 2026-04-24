@@ -224,7 +224,12 @@
       flex-wrap: wrap; gap: .75rem; margin-bottom: 1.75rem;
     }
     .steps-bar h2 { font-family:'Noto Serif Hebrew',serif; font-size:1.5rem; font-weight:600; color:var(--ink); }
-    .steps-bar-right { display:flex; gap:.6rem; align-items:center; }
+    .steps-bar-right { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .steps-bar-row { display:flex; gap:.5rem; align-items:center; }
+    @media (max-width:640px) {
+      .steps-bar-right { flex-direction:column; align-items:stretch; }
+      .steps-bar-row { justify-content:flex-start; }
+    }
     .open-all-btn {
       padding:.4rem 1rem; border:1.5px solid var(--sand-dark);
       background:var(--white); color:var(--ink-light);
@@ -573,21 +578,23 @@
         <div class="steps-bar">
           <h2>הוראות הכנה</h2>
           <div class="steps-bar-right">
-            <select class="voice-select" id="sound-select" title="צליל טיימר">
-              <option value="bell">🔔 פעמון</option>
-              <option value="beep">📢 ביפ</option>
-              <option value="melody">🎵 מלודיה</option>
-            </select>
-            <select class="voice-select" id="voice-select">
-              <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
-              <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
-              <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
-              <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
-            </select>
-            <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
-            <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">
-              👨‍🍳 מצב בישול
-            </button>
+            <div class="steps-bar-row">
+              <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
+              <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">👨‍🍳 מצב בישול</button>
+            </div>
+            <div class="steps-bar-row">
+              <select class="voice-select" id="voice-select">
+                <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
+                <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
+                <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
+                <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
+              </select>
+              <select class="voice-select" id="sound-select" title="צליל טיימר">
+                <option value="bell">🔔 פעמון</option>
+                <option value="beep">📢 ביפ</option>
+                <option value="melody">🎵 מלודיה</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="cooking-bar" id="cooking-bar">
