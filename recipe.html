@@ -157,11 +157,24 @@
     .ingredient-list { list-style: none; }
     .ingredient-item {
       display: flex; align-items: baseline; justify-content: space-between;
-      padding: .6rem 0;
+      padding: .65rem .5rem;
+      margin: 0 -.5rem;
       border-bottom: 1px solid var(--sand);
       gap: .5rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background .15s ease;
+      user-select: none;
     }
     .ingredient-item:last-child { border-bottom: none; }
+    .ingredient-item:hover { background: var(--terracotta-pale); }
+    .ingredient-item.checked {
+      opacity: .42;
+    }
+    .ingredient-item.checked .ing-name {
+      text-decoration: line-through;
+      text-decoration-color: var(--terracotta);
+    }
     .ing-name { font-size: .95rem; color: var(--ink); }
     .ing-amount {
       font-size: .88rem; color: var(--ink-muted);
@@ -794,7 +807,7 @@ function renderIngredients() {
     const ratio = currentServings / baseServings;
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     return `
-      <li class="ingredient-item">
+      <li class="ingredient-item" onclick="this.classList.toggle('checked')">
         <span>
           <span class="ing-name">${ing.display_name || ing.name}</span>
           ${ing.note ? `<span class="ing-note">${ing.note}</span>` : ''}
