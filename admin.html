@@ -554,10 +554,9 @@ function renderIngMgrTable(rows) {
 
 function ingMgrRowHtml(r) {
   const diff = r.display_name !== r.original_name;
-  const noteCtx = r.note ? `<span style="font-size:.72rem;color:var(--ink-muted)"> — ${esc(r.note)}</span>` : '';
   return `<tr class="${diff ? 'alias-diff' : ''}"
     data-orig="${esc(r.original_name)}" data-note="${esc(r.note || '')}">
-    <td style="color:var(--ink-light)">${esc(r.original_name)}${noteCtx}</td>
+    <td style="color:var(--ink-light)">${esc(r.original_name)}</td>
     <td>
       <input class="alias-inp alias-name-inp" value="${esc(r.display_name)}"
         placeholder="${esc(r.original_name)}"
@@ -565,7 +564,10 @@ function ingMgrRowHtml(r) {
         onkeydown="if(event.key==='Enter')this.blur()" />
     </td>
     <td>
-      <span style="font-size:.82rem;color:var(--ink-muted)">${esc(r.note || '')}</span>
+      <input class="alias-inp alias-note-inp" value="${esc(r.note || '')}"
+        placeholder=""
+        onblur="saveAlias(this.closest('tr'))"
+        onkeydown="if(event.key==='Enter')this.blur()" />
     </td>
     <td class="ing-count-badge" style="text-align:center">${r.recipe_count || 0}</td>
   </tr>`;
@@ -573,20 +575,25 @@ function ingMgrRowHtml(r) {
 
 async function saveAlias(row) {
   const original_name = row.dataset.orig;
-  const note         = row.dataset.note || '';
+  const note          = row.dataset.note || '';
   const nameInp  = row.querySelector('.alias-name-inp');
+  const noteInp  = row.querySelector('.alias-note-inp');
   const display_name = nameInp.value.trim() || original_name;
+  const new_note     = noteInp ? noteInp.value.trim() : note;
   nameInp.value = display_name;
   try {
     const res = await fetch(`${API}/api/admin/ingredients/alias`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
-      body: JSON.stringify({ original_name, display_name, note }),
+      body: JSON.stringify({ original_name, display_name, note, new_note }),
     });
-    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    console.log('[saveAlias] response:', data);
+    if (!res.ok) { showToast(data.error || 'שגיאה', 'error'); return; }
+    row.dataset.note = new_note;
     row.className = display_name !== original_name ? 'alias-diff' : '';
     const entry = ingMgrData.find(e => e.original_name === original_name && e.note === note);
-    if (entry) entry.display_name = display_name;
+    if (entry) { entry.display_name = display_name; entry.note = new_note; }
     showToast('נשמר ✓', 'success');
   } catch {
     showToast('שגיאה בשמירה', 'error');

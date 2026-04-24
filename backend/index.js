@@ -557,6 +557,7 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
        LEFT JOIN ingredient_aliases ia
          ON ia.original_name = i.name
          AND (ia.note = ri.note
+              OR (ia.note IS NULL AND ri.note IS NULL)
               OR (ia.note = '' AND (ri.note IS NULL OR ri.note = '')))
        GROUP BY i.name, ri.note, ia.display_name
        ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
@@ -603,11 +604,13 @@ app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res
   if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY לא מוגדר ב-Railway Variables' });
 
   try {
-    // Only suggest for ingredients without a manual alias yet
+    // Only suggest for ingredients actually used in recipes, without an alias yet
     const { rows } = await pool.query(
-      `SELECT i.name FROM ingredients i
-       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
-       WHERE a.original_name IS NULL
+      `SELECT DISTINCT i.name
+       FROM ingredients i
+       JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
+       LEFT JOIN ingredient_aliases ia ON ia.original_name = i.name
+       WHERE ia.original_name IS NULL
        ORDER BY i.name`
     );
     if (!rows.length) return res.json({ saved: 0, suggestions: [] });
@@ -645,9 +648,9 @@ app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res
     for (const s of suggestions) {
       if (!s.original_name || !s.display_name) continue;
       await pool.query(
-        `INSERT INTO ingredient_aliases (original_name, display_name)
-         VALUES ($1, $2)
-         ON CONFLICT (original_name) DO NOTHING`,
+        `INSERT INTO ingredient_aliases (original_name, display_name, note)
+         VALUES ($1, $2, '')
+         ON CONFLICT (original_name, note) DO NOTHING`,
         [s.original_name, s.display_name]
       );
       saved++;

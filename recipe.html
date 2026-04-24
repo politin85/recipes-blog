@@ -448,28 +448,38 @@
     }
     footer span { color: var(--terracotta-light); }
 
-    /* ── Scroll-animated recipe title ── */
-    .recipe-title {
-      transition: font-size .25s ease, padding .25s ease, background-color .25s ease, color .25s ease, margin .25s ease;
-    }
-    .recipe-title.title-sticky {
+    /* ── Sticky title bar ── */
+    .sticky-title {
       position: fixed;
-      top: var(--nav-h, 64px);
+      top: 64px; /* overridden by JS */
       left: 0; right: 0;
-      z-index: 98;
-      font-size: 1rem !important;
-      padding: .45rem 2rem !important;
-      background-color: rgba(162,71,30,.97);
-      color: var(--white) !important;
-      margin: 0 !important;
+      z-index: 999;
+      background: rgba(162,71,30,.97);
+      color: var(--white);
+      font-family: 'Secular One', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: .45rem 2rem;
       line-height: 1.4;
       box-shadow: 0 2px 8px rgba(44,31,20,.2);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity .25s ease, transform .25s ease;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sticky-title.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     @media (max-width: 640px) {
       .recipe-hero { padding: 2.5rem 1.25rem 2rem; }
       .recipe-layout { padding: 1.5rem 1.25rem 4rem; }
-      .recipe-title.title-sticky { padding: .4rem 1.25rem !important; }
+      .sticky-title { padding: .4rem 1.25rem; }
     }
 
     /* ── Hamburger + Drawer ── */
@@ -497,6 +507,7 @@
     <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="תפריט">☰</button>
   </div>
 </header>
+<div class="sticky-title" id="sticky-title"></div>
 
 <div id="page-loading" class="state-box">
   <div class="spinner"></div>
@@ -700,6 +711,8 @@ function updateFavBtn() {
 
 function renderHero() {
   const totalMin = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  const stickyEl = document.getElementById('sticky-title');
+  if (stickyEl) stickyEl.textContent = recipe.title;
   document.getElementById('recipe-hero').innerHTML = `
     <div class="recipe-hero">
       <div class="recipe-hero-inner">
@@ -1323,32 +1336,23 @@ function setOGTags(r) {
   set('meta[name="twitter:image"]',      img);
 }
 
-// ── Scroll-animated title ────────────────────────────────────────────────────
+// ── Sticky title ─────────────────────────────────────────────────────────────
 
 function initScrollTitle() {
-  const title = document.querySelector('.recipe-title');
-  if (!title) return;
+  const mainTitle   = document.querySelector('.recipe-title');
+  const stickyTitle = document.getElementById('sticky-title');
+  if (!mainTitle || !stickyTitle) return;
 
-  const navH = document.querySelector('header')?.offsetHeight || 64;
-  document.documentElement.style.setProperty('--nav-h', navH + 'px');
+  const navbarHeight = document.querySelector('header')?.offsetHeight || 64;
+  stickyTitle.style.top = navbarHeight + 'px';
 
-  const placeholder = document.createElement('div');
-  placeholder.style.display = 'none';
-  title.after(placeholder);
-
-  const observer = new IntersectionObserver(([entry]) => {
-    const stuck = !entry.isIntersecting && entry.boundingClientRect.top < navH;
-    if (stuck) {
-      placeholder.style.height = title.offsetHeight + 'px';
-      placeholder.style.display = 'block';
-      title.classList.add('title-sticky');
-    } else {
-      placeholder.style.display = 'none';
-      title.classList.remove('title-sticky');
-    }
-  }, { rootMargin: `-${navH}px 0px 0px 0px`, threshold: 0 });
-
-  observer.observe(title);
+  const titleObserver = new IntersectionObserver(
+    ([entry]) => {
+      stickyTitle.classList.toggle('visible', !entry.isIntersecting);
+    },
+    { threshold: 0, rootMargin: '-' + navbarHeight + 'px 0px 0px 0px' }
+  );
+  titleObserver.observe(mainTitle);
 }
 
 // ── Service Worker ────────────────────────────────────────────────────────────
