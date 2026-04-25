@@ -549,18 +549,14 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
     const result = await pool.query(
       `SELECT
          i.name AS original_name,
+         i.name AS display_name,
          ri.note,
-         COALESCE(ia.display_name, i.name) AS display_name,
          COUNT(DISTINCT ri.recipe_id) AS usage_count
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
-       LEFT JOIN ingredient_aliases ia
-         ON ia.original_name = i.name
-         AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
-       GROUP BY i.name, ri.note, ia.display_name
+       GROUP BY i.name, ri.note
        ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
     );
-    console.log('[INGREDIENTS] First 3 rows:', JSON.stringify(result.rows.slice(0, 3)));
     res.json(result.rows);
   } catch (err) {
     console.error('[INGREDIENTS] error:', err);
@@ -569,47 +565,41 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
-  const original_name  = (req.body.original_name  || '').trim();
-  const display_name   = (req.body.display_name   || '').trim();
-  const note           = (req.body.note           || '').trim();
-  const new_note_raw   = req.body.new_note;
-  console.log('[ALIAS PUT] received:', JSON.stringify({ original_name, display_name, note, new_note: new_note_raw }));
+  const original_name = (req.body.original_name || '').trim();
+  const display_name  = (req.body.display_name  || '').trim();
+  const note          = (req.body.note          || '').trim();
+  const new_note_raw  = req.body.new_note;
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
+
   const effectiveName    = display_name || original_name;
-  const effectiveNote    = note;
-  const effectiveNewNote = new_note_raw !== undefined ? (new_note_raw || '').trim() : effectiveNote;
-  console.log('[ALIAS PUT] computed:', JSON.stringify({ effectiveName, effectiveNote, effectiveNewNote }));
+  const effectiveNewNote = new_note_raw !== undefined ? (new_note_raw || '').trim() : note;
+
   try {
-    // Try UPDATE first using the OLD note as the row key.
-    // This preserves the alias when only display_name changes and avoids
-    // deleting a working alias before we know the new note is reachable.
-    const upd = await pool.query(
-      `UPDATE ingredient_aliases
-         SET display_name = $1, note = $2, updated_at = NOW()
-       WHERE original_name = $3 AND COALESCE(note,'') = $4
-       RETURNING *`,
-      [effectiveName, effectiveNewNote, original_name, effectiveNote]
-    );
-    let saved;
-    if (upd.rowCount > 0) {
-      saved = upd.rows[0];
-    } else {
-      // No existing row — INSERT (upsert handles race conditions)
-      const ins = await pool.query(
-        `INSERT INTO ingredient_aliases (original_name, display_name, note)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (original_name, note) DO UPDATE
-           SET display_name = EXCLUDED.display_name,
-               updated_at   = NOW()
-         RETURNING *`,
-        [original_name, effectiveName, effectiveNewNote]
+    // Rename the ingredient globally across all recipes
+    if (effectiveName !== original_name) {
+      await pool.query(
+        `UPDATE ingredients SET name = $1 WHERE name = $2`,
+        [effectiveName, original_name]
       );
-      saved = ins.rows[0];
     }
-    console.log('[ALIAS PUT] DB result:', JSON.stringify(saved));
-    res.json({ original_name, display_name: effectiveName, note: effectiveNewNote });
+
+    // Update note directly in recipe_ingredients (only rows with the old note)
+    if (effectiveNewNote !== note) {
+      const noteValue = effectiveNewNote === '' ? null : effectiveNewNote;
+      await pool.query(
+        `UPDATE recipe_ingredients SET note = $1
+         WHERE ingredient_id = (SELECT id FROM ingredients WHERE name = $2)
+           AND COALESCE(note, '') = $3`,
+        [noteValue, effectiveName, note]
+      );
+    }
+
+    res.json({ original_name: effectiveName, display_name: effectiveName, note: effectiveNewNote });
   } catch (err) {
     console.error('[alias PUT] error:', err);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: `המצרך "${effectiveName}" כבר קיים — לא ניתן לשנות שם לשם קיים` });
+    }
     res.status(500).json({ error: 'DB error' });
   }
 });
