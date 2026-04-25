@@ -167,6 +167,8 @@
     .ing-row { background: var(--cream); border-radius: var(--radius); padding: var(--space-3) var(--space-3); margin-bottom: var(--space-2); border: 1px solid var(--sand); }
     .ing-name-wrap { margin-bottom: var(--space-2); display: flex; gap: var(--space-2); align-items: center; }
     .ing-name-wrap input { flex: 1; }
+    .ing-orig-label { font-size:.75rem; color:var(--ink-muted); margin-bottom:var(--space-1); font-style:italic; display:none; }
+    .ing-orig-label.visible { display:block; }
     .ing-sub { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: var(--space-2); }
     @media (max-width: 480px) { .ing-sub { grid-template-columns: 1fr 1fr; } .ing-note-col { grid-column: span 2; } }
 
@@ -1157,7 +1159,10 @@ function ingRowHtml(idx, i={}) {
     <div class="ing-row" id="ing-${id}" draggable="true">
       <div class="ing-name-wrap">
         <span class="drag-handle" title="גרור לשינוי סדר">☰</span>
-        <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${displayVal}" data-original="${origVal}" data-display="${displayVal}" />
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+          <div class="ing-orig-label${origVal && origVal !== displayVal ? ' visible' : ''}">${origVal && origVal !== displayVal ? `שם מקורי: ${origVal}` : ''}</div>
+          <input type="text" class="ing-name" placeholder="שם מרכיב *" value="${displayVal}" data-original="${origVal}" data-display="${displayVal}" />
+        </div>
         <button type="button" class="del-btn" onclick="delRow('ing-${id}')">✕</button>
       </div>
       <div class="ing-sub">

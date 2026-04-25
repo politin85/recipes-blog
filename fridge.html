@@ -688,7 +688,7 @@ function recipeCardHtml(r) {
             <span class="match-pct" style="color:${color}">${pct}%</span>
           </div>
           ${missing.length
-            ? `<div class="missing-list">${missing.map(m => `<span class="missing-chip">${m.name}</span>`).join('')}</div>`
+            ? `<div class="missing-list">${missing.map(m => `<span class="missing-chip">${m.display_name || m.name}</span>`).join('')}</div>`
             : `<div style="font-size:.82rem;color:#2E7D32;font-weight:500">✓ יש לך את כל המרכיבים!</div>`}
         ` : ''}
         <div style="display:flex;gap:var(--space-4);margin-top:.6rem">
