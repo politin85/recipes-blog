@@ -610,14 +610,16 @@ async function saveAlias(row) {
   const display_name = nameInp.value.trim() || original_name;
   const new_note     = noteInp ? noteInp.value.trim() : note;
   nameInp.value = display_name;
+  const putBody = { original_name, display_name, note, new_note };
+  console.log('[ADMIN] sending PUT:', JSON.stringify(putBody));
   try {
     const res = await fetch(`${API}/api/admin/ingredients/alias`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
-      body: JSON.stringify({ original_name, display_name, note, new_note }),
+      body: JSON.stringify(putBody),
     });
     const data = await res.json();
-    console.log('[saveAlias] response:', data);
+    console.log('[ADMIN] PUT response:', res.status, JSON.stringify(data));
     if (!res.ok) { showToast(data.error || 'שגיאה', 'error'); return; }
     row.dataset.note = new_note;
     row.className = display_name !== original_name ? 'alias-diff' : '';

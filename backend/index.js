@@ -556,9 +556,7 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
        JOIN ingredients i ON i.id = ri.ingredient_id
        LEFT JOIN ingredient_aliases ia
          ON ia.original_name = i.name
-         AND (ia.note = ri.note
-              OR (ia.note IS NULL AND ri.note IS NULL)
-              OR (ia.note = '' AND (ri.note IS NULL OR ri.note = '')))
+         AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
        GROUP BY i.name, ri.note, ia.display_name
        ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
     );
@@ -572,10 +570,12 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
   const { original_name, display_name, note, new_note } = req.body;
+  console.log('[ALIAS PUT] received:', JSON.stringify({ original_name, display_name, note, new_note }));
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
   const effectiveName    = display_name?.trim() || original_name;
-  const effectiveNote    = note?.trim() ?? '';
-  const effectiveNewNote = new_note !== undefined ? (new_note?.trim() ?? '') : effectiveNote;
+  const effectiveNote    = (note || '').trim();
+  const effectiveNewNote = new_note !== undefined ? (new_note || '').trim() : effectiveNote;
+  console.log('[ALIAS PUT] computed:', JSON.stringify({ effectiveName, effectiveNote, effectiveNewNote }));
   try {
     if (effectiveNewNote !== effectiveNote) {
       await pool.query(
@@ -583,15 +583,16 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
         [original_name, effectiveNote]
       );
     }
-    await pool.query(
+    const result = await pool.query(
       `INSERT INTO ingredient_aliases (original_name, display_name, note)
        VALUES ($1, $2, $3)
        ON CONFLICT (original_name, note) DO UPDATE
          SET display_name = EXCLUDED.display_name,
-             updated_at   = NOW()`,
+             updated_at   = NOW()
+       RETURNING *`,
       [original_name, effectiveName, effectiveNewNote]
     );
-    console.log('[alias PUT] saved:', original_name, '->', effectiveName, 'note:', effectiveNewNote);
+    console.log('[ALIAS PUT] DB result:', JSON.stringify(result.rows[0]));
     res.json({ original_name, display_name: effectiveName, note: effectiveNewNote });
   } catch (err) {
     console.error('[alias PUT] error:', err);
