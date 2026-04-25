@@ -293,9 +293,10 @@
     .pantry-chips { display:flex; flex-wrap:wrap; gap:var(--space-2); min-height:40px; margin-bottom:var(--space-5); }
     .pantry-chip { display:flex; align-items:center; gap:var(--space-2); background:var(--terracotta-pale); color:var(--terracotta); border:1.5px solid var(--terracotta); border-radius:50px; font-size:.85rem; font-weight:500; padding:var(--space-1) var(--space-4); cursor:pointer; transition:all .2s; }
     .pantry-chip:hover { background:var(--terracotta); color:var(--white); }
-    .pantry-add-row { display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap; }
-    .pantry-add-sel { flex:1; min-width:200px; padding:var(--space-3) var(--space-4); border:1.5px solid var(--sand-dark); border-radius:var(--radius); font-family:var(--font-body); font-size:.9rem; direction:rtl; outline:none; transition:border-color .2s; }
+    .pantry-add-row { display:flex; gap:var(--space-3); align-items:flex-start; flex-wrap:wrap; }
+    .pantry-add-sel { flex:1; min-width:200px; padding:var(--space-2) var(--space-3); border:1.5px solid var(--sand-dark); border-radius:var(--radius); font-family:var(--font-body); font-size:.9rem; direction:rtl; outline:none; transition:border-color .2s; height:140px; }
     .pantry-add-sel:focus { border-color:var(--olive); }
+    .pantry-add-sel option { padding:var(--space-1) var(--space-2); }
     .pantry-add-btn { padding:var(--space-3) var(--space-6); background:var(--olive); color:var(--white); border:none; border-radius:50px; font-family:var(--font-body); font-size:.85rem; font-weight:500; cursor:pointer; transition:background .2s; white-space:nowrap; }
     .pantry-add-btn:hover { background:var(--olive-light); }
 
@@ -467,10 +468,12 @@
           <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
         </div>
         <div class="pantry-add-row">
-          <select class="pantry-add-sel" id="pantry-add-sel">
-            <option value="">— בחר מצרך להוספה —</option>
+          <select class="pantry-add-sel" id="pantry-add-sel" multiple>
           </select>
-          <button class="pantry-add-btn" onclick="addPantryStaple()">+ הוסף</button>
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <button class="pantry-add-btn" onclick="addPantryStaple()">+ הוסף נבחרים</button>
+            <span style="font-size:.75rem;color:var(--ink-muted);text-align:center">Ctrl/Cmd לבחירה מרובה</span>
+          </div>
         </div>
       </div>
     </section>
@@ -840,19 +843,20 @@ async function populatePantryDropdown() {
     const pantryIds = new Set(pantryData.map(s => s.id));
     pantryDropdownGroups = groupByDisplayName(ings.filter(i => !pantryIds.has(i.id)));
     const sel = document.getElementById('pantry-add-sel');
-    sel.innerHTML = '<option value="">— בחר מצרך להוספה —</option>' +
-      pantryDropdownGroups.map((g, i) => `<option value="${i}">${g.display_name}</option>`).join('');
+    sel.innerHTML = pantryDropdownGroups
+      .map((g, i) => `<option value="${i}">${g.display_name}</option>`).join('');
   } catch {}
 }
 
 async function addPantryStaple() {
   const sel = document.getElementById('pantry-add-sel');
-  const idx = parseInt(sel.value);
-  if (isNaN(idx) || sel.value === '') return;
-  const group = pantryDropdownGroups[idx];
-  if (!group) return;
+  const selectedGroups = [...sel.selectedOptions]
+    .map(opt => pantryDropdownGroups[parseInt(opt.value)])
+    .filter(Boolean);
+  if (!selectedGroups.length) return;
+  const allIds = selectedGroups.flatMap(g => g.ids);
   try {
-    await Promise.all(group.ids.map(id =>
+    await Promise.all(allIds.map(id =>
       fetch(`${API}/api/admin/pantry-staples`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
@@ -860,7 +864,7 @@ async function addPantryStaple() {
       })
     ));
     await loadPantryStaples();
-    showToast('נוסף ✓', 'success');
+    showToast(`נוספו ${selectedGroups.length} מוצרים ✓`, 'success');
   } catch {
     showToast('שגיאה', 'error');
   }
