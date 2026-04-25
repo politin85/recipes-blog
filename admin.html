@@ -272,6 +272,11 @@
     .suggest-spinner { width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite;display:none; }
     .ing-table { width:100%; border-collapse:collapse; font-size:.88rem; }
     .ing-table th { text-align:right; padding:var(--space-2) var(--space-3); font-size:.78rem; font-weight:600; color:var(--ink-muted); border-bottom:2px solid var(--sand); background:var(--cream); }
+    .ing-table th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+    .ing-table th.sortable:hover { color:var(--terracotta); }
+    .ing-table th.sort-active { color:var(--terracotta); }
+    .ing-table th .sort-arrow { display:inline-block; margin-right:4px; font-size:.7rem; opacity:.5; }
+    .ing-table th.sort-active .sort-arrow { opacity:1; }
     .ing-table td { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--sand); vertical-align:middle; }
     .ing-table tr.alias-diff td { background:#fffde7; }
     .ing-table tr:last-child td { border-bottom:none; }
@@ -535,6 +540,8 @@ function initAdmin() {
 // ── Ingredient manager ────────────────────────────────────────────────────────
 
 let ingMgrData = [];
+let ingMgrSortCol = null;
+let ingMgrSortDir = 1;
 
 function toggleIngMgr() {
   const body  = document.getElementById('ing-mgr-body');
@@ -573,17 +580,55 @@ function renderIngMgrTable(rows) {
     </p>
     <table class="ing-table">
       <thead>
-        <tr>
-          <th>שם מקורי</th>
-          <th>שם תצוגה</th>
-          <th>הערה</th>
-          <th style="width:50px;text-align:center">שימוש</th>
+        <tr id="ing-mgr-thead-row">
+          <th class="sortable" onclick="sortIngMgr('original_name')"><span class="sort-arrow">↕</span>שם מקורי</th>
+          <th class="sortable" onclick="sortIngMgr('display_name')"><span class="sort-arrow">↕</span>שם תצוגה</th>
+          <th class="sortable" onclick="sortIngMgr('note')"><span class="sort-arrow">↕</span>הערה</th>
+          <th class="sortable" onclick="sortIngMgr('usage_count')" style="width:50px;text-align:center"><span class="sort-arrow">↕</span>שימוש</th>
         </tr>
       </thead>
       <tbody id="ing-mgr-tbody">
         ${rows.map(r => ingMgrRowHtml(r)).join('')}
       </tbody>
     </table>`;
+  updateSortHeaders();
+}
+
+function sortIngMgr(col) {
+  if (ingMgrSortCol === col) {
+    ingMgrSortDir *= -1;
+  } else {
+    ingMgrSortCol = col;
+    ingMgrSortDir = 1;
+  }
+  const dir = ingMgrSortDir;
+  ingMgrData.sort((a, b) => {
+    let av = a[col] ?? '';
+    let bv = b[col] ?? '';
+    if (col === 'usage_count') return (av - bv) * dir;
+    return av.toString().localeCompare(bv.toString(), 'he') * dir;
+  });
+  document.getElementById('ing-mgr-tbody').innerHTML = ingMgrData.map(r => ingMgrRowHtml(r)).join('');
+  updateSortHeaders();
+  filterIngMgr();
+}
+
+function updateSortHeaders() {
+  const colMap = { original_name: 0, display_name: 1, note: 2, usage_count: 3 };
+  const ths = document.querySelectorAll('#ing-mgr-thead-row th');
+  ths.forEach((th, i) => {
+    th.classList.remove('sort-active');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = '↕';
+  });
+  if (ingMgrSortCol !== null && colMap[ingMgrSortCol] !== undefined) {
+    const activeTh = ths[colMap[ingMgrSortCol]];
+    if (activeTh) {
+      activeTh.classList.add('sort-active');
+      const arrow = activeTh.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = ingMgrSortDir === 1 ? '▲' : '▼';
+    }
+  }
 }
 
 function ingMgrRowHtml(r) {
