@@ -269,18 +269,10 @@
     .tts-btn:disabled { opacity: .6; cursor: not-allowed; }
     #tts-audio { width: 100%; margin-top: var(--space-3); display: none; }
 
-    /* ── Steps bar ── */
-    .steps-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-8);
-    }
-    .steps-bar h2 { font-family:'Noto Serif Hebrew',serif; font-size:var(--text-2xl); font-weight:600; color:var(--ink); }
-    .steps-bar-right { display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-    .steps-bar-row { display:flex; gap:var(--space-2); align-items:center; }
-    @media (max-width:640px) {
-      .steps-bar-right { flex-direction:column; align-items:stretch; }
-      .steps-bar-row { justify-content:flex-start; }
-    }
+    /* ── Steps header ── */
+    .steps-header { display:flex; flex-direction:column; gap:12px; margin-bottom:var(--space-8); }
+    .steps-title { font-family:'Noto Serif Hebrew',serif; font-size:var(--text-2xl); font-weight:600; color:var(--ink); width:100%; }
+    .steps-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .open-all-btn {
       padding:var(--space-2) var(--space-4); border:1.5px solid var(--sand-dark);
       background:var(--white); color:var(--ink-light);
@@ -669,26 +661,22 @@
     <div>
       <!-- Steps -->
       <section id="steps-section">
-        <div class="steps-bar">
-          <h2>הוראות הכנה</h2>
-          <div class="steps-bar-right">
-            <div class="steps-bar-row">
-              <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
-              <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">👨‍🍳 מצב בישול</button>
-            </div>
-            <div class="steps-bar-row">
-              <select class="voice-select" id="voice-select">
-                <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
-                <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
-                <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
-                <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
-              </select>
-              <select class="voice-select" id="sound-select" title="צליל טיימר">
-                <option value="bell">🔔 פעמון</option>
-                <option value="beep">📢 ביפ</option>
-                <option value="melody">🎵 מלודיה</option>
-              </select>
-            </div>
+        <div class="steps-header">
+          <h2 class="steps-title">הוראות הכנה</h2>
+          <div class="steps-controls">
+            <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
+            <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">👨‍🍳 מצב בישול</button>
+            <select class="voice-select" id="voice-select">
+              <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
+              <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
+              <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
+              <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
+            </select>
+            <select class="voice-select" id="sound-select" title="צליל טיימר">
+              <option value="bell">🔔 פעמון</option>
+              <option value="beep">📢 ביפ</option>
+              <option value="melody">🎵 מלודיה</option>
+            </select>
           </div>
         </div>
         <div class="cooking-bar" id="cooking-bar">
