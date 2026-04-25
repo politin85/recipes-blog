@@ -578,9 +578,21 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
 
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
 
+  const client = await pool.connect();
   try {
-    // Upsert alias with old_note as the key, set new display_name
-    await pool.query(
+    await client.query('BEGIN');
+
+    if (new_note !== old_note) {
+      // Remove any conflicting alias at the target note key before moving
+      await client.query(
+        `DELETE FROM ingredient_aliases
+         WHERE original_name = $1 AND note = $2`,
+        [original_name, new_note]
+      );
+    }
+
+    // Upsert: create or update the alias row at old_note, then move to new_note
+    await client.query(
       `INSERT INTO ingredient_aliases (original_name, note, display_name)
        VALUES ($1, $2, $3)
        ON CONFLICT (original_name, note)
@@ -588,19 +600,22 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
       [original_name, old_note, new_display_name]
     );
 
-    // If note changed, update the note key in ingredient_aliases
     if (new_note !== old_note) {
-      await pool.query(
+      await client.query(
         `UPDATE ingredient_aliases SET note = $1
          WHERE original_name = $2 AND note = $3`,
         [new_note, original_name, old_note]
       );
     }
 
+    await client.query('COMMIT');
     res.json({ original_name, display_name: new_display_name, note: new_note });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('[alias PUT] error:', err);
-    res.status(500).json({ error: 'DB error' });
+    res.status(500).json({ error: err.message || 'DB error' });
+  } finally {
+    client.release();
   }
 });
 

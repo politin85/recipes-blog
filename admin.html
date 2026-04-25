@@ -688,8 +688,8 @@ async function saveAlias(row) {
     );
     if (entry) { entry.display_name = new_display_name; entry.note = new_note; }
     showToast('נשמר ✓', 'success');
-  } catch {
-    showToast('שגיאה בשמירה', 'error');
+  } catch (err) {
+    showToast(err.message || 'שגיאה בשמירה', 'error');
   }
 }
 
