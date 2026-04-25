@@ -972,10 +972,16 @@ function highlightIngredients(text) {
     const replacement = `<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
     for (const nameVariant of [...new Set([ing.name, displayName])]) {
       const escN = nameVariant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Negative lookbehind/ahead prevents matching inside longer Hebrew words (e.g. "חלב" ≠ "חלבונים")
       result = result.replace(
         new RegExp(`(?<!${_HEB_CHAR})${escN}(?!${_HEB_CHAR})(?:\\s*(?:\\([^)]*\\)))?`, 'g'),
-        replacement
+        (match, offset, str) => {
+          // Safety: if there's already a (number...) within 30 chars after the name, skip dynamic amount
+          if (amtStr) {
+            const tail = str.slice(offset + nameVariant.length, offset + nameVariant.length + 30);
+            if (/\(\s*[\d.,½¼¾⅓⅔]/.test(tail)) return `<strong>${displayName}</strong>`;
+          }
+          return replacement;
+        }
       );
     }
   }

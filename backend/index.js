@@ -844,6 +844,56 @@ app.post('/api/admin/steps/clean-all-duplicates', requireAdmin, async (req, res)
   }
 });
 
+// Diagnostic + deep SQL-level dedup (3-pass regexp_replace in PostgreSQL)
+app.post('/api/admin/steps/deep-clean-duplicates', requireAdmin, async (req, res) => {
+  // Patterns in plain strings — passed as params so PostgreSQL receives UTF-8 directly
+  const UNITS = 'גרם|מ״ל|ג׳|מל|כף|כפית|כוס|ק״ג|ליטר|יחידות?';
+  const P1    = `(\\(\\s*\\d+[^)]*?(?:${UNITS})[^)]*?\\))\\s*\\(\\s*\\d+[^)]*?(?:${UNITS})[^)]*?\\)`;
+  const P2    = '([א-ת]+)\\s*(\\(\\s*\\d+[^)]*?\\))\\s*\\1';
+
+  const DIAG  = `
+    SELECT id, recipe_id, text FROM steps
+    WHERE text ~ $1 OR text ~ $2 OR text ~ $3
+    ORDER BY recipe_id, id`;
+
+  try {
+    const { rows: before } = await pool.query(DIAG, [
+      '\\(\\s*\\d+[^)]*\\)\\s*\\(\\s*\\d+[^)]*\\)',
+      '\\(\\s*\\d+[^)]*\\)\\s*[א-ת]+\\s*\\(\\s*\\d+[^)]*\\)',
+      '([א-ת]+)\\s*\\(\\s*\\d+[^)]*\\)\\s*\\1',
+    ]);
+
+    // Pass 1: remove second unit-paren when two appear consecutively
+    await pool.query(
+      `UPDATE steps SET text = regexp_replace(text, $1, $2, 'g')`,
+      [P1, '\\1']
+    );
+    // Pass 2: remove duplicated Hebrew word around paren — "לבן (70 גרם) לבן" → "לבן (70 גרם)"
+    await pool.query(
+      `UPDATE steps SET text = regexp_replace(text, $1, $2, 'g')`,
+      [P2, '\\1 \\2']
+    );
+    // Pass 3: collapse multiple spaces
+    await pool.query(`UPDATE steps SET text = regexp_replace(text, '\\s{2,}', ' ', 'g')`);
+
+    const { rows: after } = await pool.query(DIAG, [
+      '\\(\\s*\\d+[^)]*\\)\\s*\\(\\s*\\d+[^)]*\\)',
+      '\\(\\s*\\d+[^)]*\\)\\s*[א-ת]+\\s*\\(\\s*\\d+[^)]*\\)',
+      '([א-ת]+)\\s*\\(\\s*\\d+[^)]*\\)\\s*\\1',
+    ]);
+
+    res.json({
+      before_count: before.length,
+      after_count:  after.length,
+      before_steps: before,
+      remaining:    after,
+    });
+  } catch (err) {
+    console.error('[deep-clean]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/steps/strip-amounts', requireAdmin, async (req, res) => {
   try {
     const { rows: steps } = await pool.query(
