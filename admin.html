@@ -629,7 +629,9 @@ async function saveAlias(row) {
     if (!res.ok) { showToast(data.error || 'שגיאה', 'error'); return; }
     row.dataset.note = new_note;
     row.className = display_name !== original_name ? 'alias-diff' : '';
-    const entry = ingMgrData.find(e => e.original_name === original_name && e.note === note);
+    const entry = ingMgrData.find(
+      e => e.original_name === original_name && (e.note || '') === note
+    );
     if (entry) { entry.display_name = display_name; entry.note = new_note; }
     showToast('נשמר ✓', 'success');
   } catch {

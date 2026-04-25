@@ -580,22 +580,33 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
   const effectiveNewNote = new_note_raw !== undefined ? (new_note_raw || '').trim() : effectiveNote;
   console.log('[ALIAS PUT] computed:', JSON.stringify({ effectiveName, effectiveNote, effectiveNewNote }));
   try {
-    if (effectiveNewNote !== effectiveNote) {
-      await pool.query(
-        `DELETE FROM ingredient_aliases WHERE original_name = $1 AND note = $2`,
-        [original_name, effectiveNote]
-      );
-    }
-    const result = await pool.query(
-      `INSERT INTO ingredient_aliases (original_name, display_name, note)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (original_name, note) DO UPDATE
-         SET display_name = EXCLUDED.display_name,
-             updated_at   = NOW()
+    // Try UPDATE first using the OLD note as the row key.
+    // This preserves the alias when only display_name changes and avoids
+    // deleting a working alias before we know the new note is reachable.
+    const upd = await pool.query(
+      `UPDATE ingredient_aliases
+         SET display_name = $1, note = $2, updated_at = NOW()
+       WHERE original_name = $3 AND COALESCE(note,'') = $4
        RETURNING *`,
-      [original_name, effectiveName, effectiveNewNote]
+      [effectiveName, effectiveNewNote, original_name, effectiveNote]
     );
-    console.log('[ALIAS PUT] DB result:', JSON.stringify(result.rows[0]));
+    let saved;
+    if (upd.rowCount > 0) {
+      saved = upd.rows[0];
+    } else {
+      // No existing row — INSERT (upsert handles race conditions)
+      const ins = await pool.query(
+        `INSERT INTO ingredient_aliases (original_name, display_name, note)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (original_name, note) DO UPDATE
+           SET display_name = EXCLUDED.display_name,
+               updated_at   = NOW()
+         RETURNING *`,
+        [original_name, effectiveName, effectiveNewNote]
+      );
+      saved = ins.rows[0];
+    }
+    console.log('[ALIAS PUT] DB result:', JSON.stringify(saved));
     res.json({ original_name, display_name: effectiveName, note: effectiveNewNote });
   } catch (err) {
     console.error('[alias PUT] error:', err);
