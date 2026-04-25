@@ -677,7 +677,7 @@ app.get('/api/settings', async (req, res) => {
 });
 
 app.put('/api/settings', requireAdmin, async (req, res) => {
-  const allowed = ['site_name', 'hero_title', 'site_description', 'hero_image', 'hero_image_url'];
+  const allowed = ['site_name', 'hero_title', 'site_description', 'hero_image', 'hero_image_url', 'main_image_url'];
   const entries = Object.entries(req.body).filter(([k]) => allowed.includes(k));
   if (!entries.length) return res.status(400).json({ error: 'No valid keys' });
 

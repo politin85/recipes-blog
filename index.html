@@ -840,7 +840,7 @@
       }
       if (s.hero_title) { const el = document.getElementById('hero-title'); if (el) el.textContent = s.hero_title; }
       if (s.site_description) { const el = document.getElementById('hero-subtitle'); if (el) el.textContent = s.site_description; }
-      const heroUrl = s.hero_image_url || s.hero_image;
+      const heroUrl = s.main_image_url || s.hero_image_url || s.hero_image;
       if (heroUrl) {
         const heroEl = document.getElementById('hero-section');
         if (heroEl) heroEl.style.backgroundImage = `url('${heroUrl.split('#')[0]}')`;
