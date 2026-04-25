@@ -1006,11 +1006,29 @@ function toggleAllSteps() {
   }
 }
 
+function markStepIngredientsDone(sid) {
+  const step = (recipe.steps || []).find(s => s.id === sid);
+  if (!step) return;
+  const text = step.text || '';
+  const listItems = document.querySelectorAll('#ingredient-list .ingredient-item');
+  (recipe.ingredients || []).forEach((ing, idx) => {
+    const names = [ing.display_name, ing.name].filter(Boolean);
+    if (names.some(n => text.includes(n))) {
+      listItems[idx]?.classList.add('checked');
+    }
+  });
+}
+
 function toggleDone(sid) {
   const el = document.getElementById(`step-${sid}`);
   el.classList.toggle('done');
   const btn = document.getElementById(`done-btn-${sid}`);
-  btn.textContent = el.classList.contains('done') ? '✓ בוצע' : '✓ סמן כבוצע';
+  if (el.classList.contains('done')) {
+    btn.textContent = '✓ בוצע';
+    markStepIngredientsDone(sid);
+  } else {
+    btn.textContent = '✓ סמן כבוצע';
+  }
 }
 
 // ── Cooking mode ──────────────────────────────────────────────────────────────
@@ -1047,6 +1065,11 @@ function goToStep(idx) {
   if (idx < 0 || idx >= steps.length) {
     if (idx >= steps.length) showCookingComplete();
     return;
+  }
+  if (idx > cookingIdx && steps[cookingIdx]) {
+    const prevStep = document.getElementById(`step-${steps[cookingIdx].id}`);
+    prevStep?.classList.add('done');
+    markStepIngredientsDone(steps[cookingIdx].id);
   }
   cookingIdx = idx;
   const total = steps.length;
