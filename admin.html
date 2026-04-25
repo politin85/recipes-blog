@@ -321,11 +321,11 @@
     /* ── Hamburger + Drawer ── */
     .hamburger-btn { background:none; border:none; color:rgba(255,255,255,.9); font-size:var(--text-2xl); cursor:pointer; padding:var(--space-1) var(--space-2); line-height:1; transition:opacity .2s; flex-shrink:0; }
     .hamburger-btn:hover { opacity:.75; }
-    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:400; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1001; opacity:0; pointer-events:none; transition:opacity .3s; }
     .drawer-overlay.show { opacity:1; pointer-events:all; }
-    .drawer { position:fixed; top:0; right:0; height:100%; width:280px; background:var(--cream); border-left:1px solid var(--sand-dark); z-index:401; transform:translateX(100%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
+    .drawer { position:fixed; top:0; right:0; height:100%; width:280px; background:var(--cream); border-left:1px solid var(--sand-dark); z-index:1002; transform:translateX(100%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
     .drawer.open { transform:translateX(0); }
-    .drawer-head { background:var(--terracotta); color:var(--white); padding:var(--space-4) var(--space-5); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .drawer-head { background:var(--terracotta); color:var(--white); padding:var(--space-4) var(--space-5); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; min-height:64px; }
     .drawer-logo { font-family:var(--font-display); font-size:1.1rem; font-weight:700; }
     .drawer-logo span { color:var(--sand); }
     .drawer-x { background:none; border:none; color:var(--white); font-size:var(--text-xl); cursor:pointer; padding:.15rem var(--space-2); line-height:1; }
@@ -1776,8 +1776,8 @@ if ('serviceWorker' in navigator) {
     <button class="drawer-x" onclick="closeDrawer()">✕</button>
   </div>
   <ul class="drawer-nav">
-    <li><a href="index.html#favorites">⭐ מועדפים</a></li>
     <li><a href="index.html">🔍 כל המתכונים</a></li>
+    <li><a href="index.html#favorites">⭐ מועדפים</a></li>
     <li><a href="fridge.html">🥦 מתכון לפי מצרכים</a></li>
     <li><a href="admin.html" class="current">⚙️ ניהול מתכונים</a></li>
   </ul>

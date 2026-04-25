@@ -179,12 +179,11 @@ app.post('/tts', async (req, res) => {
 app.get('/api/ingredients', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT i.*, COALESCE(a.display_name, i.name) AS display_name,
+      `SELECT i.*, i.name AS display_name,
               COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
        FROM ingredients i
-       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
        LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.id, a.display_name
+       GROUP BY i.id
        ORDER BY recipe_count DESC, i.name`
     );
     res.json(rows);
@@ -397,12 +396,10 @@ app.get('/api/recipes/:id', async (req, res) => {
     const [{ rows: ingredients }, { rows: steps }, { rows: notes }, { rows: related }] =
       await Promise.all([
         pool.query(
-          `SELECT i.id, i.name, COALESCE(a.display_name, i.name) AS display_name,
+          `SELECT i.id, i.name, i.name AS display_name,
                   i.is_pantry_staple, ri.amount, ri.unit, ri.note
            FROM recipe_ingredients ri
            JOIN ingredients i ON i.id = ri.ingredient_id
-           LEFT JOIN ingredient_aliases a
-             ON a.original_name = i.name AND a.note = COALESCE(ri.note, '')
            WHERE ri.recipe_id = $1`,
           [id]
         ),
@@ -415,9 +412,9 @@ app.get('/api/recipes/:id', async (req, res) => {
         pool.query(
           `SELECT id, title, image_url, prep_time, cook_time, difficulty, category
            FROM recipes
-           WHERE id != $1 AND (category = $2 OR tags && $3::text[])
+           WHERE id != $1 AND is_hidden IS NOT TRUE AND (category = $2 OR tags && $3::text[])
            ORDER BY created_at DESC
-           LIMIT 3`,
+           LIMIT 6`,
           [id, recipe.category, recipe.tags ?? []]
         ),
       ]);
