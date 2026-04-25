@@ -425,7 +425,11 @@
           <button class="suggest-btn" id="strip-amounts-btn" onclick="stripAllAmounts()" style="background:#8B4513;color:#fff">
             ✂️ הסר כמויות מטקסטים (חד-פעמי)
           </button>
+          <button class="suggest-btn" id="diagnose-btn" onclick="diagnoseAlias()" style="background:#555">
+            🔍 אבחן מצרך
+          </button>
         </div>
+        <pre id="diagnose-out" style="display:none;background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:.75rem;overflow:auto;max-height:400px;margin-top:8px;direction:ltr"></pre>
         <div id="ing-mgr-table-wrap">
           <div class="spinner" style="width:24px;height:24px;border-width:2px;margin:1rem auto"></div>
         </div>
@@ -651,6 +655,23 @@ async function suggestAliases() {
     showToast('שגיאה בהצעת שמות', 'error');
   } finally {
     btn.disabled = false; spinner.style.display = 'none';
+  }
+}
+
+async function diagnoseAlias() {
+  const name = prompt('שם מצרך לאבחון (original_name):');
+  if (!name) return;
+  const out = document.getElementById('diagnose-out');
+  out.style.display = 'block';
+  out.textContent = 'טוען...';
+  try {
+    const res = await fetch(`${API}/api/admin/ingredients/diagnose?name=${encodeURIComponent(name)}`, {
+      headers: { 'x-admin-password': adminPw },
+    });
+    const data = await res.json();
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    out.textContent = 'שגיאה: ' + e.message;
   }
 }
 
