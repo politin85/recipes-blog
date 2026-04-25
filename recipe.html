@@ -263,6 +263,7 @@
     }
 
     /* TTS */
+    .tts-section, .listen-section { margin-bottom: 2rem; }
     .tts-btn {
       width: 100%; padding: var(--space-4);
       background: var(--terracotta); color: var(--white);
@@ -277,7 +278,7 @@
 
     /* ── Steps header ── */
     .steps-header { display:flex; flex-direction:column; gap:12px; margin-bottom:var(--space-8); }
-    .steps-title { font-family:'Noto Serif Hebrew',serif; font-size:var(--text-2xl); font-weight:600; color:var(--ink); width:100%; }
+    .steps-title { font-family:'Noto Serif Hebrew',serif; font-size:var(--text-2xl); font-weight:600; color:var(--ink); width:100%; margin-top:1.5rem; }
     .steps-controls { display:flex; flex-direction:column; gap:8px; width:100%; padding:0 16px; }
     .steps-controls-row { display:flex; gap:8px; width:100%; justify-content:flex-start; flex-wrap:wrap; }
     .open-all-btn {
@@ -652,7 +653,7 @@
       </div>
 
       <!-- TTS -->
-      <div class="card">
+      <div class="card tts-section listen-section">
         <h2 class="card-heading">האזנה למתכון</h2>
         <button class="tts-btn" id="tts-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -674,7 +675,7 @@
           <h2 class="steps-title">הוראות הכנה</h2>
           <div class="steps-controls">
             <div class="steps-controls-row">
-              <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">פתח את כל הצעדים</button>
+              <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">סגור את כל הצעדים</button>
               <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">👨‍🍳 מצב בישול</button>
             </div>
             <div class="steps-controls-row">
@@ -955,7 +956,7 @@ function renderTags() {
 
 let cookingMode = false;
 let cookingIdx  = 0;
-let allOpen     = false;
+let allOpen     = true;
 
 function cleanStepText(text) {
   return text.replace(/\s*\([^)]*(?:גרם|מ״ל|מ"ל|כף|כפית|ק״ג|ק"ג|ליטר|יחידות?|ס"מ|ס״מ|יח'|יח׳)[^)]*\)/g, '');
@@ -973,7 +974,7 @@ function renderSteps() {
     const highlighted = highlightIngredients(s.text);
     const isLast = i === total - 1;
     return `
-      <div class="step${isFirst ? ' open' : ''}" id="step-${s.id}" data-idx="${i}" data-sid="${s.id}">
+      <div class="step open" id="step-${s.id}" data-idx="${i}" data-sid="${s.id}">
         <div class="step-header-row" onclick="toggleStepOpen(${s.id})">
           <div class="step-num">${s.step_order}</div>
           <div class="step-header-title">${s.title || 'שלב ' + s.step_order}</div>
