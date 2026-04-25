@@ -578,33 +578,35 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
 
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
 
+  const noteChanged = new_note !== old_note;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    if (new_note !== old_note) {
-      // Remove any conflicting alias at the target note key before moving
-      await client.query(
-        `DELETE FROM ingredient_aliases
-         WHERE original_name = $1 AND note = $2`,
-        [original_name, new_note]
-      );
-    }
-
-    // Upsert: create or update the alias row at old_note, then move to new_note
+    // 1. Upsert alias keyed on new_note (avoids two-step UPDATE of the key column)
     await client.query(
       `INSERT INTO ingredient_aliases (original_name, note, display_name)
        VALUES ($1, $2, $3)
        ON CONFLICT (original_name, note)
        DO UPDATE SET display_name = EXCLUDED.display_name`,
-      [original_name, old_note, new_display_name]
+      [original_name, new_note, new_display_name]
     );
 
-    if (new_note !== old_note) {
+    if (noteChanged) {
+      // 2. Keep recipe_ingredients.note in sync so the JOIN key stays valid
       await client.query(
-        `UPDATE ingredient_aliases SET note = $1
-         WHERE original_name = $2 AND note = $3`,
+        `UPDATE recipe_ingredients
+         SET note = $1
+         WHERE ingredient_id = (SELECT id FROM ingredients WHERE name = $2)
+           AND COALESCE(note, '') = $3`,
         [new_note, original_name, old_note]
+      );
+
+      // 3. Remove the old alias entry (superseded by the upsert above)
+      await client.query(
+        `DELETE FROM ingredient_aliases
+         WHERE original_name = $1 AND note = $2`,
+        [original_name, old_note]
       );
     }
 
