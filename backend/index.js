@@ -569,12 +569,15 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
-  const { original_name, display_name, note, new_note } = req.body;
-  console.log('[ALIAS PUT] received:', JSON.stringify({ original_name, display_name, note, new_note }));
+  const original_name  = (req.body.original_name  || '').trim();
+  const display_name   = (req.body.display_name   || '').trim();
+  const note           = (req.body.note           || '').trim();
+  const new_note_raw   = req.body.new_note;
+  console.log('[ALIAS PUT] received:', JSON.stringify({ original_name, display_name, note, new_note: new_note_raw }));
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
-  const effectiveName    = display_name?.trim() || original_name;
-  const effectiveNote    = (note || '').trim();
-  const effectiveNewNote = new_note !== undefined ? (new_note || '').trim() : effectiveNote;
+  const effectiveName    = display_name || original_name;
+  const effectiveNote    = note;
+  const effectiveNewNote = new_note_raw !== undefined ? (new_note_raw || '').trim() : effectiveNote;
   console.log('[ALIAS PUT] computed:', JSON.stringify({ effectiveName, effectiveNote, effectiveNewNote }));
   try {
     if (effectiveNewNote !== effectiveNote) {
@@ -597,6 +600,39 @@ app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[alias PUT] error:', err);
     res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// Diagnostic: inspect alias state + what the GET join would return for a given ingredient name
+app.get('/api/admin/ingredients/diagnose', requireAdmin, async (req, res) => {
+  const name = (req.query.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'name query param required' });
+  try {
+    const [rawAlias, joinResult, pgIndex] = await Promise.all([
+      pool.query(
+        `SELECT *, length(original_name) AS orig_len, length(note) AS note_len,
+                octet_length(original_name) AS orig_bytes, octet_length(note) AS note_bytes
+         FROM ingredient_aliases WHERE original_name = $1`, [name]),
+      pool.query(
+        `SELECT i.name, ri.note, COALESCE(ia.display_name, i.name) AS display_name,
+                ia.original_name AS ia_orig, ia.note AS ia_note
+         FROM recipe_ingredients ri
+         JOIN ingredients i ON i.id = ri.ingredient_id
+         LEFT JOIN ingredient_aliases ia
+           ON ia.original_name = i.name AND COALESCE(ia.note,'') = COALESCE(ri.note,'')
+         WHERE i.name = $1`, [name]),
+      pool.query(
+        `SELECT indexname, indexdef FROM pg_indexes
+         WHERE tablename = 'ingredient_aliases'`),
+    ]);
+    res.json({
+      raw_aliases:   rawAlias.rows,
+      join_result:   joinResult.rows,
+      indexes:       pgIndex.rows,
+    });
+  } catch (err) {
+    console.error('[diagnose]', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
