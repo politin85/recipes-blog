@@ -574,7 +574,8 @@ function renderIngMgrTable(rows) {
     <table class="ing-table">
       <thead>
         <tr>
-          <th>שם המצרך</th>
+          <th>שם מקורי</th>
+          <th>שם תצוגה</th>
           <th>הערה</th>
           <th style="width:50px;text-align:center">שימוש</th>
         </tr>
@@ -586,15 +587,22 @@ function renderIngMgrTable(rows) {
 }
 
 function ingMgrRowHtml(r) {
-  return `<tr data-orig="${esc(r.original_name)}" data-note="${esc(r.note || '')}" data-usage="${r.usage_count || 0}">
+  const origName  = esc(r.original_name);
+  const dispName  = esc(r.display_name || r.original_name);
+  const noteVal   = esc(r.note || '');
+  return `<tr data-orig="${origName}" data-note="${noteVal}" data-display="${dispName}" data-usage="${r.usage_count || 0}">
     <td>
-      <input class="alias-inp alias-name-inp" value="${esc(r.original_name)}"
-        placeholder="${esc(r.original_name)}"
+      <input class="alias-inp" value="${origName}" disabled
+        style="color:var(--ink-muted);background:var(--sand);cursor:default" />
+    </td>
+    <td>
+      <input class="alias-inp alias-disp-inp" value="${dispName}"
+        placeholder="${origName}"
         onblur="saveAlias(this.closest('tr'))"
         onkeydown="if(event.key==='Enter')this.blur()" />
     </td>
     <td>
-      <input class="alias-inp alias-note-inp" value="${esc(r.note || '')}"
+      <input class="alias-inp alias-note-inp" value="${noteVal}"
         placeholder=""
         onblur="saveAlias(this.closest('tr'))"
         onkeydown="if(event.key==='Enter')this.blur()" />
@@ -604,28 +612,17 @@ function ingMgrRowHtml(r) {
 }
 
 async function saveAlias(row) {
-  const original_name = row.dataset.orig;
-  const note          = row.dataset.note || '';
-  const nameInp  = row.querySelector('.alias-name-inp');
-  const noteInp  = row.querySelector('.alias-note-inp');
-  const display_name = nameInp.value.trim() || original_name;
-  const new_note     = noteInp ? noteInp.value.trim() : note;
+  const original_name  = row.dataset.orig;
+  const old_note       = row.dataset.note || '';
+  const old_display    = row.dataset.display || original_name;
+  const dispInp        = row.querySelector('.alias-disp-inp');
+  const noteInp        = row.querySelector('.alias-note-inp');
+  const new_display_name = dispInp.value.trim() || original_name;
+  const new_note         = noteInp ? noteInp.value.trim() : old_note;
 
-  // Nothing changed — skip
-  if (display_name === original_name && new_note === note) return;
+  if (new_display_name === old_display && new_note === old_note) return;
 
-  // Confirm name change — it's global across all recipes
-  if (display_name !== original_name) {
-    const usage = parseInt(row.dataset.usage || '0', 10);
-    const msg = `שינוי שם המצרך ישפיע על ${usage} מתכון${usage === 1 ? '' : 'ים'}. להמשיך?`;
-    if (!confirm(msg)) {
-      nameInp.value = original_name;
-      return;
-    }
-  }
-
-  nameInp.value = display_name;
-  const putBody = { original_name, display_name, note, new_note };
+  const putBody = { original_name, old_note, new_display_name, new_note };
   try {
     const res = await fetch(`${API}/api/admin/ingredients/alias`, {
       method: 'PUT',
@@ -635,15 +632,16 @@ async function saveAlias(row) {
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'שגיאה', 'error');
-      nameInp.value = original_name;
+      dispInp.value = old_display;
+      if (noteInp) noteInp.value = old_note;
       return;
     }
-    row.dataset.orig = display_name;
-    row.dataset.note = new_note;
+    row.dataset.note    = new_note;
+    row.dataset.display = new_display_name;
     const entry = ingMgrData.find(
-      e => e.original_name === original_name && (e.note || '') === note
+      e => e.original_name === original_name && (e.note || '') === old_note
     );
-    if (entry) { entry.original_name = display_name; entry.display_name = display_name; entry.note = new_note; }
+    if (entry) { entry.display_name = new_display_name; entry.note = new_note; }
     showToast('נשמר ✓', 'success');
   } catch {
     showToast('שגיאה בשמירה', 'error');
@@ -694,7 +692,7 @@ function filterIngMgr() {
   if (!tbody) return;
   tbody.querySelectorAll('tr').forEach(tr => {
     const orig = tr.dataset.orig?.toLowerCase() || '';
-    const disp = tr.querySelector('.alias-name-inp')?.value.toLowerCase() || '';
+    const disp = tr.querySelector('.alias-disp-inp')?.value.toLowerCase() || '';
     const note = tr.querySelector('.alias-note-inp')?.value.toLowerCase() || '';
     tr.style.display = (!q || orig.includes(q) || disp.includes(q) || note.includes(q)) ? '' : 'none';
   });

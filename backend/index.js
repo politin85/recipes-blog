@@ -179,11 +179,12 @@ app.post('/tts', async (req, res) => {
 app.get('/api/ingredients', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT i.*, i.name AS display_name,
+      `SELECT i.*, COALESCE(a.display_name, i.name) AS display_name,
               COUNT(DISTINCT ri.recipe_id)::int AS recipe_count
        FROM ingredients i
+       LEFT JOIN ingredient_aliases a ON a.original_name = i.name
        LEFT JOIN recipe_ingredients ri ON ri.ingredient_id = i.id
-       GROUP BY i.id
+       GROUP BY i.id, a.display_name
        ORDER BY recipe_count DESC, i.name`
     );
     res.json(rows);
@@ -396,10 +397,14 @@ app.get('/api/recipes/:id', async (req, res) => {
     const [{ rows: ingredients }, { rows: steps }, { rows: notes }, { rows: related }] =
       await Promise.all([
         pool.query(
-          `SELECT i.id, i.name, i.name AS display_name,
-                  i.is_pantry_staple, ri.amount, ri.unit, ri.note
+          `SELECT i.id, i.name, COALESCE(ia.display_name, i.name) AS display_name,
+                  i.is_pantry_staple, ri.amount, ri.unit,
+                  COALESCE(ia.note, ri.note) AS note
            FROM recipe_ingredients ri
            JOIN ingredients i ON i.id = ri.ingredient_id
+           LEFT JOIN ingredient_aliases ia
+             ON ia.original_name = i.name
+             AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
            WHERE ri.recipe_id = $1`,
           [id]
         ),
@@ -545,13 +550,17 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-         i.name AS original_name,
-         i.name AS display_name,
-         ri.note,
-         COUNT(DISTINCT ri.recipe_id) AS usage_count
+         i.name                             AS original_name,
+         COALESCE(ia.display_name, i.name) AS display_name,
+         COALESCE(ia.note, ri.note)        AS note,
+         ri.note                            AS original_note,
+         COUNT(DISTINCT ri.recipe_id)::int  AS usage_count
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
-       GROUP BY i.name, ri.note
+       LEFT JOIN ingredient_aliases ia
+         ON ia.original_name = i.name
+         AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
+       GROUP BY i.name, ri.note, ia.display_name, ia.note
        ORDER BY i.name ASC, ri.note ASC NULLS FIRST`
     );
     res.json(result.rows);
@@ -562,41 +571,35 @@ app.get('/api/admin/ingredients/all', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/ingredients/alias', requireAdmin, async (req, res) => {
-  const original_name = (req.body.original_name || '').trim();
-  const display_name  = (req.body.display_name  || '').trim();
-  const note          = (req.body.note          || '').trim();
-  const new_note_raw  = req.body.new_note;
+  const original_name    = (req.body.original_name    || '').trim();
+  const old_note         = (req.body.old_note         ?? '').toString().trim();
+  const new_display_name = (req.body.new_display_name || '').trim() || original_name;
+  const new_note         = (req.body.new_note         ?? old_note).toString().trim();
+
   if (!original_name) return res.status(400).json({ error: 'original_name required' });
 
-  const effectiveName    = display_name || original_name;
-  const effectiveNewNote = new_note_raw !== undefined ? (new_note_raw || '').trim() : note;
-
   try {
-    // Rename the ingredient globally across all recipes
-    if (effectiveName !== original_name) {
+    // Upsert alias with old_note as the key, set new display_name
+    await pool.query(
+      `INSERT INTO ingredient_aliases (original_name, note, display_name)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (original_name, note)
+       DO UPDATE SET display_name = EXCLUDED.display_name`,
+      [original_name, old_note, new_display_name]
+    );
+
+    // If note changed, update the note key in ingredient_aliases
+    if (new_note !== old_note) {
       await pool.query(
-        `UPDATE ingredients SET name = $1 WHERE name = $2`,
-        [effectiveName, original_name]
+        `UPDATE ingredient_aliases SET note = $1
+         WHERE original_name = $2 AND note = $3`,
+        [new_note, original_name, old_note]
       );
     }
 
-    // Update note directly in recipe_ingredients (only rows with the old note)
-    if (effectiveNewNote !== note) {
-      const noteValue = effectiveNewNote === '' ? null : effectiveNewNote;
-      await pool.query(
-        `UPDATE recipe_ingredients SET note = $1
-         WHERE ingredient_id = (SELECT id FROM ingredients WHERE name = $2)
-           AND COALESCE(note, '') = $3`,
-        [noteValue, effectiveName, note]
-      );
-    }
-
-    res.json({ original_name: effectiveName, display_name: effectiveName, note: effectiveNewNote });
+    res.json({ original_name, display_name: new_display_name, note: new_note });
   } catch (err) {
     console.error('[alias PUT] error:', err);
-    if (err.code === '23505') {
-      return res.status(409).json({ error: `המצרך "${effectiveName}" כבר קיים — לא ניתן לשנות שם לשם קיים` });
-    }
     res.status(500).json({ error: 'DB error' });
   }
 });
