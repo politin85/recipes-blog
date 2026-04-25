@@ -348,7 +348,7 @@
         <h2>המרכיבים שלי</h2>
         <div class="free-search-wrap">
           <input type="text" id="free-search" class="free-search-inp"
-            placeholder="הקלד מרכיב, הפרד בפסיק..." autocomplete="off" />
+            placeholder="הקלד מרכיב..." autocomplete="off" />
           <div id="autocomplete-drop" class="autocomplete-drop" style="display:none"></div>
         </div>
       </div>
@@ -441,7 +441,10 @@ fetch(`${API}/api/ingredients`)
 
 function buildDisplayGroups() {
   displayGroups = {};
+  const seenIds = new Set();
   for (const i of allIngredients) {
+    if (seenIds.has(i.id)) continue;
+    seenIds.add(i.id);
     const dn = i.display_name || i.name;
     (displayGroups[dn] = displayGroups[dn] || []).push(i.id);
   }
@@ -489,29 +492,29 @@ function showDrop(items) {
   dropEl.style.display = 'block';
 }
 
-freeEl.addEventListener('focus', () => {
+function showCommonIngredients() {
   acSelectedIdx = -1;
-  const parts = freeEl.value.split(',');
-  const cur = parts[parts.length - 1].trim();
-  if (cur) return;
-  const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name)).slice(0, 10);
+  const top = allIngredients
+    .filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name))
+    .slice(0, 10);
   showDrop(top);
+}
+
+freeEl.addEventListener('focus', () => {
+  if (freeEl.value.trim() === '') showCommonIngredients();
+});
+
+freeEl.addEventListener('click', () => {
+  if (freeEl.value.trim() === '') showCommonIngredients();
 });
 
 freeEl.addEventListener('input', () => {
-  const parts = freeEl.value.split(',');
-  const cur   = parts[parts.length - 1].trim();
+  const cur = freeEl.value.trim();
   acSelectedIdx = -1;
-
-  if (!cur) {
-    const top = allIngredients.filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name)).slice(0, 10);
-    showDrop(top);
-    return;
-  }
-
+  if (!cur) { showCommonIngredients(); return; }
   const matches = allIngredients
     .filter(i => !i.is_pantry_staple && !selected.has(i.display_name || i.name) &&
-      (i.name.startsWith(cur) || (i.display_name || '').startsWith(cur)))
+      (i.display_name || i.name).toLowerCase().startsWith(cur.toLowerCase()))
     .slice(0, 8);
   showDrop(matches);
 });
@@ -526,23 +529,21 @@ freeEl.addEventListener('keydown', e => {
     acSelectedIdx = Math.max(acSelectedIdx - 1, -1);
     items.forEach((el, i) => el.classList.toggle('active', i === acSelectedIdx));
     e.preventDefault();
-  } else if (e.key === 'Enter' || e.key === ',') {
+  } else if (e.key === 'Enter') {
     if (acSelectedIdx >= 0 && items[acSelectedIdx]) {
       const el = items[acSelectedIdx];
       pickAutocomplete(parseInt(el.dataset.id), el.dataset.name, null);
     } else {
-      const parts = freeEl.value.split(',');
-      const cur = parts[parts.length - 1].trim();
+      const cur = freeEl.value.trim();
       if (cur) {
         const match = allIngredients.find(i =>
-          i.name.toLowerCase() === cur.toLowerCase() ||
-          (i.display_name || '').toLowerCase() === cur.toLowerCase() ||
-          i.name.startsWith(cur) || (i.display_name || '').startsWith(cur)
+          (i.display_name || i.name).toLowerCase() === cur.toLowerCase() ||
+          (i.display_name || i.name).toLowerCase().startsWith(cur.toLowerCase())
         );
         if (match) pickAutocomplete(match.id, match.name, null);
       }
     }
-    if (e.key === 'Enter') e.preventDefault();
+    e.preventDefault();
   } else if (e.key === 'Escape') {
     dropEl.style.display = 'none';
   }
@@ -552,9 +553,7 @@ freeEl.addEventListener('blur', () => setTimeout(() => { dropEl.style.display = 
 
 function pickAutocomplete(id, name, e) {
   if (e) e.preventDefault();
-  const parts = freeEl.value.split(',');
-  parts[parts.length - 1] = '';
-  freeEl.value = parts.join(',').replace(/,\s*$/, '');
+  freeEl.value = '';
   dropEl.style.display = 'none';
   acSelectedIdx = -1;
   addIngredient(id, name);

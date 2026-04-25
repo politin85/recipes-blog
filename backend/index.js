@@ -87,13 +87,14 @@ async function initDB() {
 
   // Add new columns idempotently
   await pool.query(`
-    ALTER TABLE recipes ADD COLUMN IF NOT EXISTS is_hidden  BOOLEAN DEFAULT FALSE;
-    ALTER TABLE recipes ADD COLUMN IF NOT EXISTS story_text TEXT;
-    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS prep_minutes      INTEGER DEFAULT 0;
-    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS cook_minutes      INTEGER DEFAULT 0;
-    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS show_timer        BOOLEAN DEFAULT true;
-    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS show_prep_timer   BOOLEAN DEFAULT true;
-    ALTER TABLE steps   ADD COLUMN IF NOT EXISTS show_cook_timer   BOOLEAN DEFAULT true;
+    ALTER TABLE recipes      ADD COLUMN IF NOT EXISTS is_hidden         BOOLEAN DEFAULT FALSE;
+    ALTER TABLE recipes      ADD COLUMN IF NOT EXISTS story_text        TEXT;
+    ALTER TABLE steps        ADD COLUMN IF NOT EXISTS prep_minutes      INTEGER DEFAULT 0;
+    ALTER TABLE steps        ADD COLUMN IF NOT EXISTS cook_minutes      INTEGER DEFAULT 0;
+    ALTER TABLE steps        ADD COLUMN IF NOT EXISTS show_timer        BOOLEAN DEFAULT true;
+    ALTER TABLE steps        ADD COLUMN IF NOT EXISTS show_prep_timer   BOOLEAN DEFAULT true;
+    ALTER TABLE steps        ADD COLUMN IF NOT EXISTS show_cook_timer   BOOLEAN DEFAULT true;
+    ALTER TABLE ingredients  ADD COLUMN IF NOT EXISTS is_pantry_staple  BOOLEAN DEFAULT FALSE;
   `);
 
   await pool.query(`
@@ -714,6 +715,54 @@ app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── Pantry staples (admin) ───────────────────────────────────────────────────
+
+app.get('/api/admin/pantry-staples', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT i.id, i.name,
+              COALESCE(ia.display_name, i.name) AS display_name
+       FROM ingredients i
+       LEFT JOIN LATERAL (
+         SELECT display_name FROM ingredient_aliases
+         WHERE original_name = i.name
+         ORDER BY note ASC NULLS FIRST
+         LIMIT 1
+       ) ia ON true
+       WHERE i.is_pantry_staple = TRUE
+       ORDER BY i.name`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/pantry-staples', requireAdmin, async (req, res) => {
+  const ingredient_id = parseInt(req.body.ingredient_id);
+  if (!ingredient_id) return res.status(400).json({ error: 'ingredient_id required' });
+  try {
+    await pool.query('UPDATE ingredients SET is_pantry_staple = TRUE WHERE id = $1', [ingredient_id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.delete('/api/admin/pantry-staples/:ingredient_id', requireAdmin, async (req, res) => {
+  const ingredient_id = parseInt(req.params.ingredient_id);
+  if (!ingredient_id) return res.status(400).json({ error: 'ingredient_id required' });
+  try {
+    await pool.query('UPDATE ingredients SET is_pantry_staple = FALSE WHERE id = $1', [ingredient_id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
   }
 });
 
