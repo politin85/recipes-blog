@@ -72,7 +72,13 @@
     }
     html, body { overflow-x: hidden; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font-body); background: var(--cream); color: var(--ink); min-height: 100vh; }
+    body { font-family: var(--font-body); font-size: 1rem; background: var(--cream); color: var(--ink); min-height: 100vh; }
+    /* ── Global text overflow prevention ── */
+    p, .step-text, .step-content, .recipe-desc, .step-header-title {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      max-width: 100%;
+    }
 
     /* ── Header ── */
     header {
@@ -559,6 +565,24 @@
       .sticky-title { padding: var(--space-2) var(--space-5); }
     }
 
+    /* ── Story section ── */
+    .story-outer { max-width: 1100px; margin: 0 auto; padding: var(--space-10) var(--space-8) 0; }
+    .story-inner {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-8);
+      box-shadow: var(--shadow-sm); border-right: 4px solid var(--terracotta);
+    }
+    .story-text {
+      font-family: 'Noto Serif Hebrew', serif;
+      font-size: 1.05rem; color: var(--ink-light);
+      line-height: 1.9; white-space: pre-wrap;
+      overflow-wrap: break-word; word-wrap: break-word;
+    }
+    @media (max-width: 640px) {
+      .story-outer { padding: var(--space-6) var(--space-5) 0; }
+      .story-inner { padding: var(--space-5) var(--space-5); }
+    }
+
     /* ── Hamburger + Drawer ── */
     .hamburger-btn { background:none; border:none; color:rgba(255,255,255,.9); font-size:var(--text-2xl); cursor:pointer; padding:var(--space-1) var(--space-2); line-height:1; transition:opacity .2s; flex-shrink:0; }
     .hamburger-btn:hover { opacity:.75; }
@@ -851,9 +875,9 @@ function renderHero() {
 function renderStory() {
   if (!recipe.story_text) return;
   document.getElementById('recipe-story').innerHTML = `
-    <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0">
-      <div style="background:var(--white);border-radius:var(--radius-lg);padding:var(--space-8) var(--space-10);box-shadow:var(--shadow-sm);border-right:4px solid var(--terracotta)">
-        <p style="font-family:'Noto Serif Hebrew',serif;font-size:1.05rem;color:var(--ink-light);line-height:2.1;white-space:pre-wrap">${recipe.story_text}</p>
+    <div class="story-outer">
+      <div class="story-inner">
+        <p class="story-text">${recipe.story_text}</p>
       </div>
     </div>`;
 }
