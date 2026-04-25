@@ -784,6 +784,18 @@ function filterIngMgr() {
 // ── Pantry staples ────────────────────────────────────────────────────────────
 
 let pantryData = [];
+let pantryChipGroups    = []; // [{ display_name, ids: [] }] — for rendered chips
+let pantryDropdownGroups = []; // [{ display_name, ids: [] }] — for add dropdown
+
+function groupByDisplayName(items) {
+  const map = {};
+  for (const item of items) {
+    const dn = item.display_name || item.name;
+    const ids = map[dn] = map[dn] || { display_name: dn, ids: [] };
+    if (!ids.ids.includes(item.id)) ids.ids.push(item.id);
+  }
+  return Object.values(map).sort((a, b) => a.display_name.localeCompare(b.display_name, 'he'));
+}
 
 function togglePantrySection() {
   const body  = document.getElementById('pantry-body');
@@ -812,11 +824,12 @@ function renderPantryChips() {
   const wrap = document.getElementById('pantry-chips');
   if (!pantryData.length) {
     wrap.innerHTML = '<span style="font-size:.85rem;color:var(--ink-muted)">אין מוצרי יסוד עדיין</span>';
+    pantryChipGroups = [];
     return;
   }
-  wrap.innerHTML = pantryData
-    .sort((a, b) => a.display_name.localeCompare(b.display_name, 'he'))
-    .map(s => `<span class="pantry-chip" onclick="removePantryStaple(${s.id})">${s.display_name} ×</span>`)
+  pantryChipGroups = groupByDisplayName(pantryData);
+  wrap.innerHTML = pantryChipGroups
+    .map((g, i) => `<span class="pantry-chip" onclick="removePantryGroup(${i})">${g.display_name} ×</span>`)
     .join('');
 }
 
@@ -825,31 +838,27 @@ async function populatePantryDropdown() {
     const res = await fetch(`${API}/api/ingredients`);
     const ings = await res.json();
     const pantryIds = new Set(pantryData.map(s => s.id));
-    const seen = new Set();
-    const options = ings
-      .filter(i => {
-        if (pantryIds.has(i.id) || seen.has(i.id)) return false;
-        seen.add(i.id);
-        return true;
-      })
-      .sort((a, b) => (a.display_name || a.name).localeCompare(b.display_name || b.name, 'he'));
+    pantryDropdownGroups = groupByDisplayName(ings.filter(i => !pantryIds.has(i.id)));
     const sel = document.getElementById('pantry-add-sel');
     sel.innerHTML = '<option value="">— בחר מצרך להוספה —</option>' +
-      options.map(i => `<option value="${i.id}">${i.display_name || i.name}</option>`).join('');
+      pantryDropdownGroups.map((g, i) => `<option value="${i}">${g.display_name}</option>`).join('');
   } catch {}
 }
 
 async function addPantryStaple() {
   const sel = document.getElementById('pantry-add-sel');
-  const id = parseInt(sel.value);
-  if (!id) return;
+  const idx = parseInt(sel.value);
+  if (isNaN(idx) || sel.value === '') return;
+  const group = pantryDropdownGroups[idx];
+  if (!group) return;
   try {
-    const res = await fetch(`${API}/api/admin/pantry-staples`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
-      body: JSON.stringify({ ingredient_id: id }),
-    });
-    if (!res.ok) { showToast('שגיאה', 'error'); return; }
+    await Promise.all(group.ids.map(id =>
+      fetch(`${API}/api/admin/pantry-staples`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+        body: JSON.stringify({ ingredient_id: id }),
+      })
+    ));
     await loadPantryStaples();
     showToast('נוסף ✓', 'success');
   } catch {
@@ -857,14 +866,17 @@ async function addPantryStaple() {
   }
 }
 
-async function removePantryStaple(id) {
+async function removePantryGroup(idx) {
+  const group = pantryChipGroups[idx];
+  if (!group) return;
   try {
-    const res = await fetch(`${API}/api/admin/pantry-staples/${id}`, {
-      method: 'DELETE',
-      headers: { 'x-admin-password': adminPw },
-    });
-    if (!res.ok) { showToast('שגיאה', 'error'); return; }
-    pantryData = pantryData.filter(s => s.id !== id);
+    await Promise.all(group.ids.map(id =>
+      fetch(`${API}/api/admin/pantry-staples/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': adminPw },
+      })
+    ));
+    pantryData = pantryData.filter(s => !group.ids.includes(s.id));
     renderPantryChips();
     await populatePantryDropdown();
     showToast('הוסר ✓', 'success');
