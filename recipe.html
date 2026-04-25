@@ -970,20 +970,16 @@ function highlightIngredients(text) {
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
     const replacement = `<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
-    for (const nameVariant of [...new Set([ing.name, displayName])]) {
-      const escN = nameVariant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      result = result.replace(
-        new RegExp(`(?<!${_HEB_CHAR})${escN}(?!${_HEB_CHAR})(?:\\s*(?:\\([^)]*\\)))?`, 'g'),
-        (match, offset, str) => {
-          // Safety: if there's already a (number...) within 30 chars after the name, skip dynamic amount
-          if (amtStr) {
-            const tail = str.slice(offset + nameVariant.length, offset + nameVariant.length + 30);
-            if (/\(\s*[\d.,½¼¾⅓⅔]/.test(tail)) return `<strong>${displayName}</strong>`;
-          }
-          return replacement;
-        }
-      );
-    }
+    // Build single regex with all name variants longest-first.
+    // One .replace() call prevents the engine from re-scanning inserted HTML,
+    // which caused double-amounts when ing.name is a prefix of displayName.
+    const variants = [...new Set([displayName, ing.name])]
+      .sort((a, b) => b.length - a.length)
+      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    result = result.replace(
+      new RegExp(`(?<!${_HEB_CHAR})(${variants.join('|')})(?!${_HEB_CHAR})(?:\\s*(?:\\([^)]*\\)))*`, 'g'),
+      replacement
+    );
   }
   return result;
 }
