@@ -1,9 +1,10 @@
 // One-shot cleanup: trims leading/trailing whitespace from ingredient names
 // across both `ingredients` and `ingredient_aliases`. Safe to re-run.
 //
-// Usage (from /backend with DATABASE_URL set):
-//   node ../scripts/trim-ingredient-names.js
-if (process.env.NODE_ENV !== 'production') require('dotenv').config({ path: '../.env' });
+// Usage:
+//   - Railway shell (DATABASE_URL already in env): node scripts/trim-ingredient-names.js
+//   - Local (with backend/.env present):           node scripts/trim-ingredient-names.js
+if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 
 const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
