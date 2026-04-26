@@ -1011,8 +1011,10 @@ function stripExistingAmounts(text) {
   return text.replace(_AMOUNT_STRIP_RE, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-// Hebrew letter range — used for word-boundary assertions
-const _HEB_CHAR = '[\\u05D0-\\u05EA\\u05B0-\\u05BD]';
+// Hebrew prefix letters that may precede an ingredient name (ו ה ב ל מ כ + combined).
+const _ING_PREFIXES = ['וה', 'וב', 'ול', 'ו', 'ה', 'ב', 'ל', 'מ', 'כ'];
+const _ING_PREFIX_ALT = _ING_PREFIXES.join('|');
+const _ING_BOUNDARY = `[\\s,()"׳'—-]`;
 
 function highlightIngredients(text) {
   if (!recipe.ingredients?.length) return text;
@@ -1023,15 +1025,13 @@ function highlightIngredients(text) {
     const ratio = currentServings / baseServings;
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
-    const replacement = `<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
-    // Build single regex with all name variants longest-first.
-    // One .replace() call prevents the engine from re-scanning inserted HTML,
-    // which caused double-amounts when ing.name is a prefix of displayName.
+    // $1 = leading boundary char (or empty for start-of-text), $2 = optional Hebrew prefix.
+    const replacement = `$1$2<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
     const variants = [...new Set([displayName, ing.name])]
       .sort((a, b) => b.length - a.length)
       .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     result = result.replace(
-      new RegExp(`(?<!${_HEB_CHAR})(${variants.join('|')})(?!${_HEB_CHAR})(?:\\s*(?:\\([^)]*\\)))*`, 'g'),
+      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(?:\\s*\\([^)]*\\))*(?=$|${_ING_BOUNDARY})`, 'g'),
       replacement
     );
   }

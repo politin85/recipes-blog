@@ -165,7 +165,7 @@
 
     /* Ingredient rows — mobile-first */
     .ing-row { background: var(--cream); border-radius: var(--radius); padding: var(--space-3) var(--space-3); margin-bottom: var(--space-2); border: 1px solid var(--sand); }
-    .ing-row.ing-row-unmentioned { background: #fff0f0; border-right: 3px solid var(--danger); }
+    .ing-row.ing-row-unmentioned { background: #fff5f5; border-right: 3px solid #e53e3e; }
     .ing-name-wrap { margin-bottom: var(--space-2); display: flex; gap: var(--space-2); align-items: center; }
     .ing-name-wrap input { flex: 1; }
     .ing-orig-label { font-size:.75rem; color:var(--ink-muted); margin-bottom:var(--space-1); font-style:italic; display:none; }
@@ -1522,22 +1522,54 @@ function recalcTimes() {
   document.getElementById('f-cook').value = cookMin || '';
 }
 
-function checkIngredientInSteps(ingredientName, stepTexts) {
+// Same Hebrew prefix-aware matcher used on the public recipe page (recipe.html).
+// Kept in sync so the admin "unmentioned" highlight uses the same rules.
+const _ING_PREFIXES = ['וה', 'וב', 'ול', 'ו', 'ה', 'ב', 'ל', 'מ', 'כ'];
+const _ING_PREFIX_ALT = _ING_PREFIXES.join('|');
+const _ING_BOUNDARY = `[\\s,()"׳'—-]`;
+
+function highlightIngredients(text, ingredients) {
+  if (!ingredients?.length) return text;
+  let result = text;
+  const sorted = [...ingredients].sort((a, b) => (b.name || '').length - (a.name || '').length);
+  for (const ing of sorted) {
+    const displayName = ing.display_name || ing.name;
+    if (!displayName) continue;
+    const variants = [...new Set([displayName, ing.name].filter(Boolean))]
+      .sort((a, b) => b.length - a.length)
+      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    result = result.replace(
+      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(?=$|${_ING_BOUNDARY})`, 'g'),
+      `$1$2<strong>${displayName}</strong>`
+    );
+  }
+  return result;
+}
+
+function checkIngredientHighlightedInSteps(ingredientName, steps) {
   if (!ingredientName) return true;
-  return stepTexts.some(t => t && t.includes(ingredientName));
+  return steps.some(step => {
+    if (!step.text) return false;
+    return highlightIngredients(step.text, [{ name: ingredientName }]).includes('<strong>');
+  });
 }
 
 function markUnmentionedIngredients() {
-  const stepTexts = [...document.querySelectorAll('.step-text-inp')].map(t => t.value || '');
+  const steps = [...document.querySelectorAll('.step-text-inp')].map(t => ({ text: t.value || '' }));
   document.querySelectorAll('.ing-row').forEach(row => {
     const inp = row.querySelector('.ing-name');
     if (!inp) return;
     const display = (inp.value || '').trim();
     const orig    = (inp.dataset.original || '').trim();
-    const found = checkIngredientInSteps(display, stepTexts) ||
-                  (orig && checkIngredientInSteps(orig, stepTexts));
-    row.classList.toggle('ing-row-unmentioned', !found && !!display);
-    if (!found && display) row.title = 'מצרך זה לא מוזכר בשום שלב';
+    if (!display) {
+      row.classList.remove('ing-row-unmentioned');
+      row.removeAttribute('title');
+      return;
+    }
+    const found = checkIngredientHighlightedInSteps(display, steps) ||
+                  (orig && checkIngredientHighlightedInSteps(orig, steps));
+    row.classList.toggle('ing-row-unmentioned', !found);
+    if (!found) row.title = 'מצרך זה לא מוזכר בשום שלב';
     else row.removeAttribute('title');
   });
 }
