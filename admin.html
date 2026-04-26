@@ -165,6 +165,7 @@
 
     /* Ingredient rows — mobile-first */
     .ing-row { background: var(--cream); border-radius: var(--radius); padding: var(--space-3) var(--space-3); margin-bottom: var(--space-2); border: 1px solid var(--sand); }
+    .ing-row.ing-row-unmentioned { background: #fff0f0; border-right: 3px solid var(--danger); }
     .ing-name-wrap { margin-bottom: var(--space-2); display: flex; gap: var(--space-2); align-items: center; }
     .ing-name-wrap input { flex: 1; }
     .ing-orig-label { font-size:.75rem; color:var(--ink-muted); margin-bottom:var(--space-1); font-style:italic; display:none; }
@@ -441,6 +442,9 @@
           </button>
           <button class="suggest-btn" id="strip-amounts-btn" onclick="stripAllAmounts()" style="background:#8B4513;color:#fff">
             ✂️ הסר כמויות מטקסטים (חד-פעמי)
+          </button>
+          <button class="suggest-btn" id="gen-titles-btn" onclick="generateAllStepTitles()" style="background:#6B5B95">
+            ✨ צור כותרות אוטומטיות לכל המתכונים
           </button>
           <button class="suggest-btn" id="diagnose-btn" onclick="diagnoseAlias()" style="background:#555">
             🔍 אבחן מצרך
@@ -1217,6 +1221,17 @@ function renderForm(data) {
 
   initFormTransforms();
   initDragDrop();
+  initUnmentionedWatch();
+  markUnmentionedIngredients();
+}
+
+function initUnmentionedWatch() {
+  const card = document.getElementById('form-card');
+  if (!card || card.dataset.unmentionedHooked) return;
+  card.dataset.unmentionedHooked = '1';
+  card.addEventListener('input', e => {
+    if (e.target.matches('.step-text-inp, .ing-name')) markUnmentionedIngredients();
+  });
 }
 
 // ── Visibility toggle (in form) ───────────────────────────────────────────────
@@ -1507,6 +1522,26 @@ function recalcTimes() {
   document.getElementById('f-cook').value = cookMin || '';
 }
 
+function checkIngredientInSteps(ingredientName, stepTexts) {
+  if (!ingredientName) return true;
+  return stepTexts.some(t => t && t.includes(ingredientName));
+}
+
+function markUnmentionedIngredients() {
+  const stepTexts = [...document.querySelectorAll('.step-text-inp')].map(t => t.value || '');
+  document.querySelectorAll('.ing-row').forEach(row => {
+    const inp = row.querySelector('.ing-name');
+    if (!inp) return;
+    const display = (inp.value || '').trim();
+    const orig    = (inp.dataset.original || '').trim();
+    const found = checkIngredientInSteps(display, stepTexts) ||
+                  (orig && checkIngredientInSteps(orig, stepTexts));
+    row.classList.toggle('ing-row-unmentioned', !found && !!display);
+    if (!found && display) row.title = 'מצרך זה לא מוזכר בשום שלב';
+    else row.removeAttribute('title');
+  });
+}
+
 // ── Collect form data ─────────────────────────────────────────────────────────
 
 function collectForm() {
@@ -1598,6 +1633,69 @@ async function cleanAllDuplicates() {
     showToast('שגיאה: ' + (e.message || ''), 'error');
   } finally {
     btn.disabled = false; btn.textContent = '🧹 ניקוי כפילויות (כל המתכונים)';
+  }
+}
+
+async function generateAllStepTitles() {
+  if (!confirm('פעולה זו תיצור כותרות אוטומטיות לכל השלבים שכותרתם ריקה או "שלב N".\nכל קריאה ל-Claude עולה כסף. להמשיך?')) return;
+  const btn = document.getElementById('gen-titles-btn');
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'מתחיל...';
+  try {
+    const res = await fetch(`${API}/api/admin/recipes/generate-step-titles`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPw },
+    });
+    if (!res.ok || !res.body) {
+      let msg = 'שגיאה בהרצת הפעולה';
+      try { const j = await res.json(); if (j.error) msg = j.error; } catch {}
+      throw new Error(msg);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalUpdated = 0;
+    let finalTotal = 0;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nlIdx;
+      while ((nlIdx = buffer.indexOf('\n\n')) !== -1) {
+        const block = buffer.slice(0, nlIdx);
+        buffer = buffer.slice(nlIdx + 2);
+        let event = 'message', data = '';
+        for (const line of block.split('\n')) {
+          if (line.startsWith('event:')) event = line.slice(6).trim();
+          else if (line.startsWith('data:')) data += line.slice(5).trim();
+        }
+        if (!data) continue;
+        let payload; try { payload = JSON.parse(data); } catch { continue; }
+        if (event === 'start') {
+          finalTotal = payload.total;
+          if (!payload.total) btn.textContent = 'אין שלבים לעדכון';
+          else btn.textContent = `מעבד 0 מתוך ${payload.total}...`;
+        } else if (event === 'progress') {
+          finalUpdated = payload.updated;
+          btn.textContent = `מעבד ${payload.processed} מתוך ${payload.total}...`;
+        } else if (event === 'done') {
+          finalUpdated = payload.updated;
+          finalTotal = payload.total;
+        } else if (event === 'error') {
+          throw new Error(payload.error || 'שגיאה במהלך העיבוד');
+        }
+      }
+    }
+
+    if (!finalTotal) showToast('אין שלבים לעדכון', 'success');
+    else showToast(`עודכנו ${finalUpdated} כותרות`, 'success');
+    await loadRecipes();
+  } catch (e) {
+    showToast('שגיאה: ' + (e.message || ''), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = origText;
   }
 }
 
