@@ -1014,24 +1014,31 @@ function stripExistingAmounts(text) {
 // Hebrew prefix letters that may precede an ingredient name (ו ה ב ל מ כ + combined).
 const _ING_PREFIXES = ['וה', 'וב', 'ול', 'ו', 'ה', 'ב', 'ל', 'מ', 'כ'];
 const _ING_PREFIX_ALT = _ING_PREFIXES.join('|');
-const _ING_BOUNDARY = `[\\s,()"׳'—-]`;
+// Boundary chars allowed immediately before/after an ingredient match.
+// Whitespace, common punctuation, Hebrew gershayim/geresh, dashes, ellipsis.
+const _ING_BOUNDARY = `[\\s,.:;!?()"'׳״—–\\-…]`;
+// Optional Hebrew suffix (up to 2 letters) — absorbs plural/construct endings
+// like ים / ות / ה / ית so "אוכמני" can match "אוכמניות".
+const _ING_SUFFIX = `(?:[\\u05D0-\\u05EA]{1,2})?`;
 
 function highlightIngredients(text) {
   if (!recipe.ingredients?.length) return text;
   let result = stripExistingAmounts(text);
   const sorted = [...recipe.ingredients].sort((a, b) => b.name.length - a.name.length);
   for (const ing of sorted) {
-    const displayName = ing.display_name || ing.name;
+    const displayName = (ing.display_name || ing.name || '').trim();
+    if (!displayName) continue;
     const ratio = currentServings / baseServings;
     const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
     const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
-    // $1 = leading boundary char (or empty for start-of-text), $2 = optional Hebrew prefix.
-    const replacement = `$1$2<strong>${displayName}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
-    const variants = [...new Set([displayName, ing.name])]
+    // $1 = leading boundary char, $2 = optional Hebrew prefix,
+    // $3 = matched variant, $4 = optional Hebrew suffix.
+    const replacement = `$1$2<strong>${displayName}$4</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
+    const variants = [...new Set([displayName, (ing.name || '').trim()].filter(Boolean))]
       .sort((a, b) => b.length - a.length)
-      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
     result = result.replace(
-      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(?:\\s*\\([^)]*\\))*(?=$|${_ING_BOUNDARY})`, 'g'),
+      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(${_ING_SUFFIX})(?=$|${_ING_BOUNDARY})`, 'g'),
       replacement
     );
   }
@@ -1068,10 +1075,14 @@ function markStepIngredientsDone(sid) {
   const text = step.text || '';
   const listItems = document.querySelectorAll('#ingredient-list .ingredient-item');
   (recipe.ingredients || []).forEach((ing, idx) => {
-    const names = [ing.display_name, ing.name].filter(Boolean);
-    if (names.some(n => text.includes(n))) {
-      listItems[idx]?.classList.add('checked');
-    }
+    // Use the same prefix/suffix-aware regex as highlightIngredients so a step
+    // that says "הבצל" or "אוכמניות" still ticks off the ingredient list item.
+    const variants = [...new Set([ing.display_name, ing.name].filter(Boolean).map(n => n.trim()).filter(Boolean))]
+      .sort((a, b) => b.length - a.length)
+      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
+    if (!variants.length) return;
+    const re = new RegExp(`(^|${_ING_BOUNDARY})(?:${_ING_PREFIX_ALT})?(?:${variants.join('|')})${_ING_SUFFIX}(?=$|${_ING_BOUNDARY})`);
+    if (re.test(text)) listItems[idx]?.classList.add('checked');
   });
 }
 
@@ -1381,7 +1392,8 @@ function buildTTSText() {
   if (recipe.description) lines.push(recipe.description);
   lines.push('מרכיבים:');
   (recipe.ingredients || []).forEach(i => {
-    lines.push(`${i.name}${i.amount ? ', ' + i.amount : ''}${i.unit ? ' ' + i.unit : ''}.`);
+    const name = i.display_name || i.name;
+    lines.push(`${name}${i.amount ? ', ' + i.amount : ''}${i.unit ? ' ' + i.unit : ''}.`);
   });
   lines.push('הוראות הכנה:');
   (recipe.steps || []).forEach((s, i) => {

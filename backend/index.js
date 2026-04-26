@@ -271,9 +271,13 @@ app.post('/api/recipes/by-ingredients', async (req, res) => {
         let missing = [];
         if (pct < 100) {
           const { rows } = await pool.query(
-            `SELECT i.id, i.name
+            `SELECT i.id, i.name,
+                    COALESCE(ia.display_name, i.name) AS display_name
              FROM   recipe_ingredients ri
              JOIN   ingredients i ON i.id = ri.ingredient_id
+             LEFT JOIN ingredient_aliases ia
+               ON ia.original_name = i.name
+               AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
              WHERE  ri.recipe_id = $1
                AND  ri.ingredient_id != ALL($2::int[])`,
             [recipe.id, available]
@@ -702,12 +706,14 @@ app.post('/api/admin/ingredients/suggest-aliases', requireAdmin, async (req, res
     const suggestions = JSON.parse(jsonMatch[0]);
     let saved = 0;
     for (const s of suggestions) {
-      if (!s.original_name || !s.display_name) continue;
+      const original = (s.original_name || '').trim();
+      const display  = (s.display_name  || '').trim();
+      if (!original || !display) continue;
       await pool.query(
         `INSERT INTO ingredient_aliases (original_name, display_name, note)
          VALUES ($1, $2, '')
          ON CONFLICT (original_name, note) DO NOTHING`,
-        [s.original_name, s.display_name]
+        [original, display]
       );
       saved++;
     }
@@ -913,6 +919,81 @@ app.post('/api/admin/recipes/generate-step-titles', requireAdmin, async (req, re
     console.error(err);
     send('error', { error: 'DB error' });
     res.end();
+  }
+});
+
+// ─── Ingredient/step coverage diagnostic (admin) ──────────────────────────────
+// Mirrors the prefix/suffix-aware matcher used in recipe.html / admin.html so
+// the admin grid can flag recipes whose ingredient list contains entries that
+// never show up in the step text (with Hebrew prefixes ו/ה/ב/ל/מ/כ + plural
+// suffix tolerance).
+const _ING_PREFIXES_BACKEND = ['וה', 'וב', 'ול', 'ו', 'ה', 'ב', 'ל', 'מ', 'כ'];
+const _ING_PREFIX_ALT_BACKEND = _ING_PREFIXES_BACKEND.join('|');
+const _ING_BOUNDARY_BACKEND  = `[\\s,.:;!?()"'׳״—–\\-…]`;
+const _ING_SUFFIX_BACKEND    = `(?:[\\u05D0-\\u05EA]{1,2})?`;
+
+function _escIngBackend(v) { return v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function ingredientAppearsInText(ingredientName, text) {
+  const trimmed = (ingredientName || '').trim();
+  if (!trimmed || !text) return false;
+  const variant = _escIngBackend(trimmed).replace(/\s+/g, '\\s+');
+  const re = new RegExp(
+    `(^|${_ING_BOUNDARY_BACKEND})(?:${_ING_PREFIX_ALT_BACKEND})?(?:${variant})${_ING_SUFFIX_BACKEND}(?=$|${_ING_BOUNDARY_BACKEND})`
+  );
+  return re.test(text);
+}
+
+app.get('/api/admin/recipes/unmatched-ingredients', requireAdmin, async (req, res) => {
+  try {
+    const { rows: recipes } = await pool.query(
+      `SELECT r.id, r.title FROM recipes r ORDER BY r.id`
+    );
+    const { rows: ings } = await pool.query(
+      `SELECT ri.recipe_id, i.name,
+              COALESCE(ia.display_name, i.name) AS display_name
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON i.id = ri.ingredient_id
+       LEFT JOIN ingredient_aliases ia
+         ON ia.original_name = i.name
+         AND COALESCE(ia.note, '') = COALESCE(ri.note, '')`
+    );
+    const { rows: steps } = await pool.query(
+      `SELECT recipe_id, text FROM steps`
+    );
+
+    const stepsByRecipe = new Map();
+    for (const s of steps) {
+      const arr = stepsByRecipe.get(s.recipe_id) || [];
+      arr.push(s.text || '');
+      stepsByRecipe.set(s.recipe_id, arr);
+    }
+    const ingsByRecipe = new Map();
+    for (const ing of ings) {
+      const arr = ingsByRecipe.get(ing.recipe_id) || [];
+      arr.push(ing);
+      ingsByRecipe.set(ing.recipe_id, arr);
+    }
+
+    const result = [];
+    for (const r of recipes) {
+      const ingList = ingsByRecipe.get(r.id) || [];
+      const stepTexts = stepsByRecipe.get(r.id) || [];
+      if (!ingList.length || !stepTexts.length) continue;
+      let unmatched = 0;
+      for (const ing of ingList) {
+        const candidates = [...new Set([ing.display_name, ing.name].filter(Boolean))];
+        const found = candidates.some(c => stepTexts.some(t => ingredientAppearsInText(c, t)));
+        if (!found) unmatched++;
+      }
+      if (unmatched > 0) {
+        result.push({ recipe_id: r.id, recipe_title: r.title, unmatched_count: unmatched });
+      }
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
   }
 });
 
@@ -1162,12 +1243,14 @@ function calcAutoTimes(steps) {
 async function insertIngredientsAndSteps(client, recipeId, ingredients, steps) {
   if (ingredients?.length) {
     for (const ing of ingredients) {
+      const ingName = (ing.name || '').trim();
+      if (!ingName) continue;
       const { rows: [row] } = await client.query(
         `INSERT INTO ingredients (name)
          VALUES ($1)
          ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
          RETURNING id`,
-        [ing.name]
+        [ingName]
       );
       await client.query(
         `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit, note)
