@@ -844,6 +844,78 @@ app.post('/api/admin/steps/generate-titles', requireAdmin, async (req, res) => {
   }
 });
 
+// SSE-streamed: regenerates titles for steps whose title is empty or "שלב N".
+// Works across all recipes; processes 5 in parallel per batch to spare the API.
+app.post('/api/admin/recipes/generate-step-titles', requireAdmin, async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY לא מוגדר ב-Railway Variables' });
+
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+
+  const send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    const { rows: steps } = await pool.query(
+      `SELECT s.id, s.text FROM steps s
+       WHERE s.title IS NULL
+          OR btrim(s.title) = ''
+          OR s.title ~ '^שלב\\s+\\d+$'
+       ORDER BY s.recipe_id, s.step_order`
+    );
+
+    const total = steps.length;
+    send('start', { total });
+    if (!total) { send('done', { updated: 0, total: 0 }); return res.end(); }
+
+    let processed = 0, updated = 0;
+    const BATCH = 5;
+
+    const generateOne = async (step) => {
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 64,
+            messages: [{
+              role: 'user',
+              content: `בהינתן טקסט הוראת הכנה הבא, כתוב כותרת קצרה בעברית של 2-4 מילים שמסכמת את הפעולה העיקרית. החזר רק את הכותרת, ללא פיסוק נוסף.\n\nטקסט: ${step.text.slice(0, 500)}`,
+            }],
+          }),
+        });
+        if (!resp.ok) return false;
+        const data = await resp.json();
+        const title = data.content?.[0]?.text?.trim().replace(/^["״]|["״]$/g, '');
+        if (!title) return false;
+        await pool.query('UPDATE steps SET title = $1 WHERE id = $2', [title, step.id]);
+        return true;
+      } catch { return false; }
+    };
+
+    for (let i = 0; i < steps.length; i += BATCH) {
+      const slice = steps.slice(i, i + BATCH);
+      const results = await Promise.all(slice.map(generateOne));
+      processed += slice.length;
+      updated   += results.filter(Boolean).length;
+      send('progress', { processed, total, updated });
+    }
+
+    send('done', { updated, total });
+    res.end();
+  } catch (err) {
+    console.error(err);
+    send('error', { error: 'DB error' });
+    res.end();
+  }
+});
+
 app.post('/api/admin/steps/sync-ingredient-names', requireAdmin, async (req, res) => {
   const { recipe_id } = req.body;
   try {
