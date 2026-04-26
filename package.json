@@ -1,0 +1,8 @@
+{
+  "name": "recipes-blog",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prebuild": "node -e \"const fs=require('fs'); const v=Date.now(); ['index.html','recipe.html','fridge.html','admin.html'].forEach(f => { let c=fs.readFileSync(f,'utf8'); c=c.replace(/\\?v=\\d+/g,'?v='+v); fs.writeFileSync(f,c); });\""
+  }
+}

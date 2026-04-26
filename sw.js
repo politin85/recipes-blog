@@ -1,39 +1,20 @@
-const SHELL_CACHE = 'shell-v1';
-const API_CACHE   = 'api-v1';
+const CACHE_NAME = 'recipes-v' + Date.now();
+const API_CACHE  = 'api-v1';
 
-const SHELL_FILES = [
-  '/recipes-blog/index.html',
-  '/recipes-blog/recipe.html',
-  '/recipes-blog/fridge.html',
-  '/recipes-blog/config.js',
-  '/recipes-blog/manifest.json',
-  '/recipes-blog/icon-192.png',
-];
-
-// ── Install: cache shell ──────────────────────────────────────────────────────
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(SHELL_CACHE)
-      .then(c => c.addAll(SHELL_FILES))
-      .then(() => self.skipWaiting())
-  );
+  self.skipWaiting();
 });
 
-// ── Activate: clear old caches ────────────────────────────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k !== SHELL_CACHE && k !== API_CACHE)
-        .map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== API_CACHE).map(k => caches.delete(k)))
+    )
   );
+  self.clients.claim();
 });
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', e => {
-  // Skip non-http(s) requests (chrome-extension://, etc.)
   if (!e.request.url.startsWith('http')) return;
 
   const url = new URL(e.request.url);
@@ -44,7 +25,21 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Shell / static: cache first, network fallback
+  // HTML documents: network first (always fresh)
+  if (e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Static assets: cache first, network fallback
   if (e.request.method === 'GET') {
     e.respondWith(cacheFirst(e.request));
   }
@@ -72,12 +67,11 @@ async function cacheFirst(req) {
   try {
     const res = await fetch(req);
     if (res.ok) {
-      const cache = await caches.open(SHELL_CACHE);
+      const cache = await caches.open(CACHE_NAME);
       cache.put(req, res.clone());
     }
     return res;
   } catch {
-    // If navigating to recipe.html offline, serve cached shell
     if (req.mode === 'navigate') {
       return caches.match('/recipes-blog/index.html');
     }

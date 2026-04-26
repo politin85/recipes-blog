@@ -21,7 +21,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@300;400;500;600&family=Noto+Serif+Hebrew:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --terracotta:       #C2622F;
@@ -57,7 +57,6 @@
       /* ── Type scale ── */
       --font-display: 'Secular One', sans-serif;
       --font-body:    'Rubik', sans-serif;
-      --font-serif:   'Noto Serif Hebrew', serif;
       --text-xs:   0.75rem;    /* 12px */
       --text-sm:   0.875rem;   /* 14px */
       --text-base: 1rem;       /* 16px */
@@ -127,7 +126,7 @@
       margin-bottom: var(--space-4);
     }
     .recipe-title {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: var(--text-4xl);
       font-weight: 700; color: var(--white);
       line-height: var(--leading-tight); margin-bottom: var(--space-4);
@@ -278,26 +277,26 @@
 
     /* ── Steps header ── */
     .steps-header { display:flex; flex-direction:column; gap:12px; margin-bottom:var(--space-8); }
-    .steps-title { font-family:'Noto Serif Hebrew',serif; font-size:var(--text-2xl); font-weight:600; color:var(--ink); width:100%; margin-top:1.5rem; }
+    .steps-title { font-family:var(--font-display); font-size:var(--text-2xl); font-weight:600; color:var(--ink); width:100%; margin-top:1.5rem; }
     .steps-controls { display:flex; flex-direction:column; gap:8px; width:100%; padding:0 16px; }
     .steps-controls-row { display:flex; gap:8px; width:100%; justify-content:flex-start; flex-wrap:wrap; }
     .open-all-btn {
       padding:var(--space-2) var(--space-4); border:1.5px solid var(--sand-dark);
       background:var(--white); color:var(--ink-light);
-      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.83rem;
+      border-radius:50px; font-family:var(--font-body); font-size:.83rem;
       cursor:pointer; transition:all .2s;
     }
     .open-all-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
     .voice-select {
       padding:.38rem var(--space-4); border:1.5px solid var(--sand-dark);
       background:var(--white); color:var(--ink-light);
-      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.83rem;
+      border-radius:50px; font-family:var(--font-body); font-size:.83rem;
       cursor:pointer; outline:none; direction:rtl; transition:border-color .2s;
     }
     .voice-select:focus { border-color:var(--terracotta); }
     .cooking-toggle {
       padding:var(--space-2) var(--space-5); background:var(--white); color:var(--ink-light);
-      border:1.5px solid var(--sand-dark); border-radius:50px; font-family:'Heebo',sans-serif;
+      border:1.5px solid var(--sand-dark); border-radius:50px; font-family:var(--font-body);
       font-size:.83rem; cursor:pointer; transition:all .2s;
       display:flex; align-items:center; gap:var(--space-2);
     }
@@ -337,7 +336,7 @@
     }
     .step.done .step-num { background:var(--olive); }
     .step-header-title {
-      flex:1; font-family:var(--font-serif);
+      flex:1; font-family:var(--font-display);
       font-size:1.0625rem; font-weight:600; color:var(--ink);
       letter-spacing: -.005em;
     }
@@ -371,13 +370,13 @@
     .step-tts-btn {
       padding:var(--space-1) var(--space-4); border:1.5px solid var(--sand-dark);
       background:transparent; color:var(--ink-muted);
-      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s;
+      border-radius:50px; font-family:var(--font-body); font-size:.8rem; cursor:pointer; transition:all .2s;
     }
     .step-tts-btn:hover { border-color:var(--terracotta); color:var(--terracotta); }
     .step-done-btn {
       padding:var(--space-1) var(--space-4); border:1.5px solid var(--sand-dark);
       background:transparent; color:var(--ink-muted);
-      border-radius:50px; font-family:'Heebo',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s;
+      border-radius:50px; font-family:var(--font-body); font-size:.8rem; cursor:pointer; transition:all .2s;
     }
     .step-done-btn:hover { border-color:var(--olive); color:var(--olive); }
     .step.done .step-done-btn { background:var(--olive); color:var(--white); border-color:var(--olive); }
@@ -390,7 +389,7 @@
     .cooking-mode-on .step-cooking-nav { display:flex; }
     .nav-btn {
       padding:.55rem var(--space-5); border-radius:50px; border:none;
-      font-family:'Heebo',sans-serif; font-size:.9rem; font-weight:500; cursor:pointer; transition:all .2s;
+      font-family:var(--font-body); font-size:.9rem; font-weight:500; cursor:pointer; transition:all .2s;
     }
     .nav-next { background:var(--terracotta); color:var(--white); }
     .nav-next:hover { background:var(--terracotta-light); }
@@ -575,7 +574,7 @@
       box-shadow: var(--shadow-sm); border-right: 4px solid var(--terracotta);
     }
     .story-text {
-      font-family: 'Noto Serif Hebrew', serif;
+      font-family: var(--font-body);
       font-size: 1.05rem; color: var(--ink-light);
       line-height: 1.9; white-space: pre-wrap;
       overflow-wrap: break-word; word-wrap: break-word;
@@ -712,7 +711,7 @@
 
       <!-- Related -->
       <section id="related-section" style="margin-top:var(--space-8);display:none">
-        <h2 style="font-family:'Noto Serif Hebrew',serif;font-size:1.3rem;font-weight:600;margin-bottom:var(--space-4);color:var(--ink)">
+        <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:600;margin-bottom:var(--space-4);color:var(--ink)">
           מתכונים נוספים
         </h2>
         <div class="related-section-wrap">
@@ -729,7 +728,7 @@
   <p>מתכונים מחושבים &nbsp;|&nbsp; המטבח פוגש טכנולוגיה &nbsp;|&nbsp; ניר פוליטי &nbsp;© 2026</p>
 </footer>
 
-<script src="config.js"></script>
+<script src="config.js?v=1"></script>
 <script>
 const API = CONFIG.API;
 const DIFF_LABEL = { easy: 'קל', medium: 'בינוני', hard: 'מאתגר' };
