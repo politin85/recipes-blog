@@ -109,6 +109,7 @@
 
     .rg-info { flex: 1; padding: var(--space-3) var(--space-4); cursor: pointer; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: .15rem; }
     .rg-title { font-size: .88rem; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rg-warn { margin-left: .25rem; font-size: .8rem; cursor: help; }
     .rg-cat { font-size: .72rem; color: var(--ink-muted); }
 
     .rg-actions { display: flex; align-items: stretch; flex-shrink: 0; border-right: 1px solid var(--sand); }
@@ -978,6 +979,20 @@ function handleHeroImageSelect(input) {
 
 // ── Recipe list ───────────────────────────────────────────────────────────────
 
+let unmatchedByRecipe = {};
+
+async function loadUnmatchedIngredients() {
+  try {
+    const res = await fetch(`${API}/api/admin/recipes/unmatched-ingredients`, {
+      headers: { 'x-admin-password': adminPw }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    unmatchedByRecipe = Object.fromEntries(data.map(r => [r.recipe_id, r.unmatched_count]));
+    renderGrid();
+  } catch {}
+}
+
 async function loadRecipes() {
   try {
     const res = await fetch(`${API}/api/recipes?include_hidden=true`, {
@@ -985,6 +1000,7 @@ async function loadRecipes() {
     });
     recipes = await res.json();
     renderGrid();
+    loadUnmatchedIngredients();
   } catch {
     document.getElementById('recipe-grid-wrap').innerHTML =
       '<div class="list-empty">שגיאה בטעינה</div>';
@@ -1001,10 +1017,14 @@ function renderGrid() {
   wrap.innerHTML = `<div class="recipe-grid">${
     recipes.map(r => {
       const hidden = r.is_hidden;
+      const unmatched = unmatchedByRecipe[r.id] || 0;
+      const warnIcon = unmatched > 0
+        ? `<span class="rg-warn" title="${unmatched} מצרכים לא מוזכרים בשלבי ההכנה">⚠️</span>`
+        : '';
       return `
         <div class="rg-card${editingId===r.id?' active':''}${hidden?' rg-hidden':''}" data-id="${r.id}">
           <div class="rg-info" onclick="openEdit(${r.id})">
-            <span class="rg-title">${esc(r.title)}</span>
+            <span class="rg-title">${warnIcon}${esc(r.title)}</span>
             <span class="rg-cat">${esc(r.category||'')}</span>
           </div>
           <div class="rg-actions">
@@ -1526,20 +1546,21 @@ function recalcTimes() {
 // Kept in sync so the admin "unmentioned" highlight uses the same rules.
 const _ING_PREFIXES = ['וה', 'וב', 'ול', 'ו', 'ה', 'ב', 'ל', 'מ', 'כ'];
 const _ING_PREFIX_ALT = _ING_PREFIXES.join('|');
-const _ING_BOUNDARY = `[\\s,()"׳'—-]`;
+const _ING_BOUNDARY = `[\\s,.:;!?()"'׳״—–\\-…]`;
+const _ING_SUFFIX = `(?:[\\u05D0-\\u05EA]{1,2})?`;
 
 function highlightIngredients(text, ingredients) {
   if (!ingredients?.length) return text;
   let result = text;
   const sorted = [...ingredients].sort((a, b) => (b.name || '').length - (a.name || '').length);
   for (const ing of sorted) {
-    const displayName = ing.display_name || ing.name;
+    const displayName = (ing.display_name || ing.name || '').trim();
     if (!displayName) continue;
-    const variants = [...new Set([displayName, ing.name].filter(Boolean))]
+    const variants = [...new Set([displayName, (ing.name || '').trim()].filter(Boolean))]
       .sort((a, b) => b.length - a.length)
-      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
     result = result.replace(
-      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(?=$|${_ING_BOUNDARY})`, 'g'),
+      new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})${_ING_SUFFIX}(?=$|${_ING_BOUNDARY})`, 'g'),
       `$1$2<strong>${displayName}</strong>`
     );
   }

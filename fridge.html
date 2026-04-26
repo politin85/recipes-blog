@@ -653,12 +653,17 @@ function renderResults(recipes) {
       </div>`;
     return;
   }
+  // Highest match% first, alphabetical (Hebrew locale) on ties.
+  const sorted = [...recipes].sort((a, b) =>
+    (b.match_percent || 0) - (a.match_percent || 0) ||
+    (a.title || '').localeCompare(b.title || '', 'he')
+  );
   area.innerHTML = `
     <div class="results-header">
       <h2 class="results-title">תוצאות לפי % התאמה</h2>
-      <span class="results-count">${recipes.length} נמצאו</span>
+      <span class="results-count">${sorted.length} נמצאו</span>
     </div>
-    ${recipes.map(r => recipeCardHtml(r)).join('')}`;
+    ${sorted.map(r => recipeCardHtml(r)).join('')}`;
 }
 
 function recipeCardHtml(r) {
