@@ -1024,22 +1024,39 @@ const _ING_SUFFIX = `(?:[\\u05D0-\\u05EA]{1,2})?`;
 function highlightIngredients(text) {
   if (!recipe.ingredients?.length) return text;
   let result = stripExistingAmounts(text);
-  const sorted = [...recipe.ingredients].sort((a, b) => b.name.length - a.name.length);
-  for (const ing of sorted) {
+  const ratio = currentServings / baseServings;
+
+  // Group ingredients by display name so that duplicate entries (e.g. two "מים"
+  // with different amounts) are handled together with a per-name occurrence counter.
+  const nameGroups = new Map();
+  for (const ing of recipe.ingredients) {
     const displayName = (ing.display_name || ing.name || '').trim();
     if (!displayName) continue;
-    const ratio = currentServings / baseServings;
-    const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
-    const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
-    // $1 = leading boundary char, $2 = optional Hebrew prefix,
-    // $3 = matched variant, $4 = optional Hebrew suffix.
-    const replacement = `$1$2<strong>${displayName}$4</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
-    const variants = [...new Set([displayName, (ing.name || '').trim()].filter(Boolean))]
+    if (!nameGroups.has(displayName)) nameGroups.set(displayName, []);
+    nameGroups.get(displayName).push(ing);
+  }
+
+  // Sort groups longest-name first to avoid partial matches.
+  const sorted = [...nameGroups.entries()].sort((a, b) => b[0].length - a[0].length);
+
+  for (const [displayName, ings] of sorted) {
+    const counter = { n: 0 };
+    const variants = [...new Set(
+      ings.flatMap(ing => [displayName, (ing.name || '').trim()].filter(Boolean))
+    )]
       .sort((a, b) => b.length - a.length)
       .map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
+
     result = result.replace(
       new RegExp(`(^|${_ING_BOUNDARY})((?:${_ING_PREFIX_ALT})?)(${variants.join('|')})(${_ING_SUFFIX})(?=$|${_ING_BOUNDARY})`, 'g'),
-      replacement
+      (_, p1, p2, _p3, p4) => {
+        // For duplicates: first text occurrence → first list entry, second → second, etc.
+        const ing = ings[counter.n] ?? ings[ings.length - 1];
+        counter.n++;
+        const amt = ing.amount ? formatAmount(parseFloat(ing.amount) * ratio) : '';
+        const amtStr = amt ? ` (${amt}${ing.unit ? ' ' + ing.unit : ''})` : '';
+        return `${p1}${p2}<strong>${displayName}${p4}</strong><span style="color:var(--ink-muted);font-weight:400">${amtStr}</span>`;
+      }
     );
   }
   return result;

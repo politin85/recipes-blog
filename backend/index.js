@@ -97,6 +97,13 @@ async function initDB() {
     ALTER TABLE ingredients  ADD COLUMN IF NOT EXISTS is_pantry_staple  BOOLEAN DEFAULT FALSE;
   `);
 
+  // Allow the same ingredient to appear more than once per recipe (e.g. water for
+  // syrup + water for gelatin). Replace the composite PK with a SERIAL id.
+  await pool.query(`
+    ALTER TABLE recipe_ingredients DROP CONSTRAINT IF EXISTS recipe_ingredients_pkey;
+    ALTER TABLE recipe_ingredients ADD COLUMN IF NOT EXISTS id SERIAL PRIMARY KEY;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ingredient_aliases (
       id            SERIAL PRIMARY KEY,
@@ -410,7 +417,8 @@ app.get('/api/recipes/:id', async (req, res) => {
            LEFT JOIN ingredient_aliases ia
              ON ia.original_name = i.name
              AND COALESCE(ia.note, '') = COALESCE(ri.note, '')
-           WHERE ri.recipe_id = $1`,
+           WHERE ri.recipe_id = $1
+           ORDER BY ri.id`,
           [id]
         ),
         pool.query(
