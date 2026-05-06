@@ -1236,6 +1236,7 @@ function renderForm(data) {
     <div class="form-actions">
       <button class="cancel-btn" type="button" onclick="closeForm()">ביטול</button>
       ${!isNew ? `<button class="calc-btn" type="button" onclick="cleanDuplicates()" style="flex-shrink:0">🧹 ניקוי כפילות</button>` : ''}
+      ${!isNew ? `<button class="calc-btn" type="button" id="calc-nutrition-btn" onclick="calculateNutritionForRecipe()" style="flex-shrink:0">🥗 חשב ערכים תזונתיים</button>` : ''}
       <button class="submit-btn" id="submit-btn" type="button" onclick="submitForm()">${isNew ? 'צור מתכון ✓' : 'שמור שינויים ✓'}</button>
     </div>`;
 
@@ -1686,6 +1687,31 @@ async function cleanAllDuplicates() {
     showToast('שגיאה: ' + (e.message || ''), 'error');
   } finally {
     btn.disabled = false; btn.textContent = '🧹 ניקוי כפילויות (כל המתכונים)';
+  }
+}
+
+async function calculateNutritionForRecipe() {
+  if (!editingId) { showToast('שמור קודם את המתכון', 'error'); return; }
+  const btn = document.getElementById('calc-nutrition-btn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ מחשב...';
+  try {
+    const res = await fetch(`${API}/api/admin/recipes/${editingId}/calculate-nutrition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPw },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'שגיאה בחישוב', 'error');
+      return;
+    }
+    showToast(`✓ ${data.calories} קק"ל למנה`, 'success');
+  } catch {
+    showToast('שגיאה בחישוב ערכים תזונתיים', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
   }
 }
 
