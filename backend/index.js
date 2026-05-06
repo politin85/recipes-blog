@@ -121,6 +121,21 @@ async function initDB() {
       ON ingredient_aliases (original_name, note);
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS nutrition (
+      recipe_id    INTEGER PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE,
+      calories     INTEGER,
+      protein_g    NUMERIC,
+      fat_g        NUMERIC,
+      carbs_g      NUMERIC,
+      sugar_g      NUMERIC,
+      fiber_g      NUMERIC,
+      sodium_mg    INTEGER,
+      per_servings INTEGER,
+      updated_at   TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
   console.log('DB ready');
 }
 
