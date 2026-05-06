@@ -1531,8 +1531,7 @@ async function fetchAndRenderNutrition(recipeId) {
     const data = await res.json();
     if (!data || data.calories === 0) return;
 
-    const servingWeightG = (data.total_weight_g && data.per_servings)
-      ? data.total_weight_g / data.per_servings : null;
+    const servingWeightG = data.total_weight_g || null;
     const hasPer100 = servingWeightG && servingWeightG > 0;
 
     const nutrients = [

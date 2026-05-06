@@ -137,8 +137,20 @@ async function initDB() {
     );
     ALTER TABLE nutrition ADD COLUMN IF NOT EXISTS total_weight_g NUMERIC;
   `);
-  // Remove zero-valued records created when USDA API rate-limited during batch run
+  // Remove zero-valued records from USDA rate-limit failures
   await pool.query(`DELETE FROM nutrition WHERE calories = 0 AND protein_g = 0`);
+  // One-time cleanup: delete all nutrition records stored as recipe totals (pre v2).
+  // Uses site_settings as a migration flag so this runs exactly once.
+  const { rows: [migFlag] } = await pool.query(
+    `SELECT value FROM site_settings WHERE key = 'nutrition_v2_cleanup'`
+  );
+  if (!migFlag) {
+    await pool.query(`DELETE FROM nutrition`);
+    await pool.query(
+      `INSERT INTO site_settings (key, value) VALUES ('nutrition_v2_cleanup', 'done')
+       ON CONFLICT (key) DO NOTHING`
+    );
+  }
 
   console.log('DB ready');
 }

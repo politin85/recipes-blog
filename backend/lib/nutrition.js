@@ -99,17 +99,17 @@ async function calculateNutrition(recipe, apiKey, usdaKey) {
 
   if (totals.calories === 0) return null;
 
-  const perServings = recipe.servings || 1;
+  const servings = recipe.servings || 1;
   return {
-    calories:       Math.round(totals.calories    / perServings),
-    protein_g:      Math.round(totals.protein_g   / perServings * 10) / 10,
-    fat_g:          Math.round(totals.fat_g       / perServings * 10) / 10,
-    carbs_g:        Math.round(totals.carbs_g     / perServings * 10) / 10,
-    fiber_g:        Math.round(totals.fiber_g     / perServings * 10) / 10,
-    sugar_g:        Math.round(totals.sugar_g     / perServings * 10) / 10,
-    sodium_mg:      Math.round(totals.sodium_mg   / perServings),
-    per_servings:   perServings,
-    total_weight_g: Math.round(totalGrams),
+    calories:       Math.round(totals.calories   / servings),
+    protein_g:      +(totals.protein_g  / servings).toFixed(1),
+    fat_g:          +(totals.fat_g      / servings).toFixed(1),
+    carbs_g:        +(totals.carbs_g    / servings).toFixed(1),
+    fiber_g:        +(totals.fiber_g    / servings).toFixed(1),
+    sugar_g:        +(totals.sugar_g    / servings).toFixed(1),
+    sodium_mg:      Math.round(totals.sodium_mg  / servings),
+    total_weight_g: +(totalGrams        / servings).toFixed(1),
+    per_servings:   servings,
   };
 }
 
