@@ -1,4 +1,4 @@
-if (process.env.NODE_ENV !== 'production') require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') { try { require('dotenv').config(); } catch {} }
 const { Pool } = require('pg');
 const { calculateNutrition } = require('../lib/nutrition');
 
@@ -12,6 +12,7 @@ const RECIPE_ID = recipeIdArg ? parseInt(recipeIdArg.split('=')[1]) : null;
 
 const apiKey  = process.env.ANTHROPIC_API_KEY;
 const usdaKey = process.env.USDA_API_KEY || 'DEMO_KEY';
+if (usdaKey === 'DEMO_KEY') console.warn('[fetch-nutrition] Using USDA DEMO_KEY — rate limited to 30 req/hr. Register free at https://fdc.nal.usda.gov/api-guide.html');
 
 if (!apiKey) { console.error('Error: ANTHROPIC_API_KEY is required'); process.exit(1); }
 

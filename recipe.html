@@ -1527,6 +1527,8 @@ async function fetchAndRenderNutrition(recipeId) {
       ['סוכר',              `${data.sugar_g} ג׳`],
       ['נתרן',              `${data.sodium_mg} מ"ג`],
     ];
+    const titleEl = document.querySelector('#nutrition-section .nutrition-title');
+    if (titleEl && data.per_servings) titleEl.textContent = `ערכים תזונתיים (למנה אחת מתוך ${data.per_servings})`;
     document.getElementById('nutrition-table-body').innerHTML =
       rows.map(([label, val]) => `<tr><td>${label}</td><td>${val}</td></tr>`).join('');
     document.getElementById('nutrition-section').style.display = 'block';

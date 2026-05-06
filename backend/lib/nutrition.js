@@ -16,7 +16,7 @@ const NUTRIENT_IDS = {
 function toGrams(amount, unit) {
   if (!amount || amount <= 0) return 100;
   const u = (unit || '').trim();
-  if (/^(גרם|ג[׳']?|g|gr)$/i.test(u))           return amount;
+  if (/^(גרם|ג[׳']?|ג|g|gr)$/i.test(u))           return amount;
   if (/^(ק[״"']ג|kg)$/i.test(u))                 return amount * 1000;
   if (/^(מ[״"']ל|ml|מל|מ'ל)$/i.test(u))          return amount;
   if (/^(ליטר|l)$/i.test(u))                     return amount * 1000;
@@ -67,6 +67,9 @@ async function fetchNutrients(ingredientEnglish, usdaKey) {
 }
 
 async function calculateNutrition(recipe, apiKey, usdaKey) {
+  if (usdaKey === 'DEMO_KEY') {
+    console.warn('[nutrition] Using USDA DEMO_KEY — rate limited to 30 req/hr. Register a free key at https://fdc.nal.usda.gov/api-guide.html');
+  }
   const ingredients = recipe.ingredients || [];
   if (!ingredients.length) return null;
 
@@ -76,13 +79,17 @@ async function calculateNutrition(recipe, apiKey, usdaKey) {
   const englishNames = await translateIngredients(names, apiKey);
   const totals = { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0 };
 
+  const nutrientsList = await Promise.all(
+    ingredients.map((ing, i) => {
+      const engName = (englishNames[i] || names[i] || '').trim();
+      return engName ? fetchNutrients(engName, usdaKey) : Promise.resolve(null);
+    })
+  );
+
   for (let i = 0; i < ingredients.length; i++) {
-    const ing = ingredients[i];
-    const engName = (englishNames[i] || names[i] || '').trim();
-    if (!engName) continue;
-    const grams = toGrams(ing.amount, ing.unit);
-    const nutrients = await fetchNutrients(engName, usdaKey);
+    const nutrients = nutrientsList[i];
     if (!nutrients) continue;
+    const grams = toGrams(ingredients[i].amount, ingredients[i].unit);
     for (const key of Object.keys(totals)) {
       totals[key] += (nutrients[key] * grams) / 100;
     }

@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const fetch = require('node-fetch');
+const { calculateNutrition } = require('./lib/nutrition');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -443,7 +444,6 @@ app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req,
       [id]
     );
 
-    const { calculateNutrition } = require('./lib/nutrition');
     const result = await calculateNutrition({ ...recipe, ingredients }, apiKey, usdaKey);
     if (!result) return res.status(422).json({ error: 'לא ניתן לחשב — אין מצרכים' });
 
@@ -545,6 +545,7 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     if (ingredients !== undefined) {
       await client.query('DELETE FROM recipe_ingredients WHERE recipe_id = $1', [id]);
     }
+    await client.query('DELETE FROM nutrition WHERE recipe_id = $1', [id]);
     if (steps !== undefined) {
       await client.query('DELETE FROM steps WHERE recipe_id = $1', [id]);
     }
