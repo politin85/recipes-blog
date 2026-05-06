@@ -600,6 +600,45 @@
     .drawer-nav li a { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-4) var(--space-5); color:var(--ink); text-decoration:none; font-size:.95rem; font-family:var(--font-body); transition:background .15s; }
     .drawer-nav li a:hover { background:var(--sand); }
     .drawer-nav li a.current { color:var(--terracotta); font-weight:500; }
+
+    /* ── Nutrition table ── */
+    .nutrition-section { margin-top: var(--space-8); }
+    .nutrition-card {
+      background: #FAF6F0;
+      border: 1.5px solid #E8DDD0;
+      border-radius: var(--radius);
+      padding: var(--space-6);
+    }
+    .nutrition-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: var(--space-4);
+    }
+    .nutrition-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+    .nutrition-table tr:not(:last-child) td {
+      border-bottom: 1px solid #E8DDD0;
+    }
+    .nutrition-table td {
+      padding: var(--space-2) var(--space-3);
+      color: var(--ink);
+    }
+    .nutrition-table td:last-child {
+      text-align: left;
+      font-weight: 500;
+      color: var(--ink-light);
+    }
+    .nutrition-source {
+      font-size: var(--text-xs);
+      color: var(--ink-muted);
+      margin-top: var(--space-3);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -710,6 +749,17 @@
         </div>
       </section>
 
+      <!-- Nutrition -->
+      <section id="nutrition-section" style="display:none">
+        <div class="nutrition-section">
+          <div class="nutrition-card">
+            <div class="nutrition-title">ערכים תזונתיים למנה</div>
+            <table class="nutrition-table" id="nutrition-table-body"></table>
+            <div class="nutrition-source">על בסיס נתוני USDA FoodData Central</div>
+          </div>
+        </div>
+      </section>
+
       <!-- Related -->
       <section id="related-section" style="margin-top:var(--space-8);display:none">
         <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:600;margin-bottom:var(--space-4);color:var(--ink)">
@@ -779,6 +829,7 @@ if (!id) {
       renderSteps();
       renderNotes();
       renderRelated();
+      fetchAndRenderNutrition(id);
       document.getElementById('page-loading').style.display = 'none';
       document.getElementById('page-content').style.display = 'block';
       document.getElementById('serv-val').value = currentServings;
@@ -1456,6 +1507,29 @@ async function deleteNote(noteId) {
     await fetch(`${API}/api/recipes/${id}/notes/${noteId}`, { method: 'DELETE' });
     recipe.notes = recipe.notes.filter(n => n.id !== noteId);
     renderNotes();
+  } catch {}
+}
+
+// ── Nutrition ─────────────────────────────────────────────────────────────────
+
+async function fetchAndRenderNutrition(recipeId) {
+  try {
+    const res = await fetch(`${API}/api/recipes/${recipeId}/nutrition`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data) return;
+    const rows = [
+      ['קלוריות',           `${data.calories} קק"ל`],
+      ['חלבון',             `${data.protein_g} ג׳`],
+      ['שומן',              `${data.fat_g} ג׳`],
+      ['פחמימות',           `${data.carbs_g} ג׳`],
+      ['סיבים תזונתיים',    `${data.fiber_g} ג׳`],
+      ['סוכר',              `${data.sugar_g} ג׳`],
+      ['נתרן',              `${data.sodium_mg} מ"ג`],
+    ];
+    document.getElementById('nutrition-table-body').innerHTML =
+      rows.map(([label, val]) => `<tr><td>${label}</td><td>${val}</td></tr>`).join('');
+    document.getElementById('nutrition-section').style.display = 'block';
   } catch {}
 }
 
