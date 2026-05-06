@@ -100,6 +100,7 @@ async function calculateNutrition(recipe, apiKey, usdaKey) {
   if (totals.calories === 0) return null;
 
   const servings = recipe.servings || 1;
+  console.log(`[nutrition] recipe "${recipe.title}" — raw servings value: ${JSON.stringify(recipe.servings)}, using: ${servings}, total calories before division: ${totals.calories.toFixed(1)}`);
   return {
     calories:       Math.round(totals.calories   / servings),
     protein_g:      +(totals.protein_g  / servings).toFixed(1),
