@@ -450,6 +450,7 @@ app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req,
   try {
     const { rows: [recipe] } = await pool.query('SELECT * FROM recipes WHERE id = $1', [id]);
     if (!recipe) return res.status(404).json({ error: 'Not found' });
+    console.log(`[calculate-nutrition] recipe id=${id} title="${recipe.title}" servings=${JSON.stringify(recipe.servings)}`);
 
     const { rows: ingredients } = await pool.query(
       `SELECT i.name, ri.amount, ri.unit
