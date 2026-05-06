@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const fetch = require('node-fetch');
+const { calculateNutrition } = require('./lib/nutrition');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -119,6 +120,21 @@ async function initDB() {
     ALTER TABLE ingredient_aliases DROP CONSTRAINT IF EXISTS ingredient_aliases_original_name_key;
     CREATE UNIQUE INDEX IF NOT EXISTS ingredient_aliases_name_note_idx
       ON ingredient_aliases (original_name, note);
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS nutrition (
+      recipe_id    INTEGER PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE,
+      calories     INTEGER,
+      protein_g    NUMERIC,
+      fat_g        NUMERIC,
+      carbs_g      NUMERIC,
+      sugar_g      NUMERIC,
+      fiber_g      NUMERIC,
+      sodium_mg    INTEGER,
+      per_servings INTEGER,
+      updated_at   TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   console.log('DB ready');
@@ -395,6 +411,59 @@ app.post('/api/recipes', requireAdmin, async (req, res) => {
   }
 });
 
+// ─── Nutrition ─────────────────────────────────────────────────────────────────
+
+app.get('/api/recipes/:id/nutrition', async (req, res) => {
+  try {
+    const { rows: [row] } = await pool.query(
+      'SELECT * FROM nutrition WHERE recipe_id = $1', [req.params.id]
+    );
+    res.json(row || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req, res) => {
+  const apiKey  = process.env.ANTHROPIC_API_KEY;
+  const usdaKey = process.env.USDA_API_KEY || 'DEMO_KEY';
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY לא מוגדר ב-Railway Variables' });
+
+  const { id } = req.params;
+  try {
+    const { rows: [recipe] } = await pool.query('SELECT * FROM recipes WHERE id = $1', [id]);
+    if (!recipe) return res.status(404).json({ error: 'Not found' });
+
+    const { rows: ingredients } = await pool.query(
+      `SELECT i.name, ri.amount, ri.unit
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON i.id = ri.ingredient_id
+       WHERE ri.recipe_id = $1
+       ORDER BY ri.id`,
+      [id]
+    );
+
+    const result = await calculateNutrition({ ...recipe, ingredients }, apiKey, usdaKey);
+    if (!result) return res.status(422).json({ error: 'לא ניתן לחשב — אין מצרכים' });
+
+    await pool.query(
+      `INSERT INTO nutrition
+         (recipe_id, calories, protein_g, fat_g, carbs_g, sugar_g, fiber_g, sodium_mg, per_servings, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+       ON CONFLICT (recipe_id) DO UPDATE SET
+         calories=$2, protein_g=$3, fat_g=$4, carbs_g=$5, sugar_g=$6, fiber_g=$7,
+         sodium_mg=$8, per_servings=$9, updated_at=NOW()`,
+      [id, result.calories, result.protein_g, result.fat_g, result.carbs_g,
+       result.sugar_g, result.fiber_g, result.sodium_mg, result.per_servings]
+    );
+    res.json(result);
+  } catch (err) {
+    console.error('[calculate-nutrition]', err);
+    res.status(500).json({ error: err.message || 'שגיאה בחישוב' });
+  }
+});
+
 // ─── Recipes: single + update + delete ───────────────────────────────────────
 
 app.get('/api/recipes/:id', async (req, res) => {
@@ -476,6 +545,7 @@ app.put('/api/recipes/:id', requireAdmin, async (req, res) => {
     if (ingredients !== undefined) {
       await client.query('DELETE FROM recipe_ingredients WHERE recipe_id = $1', [id]);
     }
+    await client.query('DELETE FROM nutrition WHERE recipe_id = $1', [id]);
     if (steps !== undefined) {
       await client.query('DELETE FROM steps WHERE recipe_id = $1', [id]);
     }
