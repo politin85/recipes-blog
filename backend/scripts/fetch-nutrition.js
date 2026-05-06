@@ -63,13 +63,13 @@ async function main() {
       }
       await pool.query(
         `INSERT INTO nutrition
-           (recipe_id, calories, protein_g, fat_g, carbs_g, sugar_g, fiber_g, sodium_mg, per_servings, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+           (recipe_id, calories, protein_g, fat_g, carbs_g, sugar_g, fiber_g, sodium_mg, per_servings, total_weight_g, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
          ON CONFLICT (recipe_id) DO UPDATE SET
            calories=$2, protein_g=$3, fat_g=$4, carbs_g=$5, sugar_g=$6, fiber_g=$7,
-           sodium_mg=$8, per_servings=$9, updated_at=NOW()`,
+           sodium_mg=$8, per_servings=$9, total_weight_g=$10, updated_at=NOW()`,
         [recipe.id, result.calories, result.protein_g, result.fat_g, result.carbs_g,
-         result.sugar_g, result.fiber_g, result.sodium_mg, result.per_servings]
+         result.sugar_g, result.fiber_g, result.sodium_mg, result.per_servings, result.total_weight_g ?? null]
       );
       console.log(`✓ ${result.calories} kcal | protein ${result.protein_g}g | fat ${result.fat_g}g | carbs ${result.carbs_g}g`);
       processed++;

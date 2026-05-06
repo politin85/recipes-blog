@@ -621,17 +621,29 @@
       border-collapse: collapse;
       font-size: var(--text-sm);
     }
-    .nutrition-table tr:not(:last-child) td {
+    .nutrition-table tr:not(:last-child) td, .nutrition-table tr:not(:last-child) th {
       border-bottom: 1px solid #E8DDD0;
     }
-    .nutrition-table td {
+    .nutrition-table td, .nutrition-table th {
       padding: var(--space-2) var(--space-3);
       color: var(--ink);
+      font-weight: 400;
     }
-    .nutrition-table td:last-child {
-      text-align: left;
+    .nutrition-table th {
+      font-size: var(--text-xs);
+      color: var(--ink-muted);
+      font-weight: 500;
+      padding-bottom: var(--space-1);
+      border-bottom: 2px solid #E8DDD0 !important;
+    }
+    .nutrition-table .nut-val {
+      text-align: center;
       font-weight: 500;
       color: var(--ink-light);
+    }
+    .nutrition-table .nut-100 {
+      text-align: left;
+      color: var(--ink-muted);
     }
     .nutrition-source {
       font-size: var(--text-xs);
@@ -1517,20 +1529,40 @@ async function fetchAndRenderNutrition(recipeId) {
     const res = await fetch(`${API}/api/recipes/${recipeId}/nutrition`);
     if (!res.ok) return;
     const data = await res.json();
-    if (!data) return;
-    const rows = [
-      ['קלוריות',           `${data.calories} קק"ל`],
-      ['חלבון',             `${data.protein_g} ג׳`],
-      ['שומן',              `${data.fat_g} ג׳`],
-      ['פחמימות',           `${data.carbs_g} ג׳`],
-      ['סיבים תזונתיים',    `${data.fiber_g} ג׳`],
-      ['סוכר',              `${data.sugar_g} ג׳`],
-      ['נתרן',              `${data.sodium_mg} מ"ג`],
+    if (!data || data.calories === 0) return;
+
+    const servingWeightG = (data.total_weight_g && data.per_servings)
+      ? data.total_weight_g / data.per_servings : null;
+    const hasPer100 = servingWeightG && servingWeightG > 0;
+
+    const nutrients = [
+      ['קלוריות',        data.calories,   'קק"ל', false],
+      ['חלבון',          data.protein_g,  'ג׳',   true],
+      ['שומן',           data.fat_g,      'ג׳',   true],
+      ['פחמימות',        data.carbs_g,    'ג׳',   true],
+      ['סיבים תזונתיים', data.fiber_g,    'ג׳',   true],
+      ['סוכר',           data.sugar_g,    'ג׳',   true],
+      ['נתרן',           data.sodium_mg,  'מ"ג',  false],
     ];
+
+    function per100(val, decimal) {
+      const v = (parseFloat(val) / servingWeightG) * 100;
+      return decimal ? v.toFixed(1) : Math.round(v);
+    }
+
+    const headerRow = hasPer100
+      ? `<tr><th></th><th class="nut-val">למנה</th><th class="nut-100">ל-100 גרם</th></tr>`
+      : '';
+
+    document.getElementById('nutrition-table-body').innerHTML = headerRow +
+      nutrients.map(([label, val, unit, decimal]) => {
+        const per100Cell = hasPer100
+          ? `<td class="nut-100">${per100(val, decimal)} ${unit}</td>` : '';
+        return `<tr><td>${label}</td><td class="nut-val">${val} ${unit}</td>${per100Cell}</tr>`;
+      }).join('');
+
     const titleEl = document.querySelector('#nutrition-section .nutrition-title');
     if (titleEl && data.per_servings) titleEl.textContent = `ערכים תזונתיים (למנה אחת מתוך ${data.per_servings})`;
-    document.getElementById('nutrition-table-body').innerHTML =
-      rows.map(([label, val]) => `<tr><td>${label}</td><td>${val}</td></tr>`).join('');
     document.getElementById('nutrition-section').style.display = 'block';
   } catch {}
 }

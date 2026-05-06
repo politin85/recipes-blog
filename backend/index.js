@@ -135,7 +135,10 @@ async function initDB() {
       per_servings INTEGER,
       updated_at   TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE nutrition ADD COLUMN IF NOT EXISTS total_weight_g NUMERIC;
   `);
+  // Remove zero-valued records created when USDA API rate-limited during batch run
+  await pool.query(`DELETE FROM nutrition WHERE calories = 0 AND protein_g = 0`);
 
   console.log('DB ready');
 }
@@ -418,7 +421,8 @@ app.get('/api/recipes/:id/nutrition', async (req, res) => {
     const { rows: [row] } = await pool.query(
       'SELECT * FROM nutrition WHERE recipe_id = $1', [req.params.id]
     );
-    res.json(row || null);
+    if (!row || (row.calories === 0 && Number(row.protein_g) === 0)) return res.json(null);
+    res.json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'DB error' });
@@ -449,13 +453,13 @@ app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req,
 
     await pool.query(
       `INSERT INTO nutrition
-         (recipe_id, calories, protein_g, fat_g, carbs_g, sugar_g, fiber_g, sodium_mg, per_servings, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+         (recipe_id, calories, protein_g, fat_g, carbs_g, sugar_g, fiber_g, sodium_mg, per_servings, total_weight_g, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
        ON CONFLICT (recipe_id) DO UPDATE SET
          calories=$2, protein_g=$3, fat_g=$4, carbs_g=$5, sugar_g=$6, fiber_g=$7,
-         sodium_mg=$8, per_servings=$9, updated_at=NOW()`,
+         sodium_mg=$8, per_servings=$9, total_weight_g=$10, updated_at=NOW()`,
       [id, result.calories, result.protein_g, result.fat_g, result.carbs_g,
-       result.sugar_g, result.fiber_g, result.sodium_mg, result.per_servings]
+       result.sugar_g, result.fiber_g, result.sodium_mg, result.per_servings, result.total_weight_g ?? null]
     );
     res.json(result);
   } catch (err) {

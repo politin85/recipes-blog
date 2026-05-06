@@ -78,6 +78,7 @@ async function calculateNutrition(recipe, apiKey, usdaKey) {
 
   const englishNames = await translateIngredients(names, apiKey);
   const totals = { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0 };
+  let totalGrams = 0;
 
   const nutrientsList = await Promise.all(
     ingredients.map((ing, i) => {
@@ -90,21 +91,25 @@ async function calculateNutrition(recipe, apiKey, usdaKey) {
     const nutrients = nutrientsList[i];
     if (!nutrients) continue;
     const grams = toGrams(ingredients[i].amount, ingredients[i].unit);
+    totalGrams += grams;
     for (const key of Object.keys(totals)) {
       totals[key] += (nutrients[key] * grams) / 100;
     }
   }
 
+  if (totals.calories === 0) return null;
+
   const perServings = recipe.servings || 1;
   return {
-    calories:     Math.round(totals.calories    / perServings),
-    protein_g:    Math.round(totals.protein_g   / perServings * 10) / 10,
-    fat_g:        Math.round(totals.fat_g       / perServings * 10) / 10,
-    carbs_g:      Math.round(totals.carbs_g     / perServings * 10) / 10,
-    fiber_g:      Math.round(totals.fiber_g     / perServings * 10) / 10,
-    sugar_g:      Math.round(totals.sugar_g     / perServings * 10) / 10,
-    sodium_mg:    Math.round(totals.sodium_mg   / perServings),
-    per_servings: perServings,
+    calories:       Math.round(totals.calories    / perServings),
+    protein_g:      Math.round(totals.protein_g   / perServings * 10) / 10,
+    fat_g:          Math.round(totals.fat_g       / perServings * 10) / 10,
+    carbs_g:        Math.round(totals.carbs_g     / perServings * 10) / 10,
+    fiber_g:        Math.round(totals.fiber_g     / perServings * 10) / 10,
+    sugar_g:        Math.round(totals.sugar_g     / perServings * 10) / 10,
+    sodium_mg:      Math.round(totals.sodium_mg   / perServings),
+    per_servings:   perServings,
+    total_weight_g: Math.round(totalGrams),
   };
 }
 
