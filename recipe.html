@@ -116,6 +116,11 @@
     .recipe-hero {
       background: linear-gradient(135deg, var(--terracotta) 0%, #A0471E 100%);
       padding: var(--space-14) var(--space-8) var(--space-10);
+      min-height: 420px;
+      display: flex;
+      align-items: flex-end;
+      background-size: cover;
+      background-position: center;
     }
     .recipe-hero-inner { max-width: 1100px; width: 100%; margin: 0 auto; }
     .recipe-category-tag {
@@ -125,6 +130,7 @@
       font-size: .8rem; font-weight: 600;
       padding: var(--space-1) var(--space-4); border-radius: 50px;
       margin-bottom: var(--space-4);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     .recipe-title {
       font-family: var(--font-display);
@@ -132,11 +138,13 @@
       font-weight: 700; color: var(--white);
       line-height: var(--leading-tight); margin-bottom: var(--space-4);
       letter-spacing: -0.01em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     .recipe-desc {
       font-size: 1.05rem; color: rgba(255,255,255,.82);
       max-width: 680px; line-height: 1.7; margin-bottom: 1.8rem;
       font-weight: 300;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     .recipe-stats {
       display: flex; flex-wrap: wrap; gap: var(--space-6);
@@ -147,9 +155,11 @@
     .stat-label {
       font-size: var(--text-xs); color: rgba(255,255,255,.6);
       text-transform: uppercase; letter-spacing: .08em; margin-bottom: var(--space-1);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     .stat-value {
       font-size: 1.1rem; font-weight: 600; color: var(--white);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     .stat-sep {
       width: 1px; background: rgba(255,255,255,.25);
@@ -562,7 +572,7 @@
     }
 
     @media (max-width: 640px) {
-      .recipe-hero { padding: var(--space-10) var(--space-5) var(--space-8); }
+      .recipe-hero { padding: var(--space-10) var(--space-5) var(--space-8); min-height: 300px; }
       .recipe-layout { padding: var(--space-6) var(--space-5) var(--space-16); }
       .sticky-title { padding: var(--space-2) var(--space-5); }
     }
@@ -885,8 +895,17 @@ function renderHero() {
   const totalMin = (recipe.prep_time || 0) + (recipe.cook_time || 0);
   const stickyEl = document.getElementById('sticky-title');
   if (stickyEl) stickyEl.textContent = recipe.title;
+
+  let heroBgStyle = '';
+  if (recipe.image_url) {
+    const imageUrl = recipe.image_url.split('#')[0];
+    const m = recipe.image_url.match(/#pos=(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
+    const bgPosition = m ? `${m[1]}% ${m[2]}%` : 'center';
+    heroBgStyle = `style="background: linear-gradient(to bottom, rgba(139,58,26,0.55) 0%, rgba(139,58,26,0.35) 100%), url('${imageUrl}') ${bgPosition}/cover no-repeat;"`;
+  }
+
   document.getElementById('recipe-hero').innerHTML = `
-    <div class="recipe-hero">
+    <div class="recipe-hero" ${heroBgStyle}>
       <div class="recipe-hero-inner">
         ${recipe.category ? `<span class="recipe-category-tag">${recipe.category}</span>` : ''}
         <h1 class="recipe-title">${recipe.title}</h1>
@@ -927,12 +946,7 @@ function renderHero() {
           </button>
         </div>
       </div>
-    </div>
-    ${recipe.image_url ? `
-    <div style="width:100%;height:320px;overflow:hidden;position:relative">
-      <img src="${recipe.image_url.split('#')[0]}" alt="${recipe.title}"
-        style="width:100%;height:100%;object-fit:cover;${imgTransformStyle(recipe.image_url)}" />
-    </div>` : ''}`;
+    </div>`;
 }
 
 // ── Story ─────────────────────────────────────────────────────────────────────
