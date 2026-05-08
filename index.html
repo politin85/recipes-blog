@@ -130,15 +130,23 @@
 
     /* ── Hero ── */
     .hero {
-      background-color: var(--ink);
-      background-size: contain;
-      background-position: center top;
-      background-repeat: no-repeat;
       width: 100%;
-      aspect-ratio: 1920 / 600;
-      position: relative;
-      display: flex;
-      align-items: flex-end;
+      overflow: hidden;
+      display: block;
+    }
+    .hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+      object-position: center center;
+    }
+    @media (max-width: 768px) {
+      .hero img {
+        height: 200px;
+        object-fit: cover;
+        object-position: center 40%;
+      }
     }
 
     /* ── Navbar glass strip ── */
@@ -669,7 +677,9 @@
 </header>
 <div class="navbar-glass-strip" id="navbar-glass-strip"></div>
 
-<section class="hero" id="hero-section" style="background-image:url('https://res.cloudinary.com/dnrswj6aw/image/upload/v1778234521/recipes/blog_cover_v2.png')"></section>
+<section class="hero" id="hero-section">
+  <img id="hero-img" src="https://res.cloudinary.com/dnrswj6aw/image/upload/v1778235436/recipes/diozc8ft8vxjshssreuk.png" alt="מתכונים מחושבים" />
+</section>
 
 <main>
   <div class="filters-wrap">
@@ -819,8 +829,8 @@
       }
       const heroUrl = s.main_image_url || s.hero_image_url || s.hero_image;
       if (heroUrl) {
-        const heroEl = document.getElementById('hero-section');
-        if (heroEl) heroEl.style.backgroundImage = `url('${heroUrl.split('#')[0]}')`;
+        const heroImg = document.getElementById('hero-img');
+        if (heroImg) heroImg.src = heroUrl.split('#')[0];
       }
     } catch {}
   }
