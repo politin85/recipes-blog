@@ -796,6 +796,26 @@
     <li><a href="fridge.html">🥦 מתכון לפי מצרכים</a></li>
     <li><a href="admin.html">⚙️ ניהול מתכונים</a></li>
   </ul>
+  <div class="drawer-settings">
+    <div class="drawer-settings-title">הגדרות</div>
+    <div class="drawer-settings-row">
+      <span class="drawer-settings-label">🎙 קול הקראה</span>
+      <select class="drawer-settings-select" id="drawer-voice-select">
+        <option value="he-IL-Wavenet-A">קול נשי א</option>
+        <option value="he-IL-Wavenet-B">קול זכר א</option>
+        <option value="he-IL-Wavenet-C">קול נשי ב</option>
+        <option value="he-IL-Wavenet-D">קול זכר ב</option>
+      </select>
+    </div>
+    <div class="drawer-settings-row">
+      <span class="drawer-settings-label">🔔 צליל התראה</span>
+      <select class="drawer-settings-select" id="drawer-sound-select">
+        <option value="bell">פעמון</option>
+        <option value="beep">ביפ</option>
+        <option value="melody">מלודיה</option>
+      </select>
+    </div>
+  </div>
 </div>
 
 <!-- Filter modal -->
@@ -959,6 +979,15 @@
     document.getElementById('drawer-overlay').classList.remove('show');
     document.body.style.overflow = '';
   }
+
+  (function initDrawerSettings() {
+    const voice = localStorage.getItem('ttsVoice') || 'he-IL-Wavenet-A';
+    const sound = localStorage.getItem('timerSound') || 'bell';
+    const dvs = document.getElementById('drawer-voice-select');
+    const dss = document.getElementById('drawer-sound-select');
+    if (dvs) { dvs.value = voice; dvs.addEventListener('change', e => localStorage.setItem('ttsVoice', e.target.value)); }
+    if (dss) { dss.value = sound; dss.addEventListener('change', e => localStorage.setItem('timerSound', e.target.value)); }
+  })();
 
   // ── Filter modal ──────────────────────────────────────────────────────────────
 
