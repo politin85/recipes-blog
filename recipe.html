@@ -645,6 +645,12 @@
     .drawer-nav li a { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-4) var(--space-5); color:var(--ink); text-decoration:none; font-size:.95rem; font-family:var(--font-body); transition:background .15s; }
     .drawer-nav li a:hover { background:var(--sand); }
     .drawer-nav li a.current { color:var(--terracotta); font-weight:500; }
+    .drawer-settings { padding: var(--space-4) var(--space-5) var(--space-2); border-top: 1px solid var(--sand-dark); }
+    .drawer-settings-title { font-family: var(--font-display); font-size: .85rem; color: var(--ink-muted); margin-bottom: var(--space-3); letter-spacing: .04em; }
+    .drawer-settings-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .drawer-settings-label { font-size: .88rem; color: var(--ink-light); white-space: nowrap; }
+    .drawer-settings-select { padding: .3rem var(--space-3); border: 1.5px solid var(--sand-dark); background: var(--white); color: var(--ink-light); border-radius: 50px; font-family: var(--font-body); font-size: .8rem; cursor: pointer; outline: none; direction: rtl; transition: border-color .2s; flex-shrink: 0; }
+    .drawer-settings-select:focus { border-color: var(--terracotta); }
 
     /* ── Nutrition table ── */
     .nutrition-section { margin-top: var(--space-8); }
