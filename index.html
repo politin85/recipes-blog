@@ -133,9 +133,12 @@
 
     /* ── Hero ── */
     .hero {
-      width: 100%;
+      width: 100vw;
       overflow: hidden;
       display: block;
+      margin: 0;
+      padding: 0;
+      position: relative;
       margin-top: calc(-1 * var(--navbar-height));
     }
     .hero img {
@@ -146,6 +149,12 @@
       object-position: center center;
     }
     @media (max-width: 768px) {
+      body {
+        padding-top: 0 !important;
+      }
+      .hero {
+        margin-top: 0;
+      }
       .hero img {
         height: 220px;
         object-fit: cover;
