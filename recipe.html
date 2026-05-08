@@ -124,10 +124,17 @@
     }
     .recipe-hero-inner { max-width: 1100px; width: 100%; margin: 0 auto; }
     .hero-text-container {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
       max-width: 90%;
+    }
+    .hero-strip {
+      display: inline;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border-radius: 3px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+      padding: 1px 6px;
     }
     .recipe-category-tag {
       display: inline-block;
@@ -144,33 +151,19 @@
       font-weight: 700; color: var(--white);
       line-height: var(--leading-tight); margin-bottom: 4px;
       letter-spacing: -0.01em;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      display: inline-block;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-radius: 4px;
-      padding: 2px 8px;
     }
     .recipe-desc {
       font-size: 15px; color: rgba(255,255,255,.82);
       max-width: 680px; line-height: 1.7; margin-bottom: 4px;
       font-weight: 300;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      display: inline-block;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-radius: 4px;
-      padding: 2px 8px;
     }
     .recipe-stats {
       display: inline-flex; flex-wrap: wrap; gap: var(--space-6);
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-radius: 4px;
-      padding: 2px 8px;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border-radius: 3px;
+      padding: 1px 8px;
       margin-bottom: 4px;
     }
     .stat {
@@ -597,17 +590,20 @@
 
     @media (max-width: 768px) {
       .hero-text-container { max-width: 95%; }
-      .recipe-title,
-      .recipe-desc,
-      .recipe-stats {
-        background: rgba(0, 0, 0, 0.25);
+      .hero-strip {
+        background: rgba(0, 0, 0, 0.18);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
       }
       .recipe-title { font-size: 22px; }
       .recipe-desc { font-size: 13px; }
       .stat-value { font-size: 12px; }
-      .recipe-stats { flex-wrap: wrap; gap: 6px; }
+      .recipe-stats {
+        background: rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        flex-wrap: wrap; gap: 6px;
+      }
     }
     @media (max-width: 640px) {
       .recipe-hero { padding: var(--space-10) var(--space-5) var(--space-8); min-height: 280px; }
@@ -947,8 +943,8 @@ function renderHero() {
       <div class="recipe-hero-inner">
         <div class="hero-text-container">
           ${recipe.category ? `<span class="recipe-category-tag">${recipe.category}</span>` : ''}
-          <h1 class="recipe-title">${recipe.title}</h1>
-          ${recipe.description ? `<p class="recipe-desc">${recipe.description}</p>` : ''}
+          <h1 class="recipe-title"><span class="hero-strip">${recipe.title}</span></h1>
+          ${recipe.description ? `<p class="recipe-desc"><span class="hero-strip">${recipe.description}</span></p>` : ''}
           <div class="recipe-stats">
             ${recipe.prep_time ? `
             <div class="stat">
