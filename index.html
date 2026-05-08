@@ -78,16 +78,19 @@
     }
 
     /* ── Header ── */
+    :root { --navbar-height: 64px; }
     header {
-      background: transparent;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       padding: 0 var(--space-5);
       position: fixed;
       top: 0; right: 0; left: 0;
       z-index: 1000;
       box-shadow: none;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
+      transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
     }
-    body { padding-top: 0; }
+    body { padding-top: var(--navbar-height); }
     .header-inner {
       max-width: 1200px;
       margin: 0 auto;
@@ -133,6 +136,7 @@
       width: 100%;
       overflow: hidden;
       display: block;
+      margin-top: calc(-1 * var(--navbar-height));
     }
     .hero img {
       width: 100%;
@@ -143,9 +147,9 @@
     }
     @media (max-width: 768px) {
       .hero img {
-        height: 200px;
+        height: 220px;
         object-fit: cover;
-        object-position: center 40%;
+        object-position: center center;
       }
     }
 
@@ -1168,15 +1172,17 @@
     const strip = document.getElementById('navbar-glass-strip');
     function updateNav() {
       if (window.scrollY > 10) {
-        hdr.style.background   = '#8B3A1A';
-        hdr.style.boxShadow    = '0 2px 12px rgba(44,31,20,.2)';
+        hdr.style.background        = '#8B3A1A';
+        hdr.style.backdropFilter    = 'none';
+        hdr.style.webkitBackdropFilter = 'none';
+        hdr.style.boxShadow         = '0 2px 12px rgba(44,31,20,.2)';
         if (strip) strip.style.opacity = '0';
-        if (strip) strip.style.pointerEvents = 'none';
       } else {
-        hdr.style.background   = 'transparent';
-        hdr.style.boxShadow    = 'none';
+        hdr.style.background        = 'rgba(255,255,255,0.12)';
+        hdr.style.backdropFilter    = 'blur(8px)';
+        hdr.style.webkitBackdropFilter = 'blur(8px)';
+        hdr.style.boxShadow         = 'none';
         if (strip) strip.style.opacity = '1';
-        if (strip) strip.style.pointerEvents = 'none';
       }
     }
     window.addEventListener('scroll', updateNav, { passive: true });
