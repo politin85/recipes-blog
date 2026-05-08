@@ -780,19 +780,6 @@
               <button class="open-all-btn" id="open-all-btn" onclick="toggleAllSteps()">סגור את כל הצעדים</button>
               <button class="cooking-toggle" id="cooking-toggle" onclick="toggleCookingMode()">👨‍🍳 מצב בישול</button>
             </div>
-            <div class="steps-controls-row">
-              <select class="voice-select" id="voice-select">
-                <option value="he-IL-Wavenet-A">🎙 קול נשי א</option>
-                <option value="he-IL-Wavenet-B">🎙 קול זכר א</option>
-                <option value="he-IL-Wavenet-C">🎙 קול נשי ב</option>
-                <option value="he-IL-Wavenet-D">🎙 קול זכר ב</option>
-              </select>
-              <select class="voice-select" id="sound-select" title="צליל טיימר">
-                <option value="bell">🔔 פעמון</option>
-                <option value="beep">📢 ביפ</option>
-                <option value="melody">🎵 מלודיה</option>
-              </select>
-            </div>
           </div>
         </div>
         <div class="cooking-bar" id="cooking-bar">
@@ -897,10 +884,10 @@ if (!id) {
       document.getElementById('page-content').style.display = 'block';
       document.getElementById('serv-val').value = currentServings;
       initScrollTitle();
-      const vs = document.getElementById('voice-select');
-      if (vs) { vs.value = selectedVoice; vs.addEventListener('change', e => { selectedVoice = e.target.value; localStorage.setItem('ttsVoice', selectedVoice); }); }
-      const ss = document.getElementById('sound-select');
-      if (ss) { ss.value = selectedSound; ss.addEventListener('change', e => { selectedSound = e.target.value; localStorage.setItem('timerSound', selectedSound); }); }
+      const dvs = document.getElementById('drawer-voice-select');
+      if (dvs) { dvs.value = selectedVoice; dvs.addEventListener('change', e => { selectedVoice = e.target.value; localStorage.setItem('ttsVoice', selectedVoice); }); }
+      const dss = document.getElementById('drawer-sound-select');
+      if (dss) { dss.value = selectedSound; dss.addEventListener('change', e => { selectedSound = e.target.value; localStorage.setItem('timerSound', selectedSound); }); }
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
