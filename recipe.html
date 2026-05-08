@@ -1717,6 +1717,26 @@ if ('serviceWorker' in navigator) {
     <li><a href="fridge.html">🥦 מתכון לפי מצרכים</a></li>
     <li><a href="admin.html">⚙️ ניהול מתכונים</a></li>
   </ul>
+  <div class="drawer-settings">
+    <div class="drawer-settings-title">הגדרות</div>
+    <div class="drawer-settings-row">
+      <span class="drawer-settings-label">🎙 קול הקראה</span>
+      <select class="drawer-settings-select" id="drawer-voice-select">
+        <option value="he-IL-Wavenet-A">קול נשי א</option>
+        <option value="he-IL-Wavenet-B">קול זכר א</option>
+        <option value="he-IL-Wavenet-C">קול נשי ב</option>
+        <option value="he-IL-Wavenet-D">קול זכר ב</option>
+      </select>
+    </div>
+    <div class="drawer-settings-row">
+      <span class="drawer-settings-label">🔔 צליל התראה</span>
+      <select class="drawer-settings-select" id="drawer-sound-select">
+        <option value="bell">פעמון</option>
+        <option value="beep">ביפ</option>
+        <option value="melody">מלודיה</option>
+      </select>
+    </div>
+  </div>
 </div>
 <script>
 function toggleDrawer() { document.getElementById('drawer').classList.contains('open') ? closeDrawer() : openDrawer(); }
