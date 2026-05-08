@@ -140,36 +140,8 @@
       display: flex;
       align-items: flex-end;
     }
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        transparent 25%,
-        rgba(44, 31, 20, 0.45) 65%,
-        rgba(44, 31, 20, 0.78) 100%
-      );
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: var(--space-8) var(--space-10);
-      gap: var(--space-2);
-    }
-    .hero-tagline {
-      font-family: var(--font-display);
-      font-size: clamp(1.3rem, 3vw, 2.2rem);
-      color: var(--white);
-      line-height: var(--leading-tight);
-      text-shadow: 0 2px 10px rgba(0,0,0,.3);
-    }
-    .hero-subtitle {
-      font-size: clamp(.8rem, 1.4vw, 1rem);
-      color: rgba(255, 255, 255, .75);
-      font-weight: 300;
-      letter-spacing: .03em;
-    }
     @media (max-width: 640px) {
-      .hero-overlay { padding: var(--space-5) var(--space-6); }
+      /* hero mobile reserved */
     }
 
     /* ── Search bar ── */
@@ -686,12 +658,7 @@
   </div>
 </header>
 
-<section class="hero" id="hero-section" style="background-image:url('https://res.cloudinary.com/dnrswj6aw/image/upload/v1776513274/recipes/blog_cover.png')">
-  <div class="hero-overlay">
-    <h1 class="hero-tagline" id="hero-title">מתכונים מחושבים</h1>
-    <p class="hero-subtitle" id="hero-subtitle">המטבח פוגש טכנולוגיה</p>
-  </div>
-</section>
+<section class="hero" id="hero-section" style="background-image:url('https://res.cloudinary.com/dnrswj6aw/image/upload/v1776513274/recipes/blog_cover.png')"></section>
 
 <main>
   <div class="filters-wrap">
@@ -839,8 +806,6 @@
         const footerEl = document.getElementById('footer-name');
         if (footerEl) footerEl.textContent = s.site_name;
       }
-      if (s.hero_title) { const el = document.getElementById('hero-title'); if (el) el.textContent = s.hero_title; }
-      if (s.site_description) { const el = document.getElementById('hero-subtitle'); if (el) el.textContent = s.site_description; }
       const heroUrl = s.main_image_url || s.hero_image_url || s.hero_image;
       if (heroUrl) {
         const heroEl = document.getElementById('hero-section');
