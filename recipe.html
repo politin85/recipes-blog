@@ -188,7 +188,13 @@
     .difficulty-pill.easy   { background: #c8f0cc; color: #1a5c1e; }
     .difficulty-pill.medium { background: #fde9a0; color: #7a4800; }
     .difficulty-pill.hard   { background: #fdd0d0; color: #8b1a1a; }
-    .hero-text-container, .hero-text-container * { font-weight: 700 !important; }
+    .hero-text-container, .hero-text-container * {
+      font-weight: 700 !important;
+      color: #ffffff !important;
+      -webkit-text-stroke: 1px #000000 !important;
+      text-stroke: 1px #000000 !important;
+      paint-order: stroke fill !important;
+    }
 
     /* ── Layout ── */
     .recipe-layout {
