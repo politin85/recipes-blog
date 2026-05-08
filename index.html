@@ -77,16 +77,17 @@
       min-height: 100vh;
     }
 
-    /* ── Header ── */ 
+    /* ── Header ── */
     header {
-      background: var(--terracotta);
+      background: transparent;
       padding: 0 var(--space-5);
       position: fixed;
       top: 0; right: 0; left: 0;
       z-index: 1000;
-      box-shadow: 0 2px 12px rgba(44,31,20,.2);
+      box-shadow: none;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
-    body { padding-top: 64px; }
+    body { padding-top: 0; }
     .header-inner {
       max-width: 1200px;
       margin: 0 auto;
@@ -1141,6 +1142,21 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/recipes-blog/sw.js').catch(() => {});
   }
+
+  (function() {
+    const hdr = document.querySelector('header');
+    function updateNav() {
+      if (window.scrollY > 10) {
+        hdr.style.background = '#8B3A1A';
+        hdr.style.boxShadow = '0 2px 12px rgba(44,31,20,.2)';
+      } else {
+        hdr.style.background = 'transparent';
+        hdr.style.boxShadow = 'none';
+      }
+    }
+    window.addEventListener('scroll', updateNav, { passive: true });
+    updateNav();
+  })();
 </script>
 </body>
 </html>
