@@ -1,6 +1,7 @@
 import ActivityKit
 import AlarmKit
 import AppIntents
+import OSLog
 import SwiftUI
 
 /// What a step timer carries into its system alarm / Live Activity.
@@ -16,49 +17,71 @@ enum TimerColors {
     static let olive = Color(.sRGB, red: 0x6B / 255.0, green: 0x7A / 255.0, blue: 0x3A / 255.0)
 }
 
+/// Runs a Live Activity button's action and keeps a short trail of what happened
+/// (readable from the app's Documents folder) so failures can be diagnosed.
+enum TimerIntentRunner {
+    private static let log = Logger(subsystem: "com.nirpoliti.recipes", category: "timer-intents")
+
+    static func run(_ name: String, alarmID: String, _ action: (UUID) throws -> Void) {
+        var outcome = "ok"
+        if let id = UUID(uuidString: alarmID) {
+            do { try action(id) } catch { outcome = "error: \(error)" }
+        } else {
+            outcome = "bad id '\(alarmID)'"
+        }
+        log.info("\(name, privacy: .public) \(outcome, privacy: .public)")
+        let line = "\(Date().formatted(.iso8601)) \(name) \(Bundle.main.bundleIdentifier ?? "?") \(outcome)\n"
+        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let url = dir.appendingPathComponent("timer-intents.log")
+            let existing = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+            try? (String(existing.suffix(4000)) + line).write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+}
+
 // The buttons on the Live Activity run these in the app's process.
 
 struct PauseTimerIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "השהה טיימר"
-    static var isDiscoverable = false
+    static var description = IntentDescription("משהה את הטיימר של השלב")
 
     @Parameter(title: "alarmID") var alarmID: String
 
-    init() {}
+    init() { alarmID = "" }
     init(alarmID: UUID) { self.alarmID = alarmID.uuidString }
 
-    func perform() async throws -> some IntentResult {
-        if let id = UUID(uuidString: alarmID) { try AlarmManager.shared.pause(id: id) }
+    func perform() throws -> some IntentResult {
+        TimerIntentRunner.run("pause", alarmID: alarmID) { try AlarmManager.shared.pause(id: $0) }
         return .result()
     }
 }
 
 struct ResumeTimerIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "המשך טיימר"
-    static var isDiscoverable = false
+    static var description = IntentDescription("ממשיך את הטיימר של השלב")
 
     @Parameter(title: "alarmID") var alarmID: String
 
-    init() {}
+    init() { alarmID = "" }
     init(alarmID: UUID) { self.alarmID = alarmID.uuidString }
 
-    func perform() async throws -> some IntentResult {
-        if let id = UUID(uuidString: alarmID) { try AlarmManager.shared.resume(id: id) }
+    func perform() throws -> some IntentResult {
+        TimerIntentRunner.run("resume", alarmID: alarmID) { try AlarmManager.shared.resume(id: $0) }
         return .result()
     }
 }
 
 struct CancelTimerIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "בטל טיימר"
-    static var isDiscoverable = false
+    static var description = IntentDescription("מבטל את הטיימר של השלב")
 
     @Parameter(title: "alarmID") var alarmID: String
 
-    init() {}
+    init() { alarmID = "" }
     init(alarmID: UUID) { self.alarmID = alarmID.uuidString }
 
-    func perform() async throws -> some IntentResult {
-        if let id = UUID(uuidString: alarmID) { try AlarmManager.shared.cancel(id: id) }
+    func perform() throws -> some IntentResult {
+        TimerIntentRunner.run("cancel", alarmID: alarmID) { try AlarmManager.shared.cancel(id: $0) }
         return .result()
     }
 }
