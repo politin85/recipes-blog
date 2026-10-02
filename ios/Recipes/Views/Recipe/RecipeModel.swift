@@ -49,7 +49,7 @@ final class RecipeModel {
             openSteps = Set(loaded.steps.map(\.id))
             timers = StepTimers(recipeID: loaded.id, recipeTitle: loaded.title)
             phase = .loaded
-            StepTimers.requestNotificationPermission()
+            Task { await StepTimers.requestPermission() }
             if let n = try? await API.shared.nutrition(recipeID: recipeID), n.calories != nil, n.calories != "0" {
                 nutrition = n
             }

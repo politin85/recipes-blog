@@ -22,67 +22,90 @@ final class SoundPlayer {
     }
 }
 
-/// One piece of server-generated speech with the play / pause / resume cycle of the web buttons.
+/// The Hebrew voices installed on the device. Narration uses only these (no server).
+struct NarrationVoice: Identifiable, Hashable {
+    let id: String
+    let label: String
+
+    /// Best quality first; more voices appear after downloading them in
+    /// Settings → Accessibility → Read & Speak → Voices → Hebrew.
+    static var installed: [NarrationVoice] {
+        hebrewVoices.map { voice in
+            let quality: String
+            switch voice.quality {
+            case .premium: quality = " (פרימיום)"
+            case .enhanced: quality = " (משופר)"
+            default: quality = ""
+            }
+            return NarrationVoice(id: voice.identifier, label: voice.name + quality)
+        }
+    }
+
+    private static var hebrewVoices: [AVSpeechSynthesisVoice] {
+        AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("he") }
+            .sorted { $0.quality.rawValue != $1.quality.rawValue ? $0.quality.rawValue > $1.quality.rawValue : $0.name < $1.name }
+    }
+
+    /// The chosen voice if it is still installed, otherwise the best Hebrew voice available.
+    static func resolve(_ identifier: String) -> AVSpeechSynthesisVoice? {
+        hebrewVoices.first { $0.identifier == identifier }
+            ?? hebrewVoices.first
+            ?? AVSpeechSynthesisVoice(language: "he-IL")
+    }
+}
+
+/// One piece of narration with the play / pause / resume cycle of the web buttons.
 @MainActor
 @Observable
-final class SpeechClip: NSObject, AVAudioPlayerDelegate {
-    enum State { case idle, loading, playing, paused, failed }
+final class SpeechClip: NSObject, AVSpeechSynthesizerDelegate {
+    enum State { case idle, playing, paused, failed }
 
     private(set) var state: State = .idle
-    private var player: AVAudioPlayer?
-
-    var duration: TimeInterval { player?.duration ?? 0 }
-    var currentTime: TimeInterval { player?.currentTime ?? 0 }
-    var isLoaded: Bool { player != nil }
+    private var synthesizer: AVSpeechSynthesizer?
 
     /// - Parameter failureResetDelay: when set, a failure flips back to idle after the delay
     ///   (the per-step button does this after 2 seconds).
     func toggle(text: String, voice: String, failureResetDelay: Duration? = nil) {
         switch state {
-        case .loading:
-            return
         case .playing:
-            player?.pause()
+            synthesizer?.pauseSpeaking(at: .immediate)
             state = .paused
         case .paused:
-            player?.play()
+            synthesizer?.continueSpeaking()
             state = .playing
         case .idle, .failed:
-            state = .loading
-            Task {
-                do {
-                    let data = try await API.shared.tts(text: text, voice: voice)
-                    try? AVAudioSession.sharedInstance().setActive(true)
-                    let player = try AVAudioPlayer(data: data)
-                    player.delegate = self
-                    self.player = player
-                    player.play()
-                    state = .playing
-                } catch {
-                    player = nil
-                    state = .failed
-                    if let failureResetDelay {
+            guard let voice = NarrationVoice.resolve(voice) else {
+                state = .failed
+                if let failureResetDelay {
+                    Task {
                         try? await Task.sleep(for: failureResetDelay)
                         if state == .failed { state = .idle }
                     }
                 }
+                return
             }
+            let utterance = AVSpeechUtterance(string: text)
+            utterance.voice = voice
+            let synthesizer = AVSpeechSynthesizer()
+            synthesizer.delegate = self
+            self.synthesizer = synthesizer
+            try? AVAudioSession.sharedInstance().setActive(true)
+            synthesizer.speak(utterance)
+            state = .playing
         }
     }
 
-    func seek(to time: TimeInterval) {
-        player?.currentTime = time
-    }
-
     func stop() {
-        player?.stop()
-        player = nil
+        synthesizer?.stopSpeaking(at: .immediate)
+        synthesizer = nil
         state = .idle
     }
 
-    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor in
-            self.player = nil
+            guard self.synthesizer === synthesizer else { return }
+            self.synthesizer = nil
             self.state = .idle
         }
     }

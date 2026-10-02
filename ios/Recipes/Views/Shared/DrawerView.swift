@@ -71,17 +71,18 @@ struct DrawerView: View {
 
     private var settings: some View {
         @Bindable var app = app
+        let voices = NarrationVoice.installed
         return VStack(alignment: .leading, spacing: 12) {
             Text("הגדרות")
                 .font(.display(13.6))
                 .foregroundStyle(Theme.inkMuted)
 
             settingsRow("🎙 קול הקראה") {
-                Picker("קול הקראה", selection: $app.ttsVoice) {
-                    ForEach(VoiceOption.all) { Text($0.label).tag($0.id) }
+                Picker("קול הקראה", selection: $app.narrationVoice) {
+                    ForEach(voices) { Text($0.label).tag($0.id) }
                 }
             } current: {
-                VoiceOption.all.first { $0.id == app.ttsVoice }?.label ?? ""
+                (voices.first { $0.id == app.narrationVoice } ?? voices.first)?.label ?? "אין קול עברי"
             }
 
             settingsRow("🔔 צליל התראה") {

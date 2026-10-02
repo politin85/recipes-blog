@@ -7,17 +7,6 @@ enum Route: Hashable {
 
 enum ViewMode: String { case grid, list }
 
-struct VoiceOption: Identifiable {
-    let id: String
-    let label: String
-    static let all = [
-        VoiceOption(id: "he-IL-Wavenet-A", label: "קול נשי א"),
-        VoiceOption(id: "he-IL-Wavenet-B", label: "קול זכר א"),
-        VoiceOption(id: "he-IL-Wavenet-C", label: "קול נשי ב"),
-        VoiceOption(id: "he-IL-Wavenet-D", label: "קול זכר ב"),
-    ]
-}
-
 struct SoundOption: Identifiable {
     let id: String
     let label: String
@@ -29,7 +18,7 @@ struct SoundOption: Identifiable {
 }
 
 /// App-wide state: navigation, the drawer, and what the website keeps in localStorage
-/// (same keys: recipeFavorites, recipeViewMode, ttsVoice, timerSound).
+/// (same keys: recipeFavorites, recipeViewMode, timerSound), plus the narration voice.
 @MainActor
 @Observable
 final class AppModel {
@@ -43,8 +32,9 @@ final class AppModel {
     var viewMode: ViewMode {
         didSet { UserDefaults.standard.set(viewMode.rawValue, forKey: "recipeViewMode") }
     }
-    var ttsVoice: String {
-        didSet { UserDefaults.standard.set(ttsVoice, forKey: "ttsVoice") }
+    /// Identifier of the chosen on-device Hebrew voice; empty means "best available".
+    var narrationVoice: String {
+        didSet { UserDefaults.standard.set(narrationVoice, forKey: "narrationVoice") }
     }
     var timerSound: String {
         didSet { UserDefaults.standard.set(timerSound, forKey: "timerSound") }
@@ -57,7 +47,7 @@ final class AppModel {
         let defaults = UserDefaults.standard
         favorites = (defaults.array(forKey: "recipeFavorites") as? [Int]) ?? []
         viewMode = ViewMode(rawValue: defaults.string(forKey: "recipeViewMode") ?? "") ?? .list
-        ttsVoice = defaults.string(forKey: "ttsVoice") ?? "he-IL-Wavenet-A"
+        narrationVoice = defaults.string(forKey: "narrationVoice") ?? ""
         timerSound = defaults.string(forKey: "timerSound") ?? "bell"
         #if DEBUG
         applyDebugLaunchArguments()

@@ -12,6 +12,7 @@ Open `Recipes.xcodeproj` in Xcode, pick a simulator or your iPhone, and press Ru
 - `Recipes/Logic` — ports of the site's JavaScript (amount formatting, step-text amounts, filters, fridge helpers)
 - `Recipes/Models`, `Recipes/Services` — API models and client, timers, audio, app state
 - `Recipes/Views` — Home, Recipe, Fridge and shared components
+- `RecipesWidgets` — the timer's Live Activity (Lock Screen and Dynamic Island); `Shared` — types used by both
 - `RecipesTests` — unit tests; `RecipesUITests` — end-to-end walkthrough against the live backend
 
 ## Tests

@@ -185,7 +185,7 @@ struct RecipeHero: View {
     }
 
     private var stats: some View {
-        FlowLayout(spacing: 6, lineSpacing: 4) {
+        FlowLayout(spacing: 10, lineSpacing: 6) {
             if let prep = recipe.prepTime, prep > 0 {
                 stat("הכנה", "\(prep) דק'")
                 separator
@@ -201,21 +201,23 @@ struct RecipeHero: View {
             if let servings = recipe.servings, servings > 0 {
                 stat("מנות", "\(servings)")
             }
+            // Every column is centered and the same height, so labels and values line up.
             if let difficulty = recipe.difficulty, let label = Labels.difficulty[difficulty] {
-                VStack(alignment: .leading, spacing: 4) {
+                if (recipe.servings ?? 0) > 0 { separator }
+                VStack(spacing: 4) {
                     statLabel("קושי")
                     Text(label)
-                        .font(.rubik(13.1, .semibold))
+                        .font(.rubik(12, .semibold))
                         .foregroundStyle(.white)
                         .textStroke()
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 12)
+                        .frame(height: 20)
                         .background(pillColor(difficulty), in: Capsule())
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 2)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 3))
     }
 
@@ -232,20 +234,23 @@ struct RecipeHero: View {
             .font(.rubik(12, .semibold))
             .foregroundStyle(.white)
             .textStroke()
+            .lineLimit(1)
+            .frame(height: 16)
     }
 
     private func stat(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(spacing: 4) {
             statLabel(label)
             Text(value)
                 .font(.rubik(12, .semibold))
                 .foregroundStyle(.white)
                 .textStroke()
+                .frame(height: 20)
         }
     }
 
     private var separator: some View {
-        Rectangle().fill(.white.opacity(0.25)).frame(width: 1, height: 34)
+        Rectangle().fill(.white.opacity(0.3)).frame(width: 1, height: 36)
     }
 }
 
@@ -398,7 +403,7 @@ struct TagsCard: View {
     }
 }
 
-/// "האזנה למתכון": narrates the whole recipe through the backend's Google TTS proxy.
+/// "האזנה למתכון": narrates the whole recipe with the device's Hebrew voice.
 struct ListenCard: View {
     @Environment(AppModel.self) private var app
     let model: RecipeModel
@@ -406,7 +411,6 @@ struct ListenCard: View {
     private var label: String {
         switch model.recipeSpeech.state {
         case .idle: "הפעל קריינות"
-        case .loading: "מכין קריינות..."
         case .playing: "⏸ השהה"
         case .paused: "▶ המשך"
         case .failed: "שגיאה — נסה שוב"
@@ -418,7 +422,7 @@ struct ListenCard: View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeading(title: "האזנה למתכון")
             Button {
-                clip.toggle(text: model.fullSpeechText, voice: app.ttsVoice)
+                clip.toggle(text: model.fullSpeechText, voice: app.narrationVoice)
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "speaker.wave.2").font(.system(size: 15, weight: .medium))
@@ -428,28 +432,8 @@ struct ListenCard: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Theme.terracotta, in: RoundedRectangle(cornerRadius: Theme.radius))
-                .opacity(clip.state == .loading ? 0.6 : 1)
             }
             .buttonStyle(.plain)
-            .disabled(clip.state == .loading)
-
-            if clip.isLoaded {
-                TimelineView(.periodic(from: .now, by: 0.25)) { _ in
-                    HStack(spacing: 10) {
-                        Text(StepTimers.format(Int(clip.currentTime)))
-                        Slider(
-                            value: Binding(get: { clip.currentTime }, set: { clip.seek(to: $0) }),
-                            in: 0...max(clip.duration, 1)
-                        )
-                        .tint(Theme.terracotta)
-                        Text(StepTimers.format(Int(clip.duration)))
-                    }
-                    .font(.rubik(12).monospacedDigit())
-                    .foregroundStyle(Theme.inkMuted)
-                    .environment(\.layoutDirection, .leftToRight)
-                }
-                .padding(.top, 12)
-            }
         }
         .padding(24)
         .card()

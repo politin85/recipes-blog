@@ -7,7 +7,7 @@ struct API {
     static let baseURL = URL(string: "https://tts-proxy-production-675e.up.railway.app")!
     static let shared = API()
 
-    enum APIError: Error { case badStatus(Int), missingAudio }
+    enum APIError: Error { case badStatus(Int) }
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -72,15 +72,5 @@ struct API {
         var request = URLRequest(url: url("/api/recipes/\(recipeID)/notes/\(noteID)"))
         request.httpMethod = "DELETE"
         _ = try await send(request)
-    }
-
-    /// Google TTS via the backend proxy; returns MP3 data.
-    func tts(text: String, voice: String) async throws -> Data {
-        let request = try jsonRequest("/tts", method: "POST", body: ["text": text, "voice": voice])
-        let data = try await send(request)
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let base64 = json["audioContent"] as? String,
-              let audio = Data(base64Encoded: base64) else { throw APIError.missingAudio }
-        return audio
     }
 }

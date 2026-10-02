@@ -9,10 +9,10 @@ talking to the same Railway backend so recipes live in one place. The website is
 
 ## Decisions
 
-- **SwiftUI, no third-party dependencies.** Project in `ios/`, targets iOS 18+, iPhone-first (runs on iPad).
+- **SwiftUI, no third-party dependencies.** Project in `ios/`, targets iOS 26.1+ (needed for system timers), iPhone-first (runs on iPad).
 - **Same backend.** Only the public endpoints are used: `/api/settings`, `/api/recipes`,
   `/api/recipes/:id`, `/api/recipes/:id/nutrition`, `/api/recipes/:id/notes`, `/api/ingredients`,
-  `/api/recipes/by-ingredients`, `/tts`.
+  `/api/recipes/by-ingredients`. The paid Google `/tts` proxy is not used.
 - **No admin in this app.** No admin screens, link, endpoints or password handling. Admin is planned
   as a separate app target (see "Not included").
 - **Hebrew, right-to-left, light mode only**, like the site. Same palette and the same fonts
@@ -38,7 +38,12 @@ compare the Swift output to that fixture.
 
 ## Where the app differs from the browser
 
-- Timers schedule a local notification, so they ring when the phone is locked.
+- Timers are system timers: they keep running when the app is closed and show on the Lock Screen
+  and in the Dynamic Island. With alarm access (AlarmKit) they ring like a Clock timer and can be
+  paused from the Live Activity; without it, a plain Live Activity plus a notification is used.
+  The Live Activity UI lives in the `RecipesWidgets` extension; `Shared/` is compiled into both.
+- Narration uses the Hebrew voices installed on the device (AVSpeechSynthesizer), not the server.
+  The voice setting lists those voices.
 - Cook mode keeps the screen awake.
 - Favorites, view mode, voice and sound are stored on the device (same keys as localStorage).
 - Images are requested from Cloudinary as resized JPEGs instead of the original PNGs.

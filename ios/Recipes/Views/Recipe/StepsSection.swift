@@ -162,7 +162,6 @@ struct StepCard: View {
     private var speechLabel: String {
         switch model.speech(for: step).state {
         case .idle: "🔊 הקרא שלב"
-        case .loading: "🔊 ..."
         case .playing: "⏸ השהה"
         case .paused: "▶ המשך"
         case .failed: "⚠️ שגיאה"
@@ -173,10 +172,10 @@ struct StepCard: View {
         let clip = model.speech(for: step)
         return FlowLayout(spacing: 12) {
             Button(speechLabel) {
-                clip.toggle(text: step.text, voice: app.ttsVoice, failureResetDelay: .seconds(2))
+                clip.toggle(text: step.text, voice: app.narrationVoice, failureResetDelay: .seconds(2))
             }
             .buttonStyle(PillButtonStyle(fill: .clear, foreground: Theme.inkMuted, fontSize: 12.8, verticalPadding: 5))
-            .disabled(clip.state == .loading || clip.state == .failed)
+            .disabled(clip.state == .failed)
 
             Button(isDone ? "✓ בוצע" : "✓ סמן כבוצע") {
                 withAnimation(.easeInOut(duration: 0.2)) { model.toggleDone(step) }

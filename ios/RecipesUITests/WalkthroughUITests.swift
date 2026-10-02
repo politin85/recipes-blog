@@ -13,10 +13,6 @@ final class WalkthroughUITests: XCTestCase {
                 alert.buttons[label].tap()
                 return true
             }
-            if alert.buttons.count > 0 {
-                alert.buttons.element(boundBy: alert.buttons.count - 1).tap()
-                return true
-            }
             return false
         }
     }
@@ -136,5 +132,69 @@ final class WalkthroughUITests: XCTestCase {
 
         scrollTo(text("על בסיס נתוני USDA FoodData Central"))
         shot("27-recipe-bottom")
+    }
+
+    private var springboard: XCUIApplication { XCUIApplication(bundleIdentifier: "com.apple.springboard") }
+
+    /// Answers a system permission prompt (alarms / notifications) if one is showing.
+    private func allowSystemPrompt() {
+        sleep(2)
+        shot("00-permission-prompt")
+        for label in ["Allow", "אישור", "אפשר"] {
+            let button = springboard.buttons[label]
+            if button.waitForExistence(timeout: 3) {
+                button.tap()
+                return
+            }
+        }
+    }
+
+    func testTimerRunsAsSystemTimer() {
+        app.launchArguments = ["-route", "recipe/99"]
+        app.launch()
+        XCTAssertTrue(text("מרכיבים").waitForExistence(timeout: 20), "recipe should load")
+        allowSystemPrompt()
+
+        // The first timer of recipe 99 is two minutes long.
+        let start = app.buttons["▶ הפעל טיימר"].firstMatch
+        scrollTo(start)
+        start.tap()
+        XCTAssertTrue(app.buttons["⏸ עצור"].waitForExistence(timeout: 5))
+        shot("30-timer-in-app")
+
+        // Leave the app: the timer keeps counting in the Dynamic Island…
+        XCUIDevice.shared.press(.home)
+        sleep(3)
+        shot("31-timer-dynamic-island")
+
+        // …and on the Lock Screen / notification list.
+        let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.01))
+        top.press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.8)))
+        sleep(2)
+        shot("32-timer-lock-screen")
+        XCUIDevice.shared.press(.home)
+
+        app.activate()
+        XCTAssertTrue(app.buttons["⏸ עצור"].waitForExistence(timeout: 5), "timer should still be running")
+        app.buttons["⏸ עצור"].tap()
+        XCTAssertTrue(app.buttons["▶ המשך"].waitForExistence(timeout: 5))
+        shot("33-timer-paused")
+        app.buttons["איפוס טיימר"].firstMatch.tap()
+        XCTAssertTrue(start.waitForExistence(timeout: 5), "reset should restore the start button")
+    }
+
+    func testNarrationUsesDeviceVoice() {
+        app.launchArguments = ["-route", "recipe/99"]
+        app.launch()
+        XCTAssertTrue(text("מרכיבים").waitForExistence(timeout: 20), "recipe should load")
+        allowSystemPrompt()
+
+        let read = app.buttons["🔊 הקרא שלב"].firstMatch
+        scrollTo(read)
+        read.tap()
+        XCTAssertTrue(app.buttons["⏸ השהה"].waitForExistence(timeout: 20), "narration should start")
+        shot("40-narration-playing")
+        app.buttons["⏸ השהה"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["▶ המשך"].waitForExistence(timeout: 5))
     }
 }
