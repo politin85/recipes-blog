@@ -1,30 +1,39 @@
 # מתכונים מחושבים — iOS app
 
-Native SwiftUI version of the recipes site. It uses the same backend as the website
-(`Recipes/Services/API.swift`), so there is no content in the app itself.
+Two native SwiftUI apps for the recipes site, both using the website's backend (`Core/API.swift`):
+
+- **Recipes** ("מתכונים") — the reader app.
+- **RecipesAdmin** ("ניהול מתכונים") — the password-protected admin app. Kept separate so the
+  reader app contains no admin code.
 
 ## Run
 
-Open `Recipes.xcodeproj` in Xcode, pick a simulator or your iPhone, and press Run.
+Open `Recipes.xcodeproj` in Xcode, choose the `Recipes` or `RecipesAdmin` scheme, pick a simulator
+or your iPhone, and press Run.
 
 ## Layout
 
-- `Recipes/Logic` — ports of the site's JavaScript (amount formatting, step-text amounts, filters, fridge helpers)
-- `Recipes/Models`, `Recipes/Services` — API models and client, timers, audio, app state
-- `Recipes/Views` — Home, Recipe, Fridge and shared components
+- `Core` — shared by both apps: models, theme, public API client, fonts, and `Core/Logic`, the ports
+  of the site's JavaScript (amount formatting, step-text amounts, filters, fridge helpers)
+- `Recipes` — the reader app: timers, audio, app state and the Home, Recipe and Fridge screens
+- `RecipesAdmin` — the admin app: login and lock, admin API client, recipe editor, tools
 - `RecipesWidgets` — the timer's Live Activity (Lock Screen and Dynamic Island); `Shared` — types used by both
-- `RecipesTests` — unit tests; `RecipesUITests` — end-to-end walkthrough against the live backend
+- `RecipesTests`, `RecipesAdminTests` — unit tests; `RecipesUITests` — end-to-end walkthroughs against the live backend
 
 ## Tests
 
 ```sh
 xcodebuild -project Recipes.xcodeproj -scheme Recipes -destination 'platform=iOS Simulator,name=iPhone 17' test
+xcodebuild -project Recipes.xcodeproj -scheme RecipesAdmin -destination 'platform=iOS Simulator,name=iPhone 17' test
 xcodebuild -project Recipes.xcodeproj -scheme RecipesUITests -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
+The admin UI tests are skipped unless the admin app is installed on the simulator and
+`TEST_RUNNER_ADMIN_PW` is set; they create and delete one hidden recipe on the live backend.
+
 ## When the website changes
 
-- If the step-text or amount logic in `recipe.html` changes, port the change to `Recipes/Logic/RecipeText.swift`
+- If the step-text or amount logic in `recipe.html` changes, port the change to `Core/Logic/RecipeText.swift`
   and regenerate the fixture: `node scripts/make_highlight_fixtures.js`. The unit tests then show any mismatch.
 - Timer sounds are rendered by `python3 scripts/make_sounds.py`.
 

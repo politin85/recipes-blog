@@ -32,6 +32,13 @@
 			remoteGlobalIDString = A10000000000000000000080;
 			remoteInfo = RecipesWidgets;
 		};
+		A100000000000000000000A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000000000000000000A0;
+			remoteInfo = RecipesAdmin;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -55,6 +62,8 @@
 		A10000000000000000000070 /* RecipesWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipesWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000076 /* Recipes-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Recipes-Info.plist"; sourceTree = "<group>"; };
 		A10000000000000000000073 /* RecipesWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "RecipesWidgets-Info.plist"; sourceTree = "<group>"; };
+		A100000000000000000000A4 /* RecipesAdmin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RecipesAdmin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A100000000000000000000B4 /* RecipesAdminTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RecipesAdminTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -81,6 +90,21 @@
 		A10000000000000000000075 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		A100000000000000000000C0 /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A100000000000000000000A5 /* RecipesAdmin */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RecipesAdmin;
+			sourceTree = "<group>";
+		};
+		A100000000000000000000B5 /* RecipesAdminTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RecipesAdminTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -114,13 +138,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A100000000000000000000A2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A100000000000000000000B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		A10000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
+				A100000000000000000000C0 /* Core */,
 				A10000000000000000000003 /* Recipes */,
+				A100000000000000000000A5 /* RecipesAdmin */,
+				A100000000000000000000B5 /* RecipesAdminTests */,
 				A10000000000000000000004 /* RecipesTests */,
 				A10000000000000000000009 /* RecipesUITests */,
 				A10000000000000000000074 /* RecipesWidgets */,
@@ -138,6 +179,8 @@
 				A10000000000000000000006 /* RecipesTests.xctest */,
 				A10000000000000000000008 /* RecipesUITests.xctest */,
 				A10000000000000000000070 /* RecipesWidgets.appex */,
+				A100000000000000000000A4 /* RecipesAdmin.app */,
+				A100000000000000000000B4 /* RecipesAdminTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -162,6 +205,7 @@
 			fileSystemSynchronizedGroups = (
 				A10000000000000000000003 /* Recipes */,
 				A10000000000000000000075 /* Shared */,
+				A100000000000000000000C0 /* Core */,
 			);
 			name = Recipes;
 			packageProductDependencies = (
@@ -239,6 +283,52 @@
 			productReference = A10000000000000000000070 /* RecipesWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A100000000000000000000A0 /* RecipesAdmin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100000000000000000000A7 /* Build configuration list for PBXNativeTarget "RecipesAdmin" */;
+			buildPhases = (
+				A100000000000000000000A1 /* Sources */,
+				A100000000000000000000A2 /* Frameworks */,
+				A100000000000000000000A3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A100000000000000000000A5 /* RecipesAdmin */,
+				A100000000000000000000C0 /* Core */,
+			);
+			name = RecipesAdmin;
+			packageProductDependencies = (
+			);
+			productName = RecipesAdmin;
+			productReference = A100000000000000000000A4 /* RecipesAdmin.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A100000000000000000000B0 /* RecipesAdminTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100000000000000000000B7 /* Build configuration list for PBXNativeTarget "RecipesAdminTests" */;
+			buildPhases = (
+				A100000000000000000000B1 /* Sources */,
+				A100000000000000000000B2 /* Frameworks */,
+				A100000000000000000000B3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A100000000000000000000B6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A100000000000000000000B5 /* RecipesAdminTests */,
+			);
+			name = RecipesAdminTests;
+			packageProductDependencies = (
+			);
+			productName = RecipesAdminTests;
+			productReference = A100000000000000000000B4 /* RecipesAdminTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -263,6 +353,13 @@
 					A10000000000000000000080 = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					A100000000000000000000A0 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					A100000000000000000000B0 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A100000000000000000000A0;
+					};
 				};
 			};
 			buildConfigurationList = A10000000000000000000041 /* Build configuration list for PBXProject "Recipes" */;
@@ -283,6 +380,8 @@
 				A10000000000000000000020 /* RecipesTests */,
 				A10000000000000000000060 /* RecipesUITests */,
 				A10000000000000000000080 /* RecipesWidgets */,
+				A100000000000000000000A0 /* RecipesAdmin */,
+				A100000000000000000000B0 /* RecipesAdminTests */,
 			);
 		};
 /* End PBXProject section */
@@ -310,6 +409,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A10000000000000000000083 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A100000000000000000000A3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A100000000000000000000B3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -347,6 +460,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A100000000000000000000A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A100000000000000000000B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -364,6 +491,11 @@
 			isa = PBXTargetDependency;
 			target = A10000000000000000000080 /* RecipesWidgets */;
 			targetProxy = A10000000000000000000034 /* PBXContainerItemProxy */;
+		};
+		A100000000000000000000B6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A100000000000000000000A0 /* RecipesAdmin */;
+			targetProxy = A100000000000000000000A6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -599,6 +731,98 @@
 			};
 			name = Release;
 		};
+		A100000000000000000000A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ניהול מתכונים";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "כדי לפתוח את ניהול המתכונים רק לך.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nirpoliti.recipes.admin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A100000000000000000000A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ניהול מתכונים";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "כדי לפתוח את ניהול המתכונים רק לך.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nirpoliti.recipes.admin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A100000000000000000000B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nirpoliti.recipes.admin.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RecipesAdmin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RecipesAdmin";
+			};
+			name = Debug;
+		};
+		A100000000000000000000B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nirpoliti.recipes.admin.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RecipesAdmin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RecipesAdmin";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -643,6 +867,24 @@
 			buildConfigurations = (
 				A10000000000000000000059 /* Debug */,
 				A10000000000000000000090 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100000000000000000000A7 /* Build configuration list for PBXNativeTarget "RecipesAdmin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000000A8 /* Debug */,
+				A100000000000000000000A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100000000000000000000B7 /* Build configuration list for PBXNativeTarget "RecipesAdminTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000000B8 /* Debug */,
+				A100000000000000000000B9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

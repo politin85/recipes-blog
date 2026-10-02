@@ -17,24 +17,16 @@ enum TimerColors {
     static let olive = Color(.sRGB, red: 0x6B / 255.0, green: 0x7A / 255.0, blue: 0x3A / 255.0)
 }
 
-/// Runs a Live Activity button's action and keeps a short trail of what happened
-/// (readable from the app's Documents folder) so failures can be diagnosed.
+/// Runs a Live Activity button's action on the timer's system alarm.
 enum TimerIntentRunner {
     private static let log = Logger(subsystem: "com.nirpoliti.recipes", category: "timer-intents")
 
     static func run(_ name: String, alarmID: String, _ action: (UUID) throws -> Void) {
-        var outcome = "ok"
-        if let id = UUID(uuidString: alarmID) {
-            do { try action(id) } catch { outcome = "error: \(error)" }
-        } else {
-            outcome = "bad id '\(alarmID)'"
-        }
-        log.info("\(name, privacy: .public) \(outcome, privacy: .public)")
-        let line = "\(Date().formatted(.iso8601)) \(name) \(Bundle.main.bundleIdentifier ?? "?") \(outcome)\n"
-        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let url = dir.appendingPathComponent("timer-intents.log")
-            let existing = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-            try? (String(existing.suffix(4000)) + line).write(to: url, atomically: true, encoding: .utf8)
+        guard let id = UUID(uuidString: alarmID) else { return }
+        do {
+            try action(id)
+        } catch {
+            log.error("\(name, privacy: .public) failed: \(String(describing: error), privacy: .public)")
         }
     }
 }

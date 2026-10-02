@@ -173,6 +173,7 @@ struct Recipe: Decodable, Hashable, Identifiable {
     let imageUrl: String?
     let createdAt: Date?
     let storyText: String?
+    let isHidden: Bool
 
     var ingredients: [RecipeIngredient]
     var steps: [RecipeStep]
@@ -185,7 +186,7 @@ struct Recipe: Decodable, Hashable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, title, description, difficulty, servings, category, tags
         case prepTime = "prep_time", cookTime = "cook_time", imageUrl = "image_url"
-        case createdAt = "created_at", storyText = "story_text"
+        case createdAt = "created_at", storyText = "story_text", isHidden = "is_hidden"
         case ingredients, steps, notes, related
         case matchPercent = "match_percent", missingIngredients = "missing_ingredients"
     }
@@ -204,6 +205,7 @@ struct Recipe: Decodable, Hashable, Identifiable {
         imageUrl = c.optString(.imageUrl)
         createdAt = APIDate.parse(c.optString(.createdAt))
         storyText = c.optString(.storyText)
+        isHidden = ((try? c.decodeIfPresent(Bool.self, forKey: .isHidden)) ?? nil) ?? false
         ingredients = ((try? c.decodeIfPresent([RecipeIngredient].self, forKey: .ingredients)) ?? nil) ?? []
         steps = ((try? c.decodeIfPresent([RecipeStep].self, forKey: .steps)) ?? nil) ?? []
         notes = ((try? c.decodeIfPresent([RecipeNote].self, forKey: .notes)) ?? nil) ?? []

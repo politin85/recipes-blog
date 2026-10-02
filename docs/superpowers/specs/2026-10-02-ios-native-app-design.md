@@ -50,9 +50,30 @@ compare the Swift output to that fixture.
 - A back button sits next to the menu button (the site relies on the browser's).
 - Fridge suggestions reopen on typing rather than on a second tap of the field.
 
+## Admin app (`RecipesAdmin`)
+
+A separate app (bundle ID `com.nirpoliti.recipes.admin`, "ניהול מתכונים") so the reader app carries
+no admin code. It covers everything in `admin.html`:
+
+- **Login**: the password is checked with a read-only admin request, stored in the Keychain
+  (this device only) and sent as `x-admin-password`. A saved login is locked behind Face ID /
+  the device passcode whenever the app opens or returns from the background. A 401 signs out.
+- **Recipes**: list with hide/show, delete (confirmed) and the "unmentioned ingredients" warning.
+- **Editor**: all recipe fields, ingredient and step rows with reordering, per-step timers and
+  images, per-section saves, preview, duplicate cleanup and nutrition calculation. Because the
+  backend deletes a recipe's nutrition on every update, the editor shows a reminder to recalculate.
+- **Images**: photo picker → Cloudinary (same unsigned preset as the site) → position editor that
+  writes the `#pos=x,y,zoom` fragment.
+- **Ingredients**: alias table with filter and sort, plus the batch tools (duplicate cleanup,
+  strip amounts, generate step titles with live progress, diagnose).
+- **Pantry staples** and **site settings**.
+
+Shared code (models, theme, logic, public API client, fonts) lives in `Core/` and is compiled
+into both apps. One deliberate difference from the web form: the step-timer autofill also
+recognises single numbers ("10 דקות"), which the website's regex misses.
+
 ## Not included
 
-- Admin (recipe editor, ingredient aliases, batch tools) — separate app target, to be designed.
 - Offline mode, App Store / TestFlight submission.
 
 ## Testing
@@ -60,3 +81,6 @@ compare the Swift output to that fixture.
 - `RecipesTests` (unit): port fidelity against the website fixture, decoding, filtering, fridge logic.
 - `RecipesUITests` (own scheme, needs network): walks home → filters → drawer → favorites,
   the fridge flow, and a recipe with scaling, cook mode and a timer run to completion.
+- `RecipesAdminTests` (unit): form → request payload, timer detection, crop geometry, list helpers.
+- `AdminUITests` (in `RecipesUITests`, needs the admin app installed and `TEST_RUNNER_ADMIN_PW`):
+  login, browse every tab, and create → edit → delete a hidden recipe. Skipped without the password.
