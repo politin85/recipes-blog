@@ -453,7 +453,7 @@ app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req,
     console.log(`[calculate-nutrition] recipe id=${id} title="${recipe.title}" servings=${JSON.stringify(recipe.servings)}`);
 
     const { rows: ingredients } = await pool.query(
-      `SELECT i.name, ri.amount, ri.unit
+      `SELECT i.name, ri.amount, ri.unit, ri.note
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
        WHERE ri.recipe_id = $1
@@ -461,7 +461,11 @@ app.post('/api/admin/recipes/:id/calculate-nutrition', requireAdmin, async (req,
       [id]
     );
 
-    const result = await calculateNutrition({ ...recipe, ingredients }, apiKey, usdaKey);
+    const { rows: steps } = await pool.query(
+      'SELECT text FROM steps WHERE recipe_id = $1 ORDER BY step_order', [id]
+    );
+
+    const result = await calculateNutrition({ ...recipe, ingredients, steps }, apiKey, usdaKey);
     if (!result) return res.status(422).json({ error: 'לא ניתן לחשב — אין מצרכים' });
 
     await pool.query(

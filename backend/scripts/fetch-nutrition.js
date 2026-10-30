@@ -25,7 +25,7 @@ async function main() {
   const params = [];
   let query = `
     SELECT r.id, r.title, r.servings,
-           json_agg(json_build_object('name', i.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id) AS ingredients
+           json_agg(json_build_object('name', i.name, 'amount', ri.amount, 'unit', ri.unit, 'note', ri.note) ORDER BY ri.id) AS ingredients
     FROM recipes r
     JOIN recipe_ingredients ri ON ri.recipe_id = r.id
     JOIN ingredients i ON i.id = ri.ingredient_id
